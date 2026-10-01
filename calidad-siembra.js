@@ -332,7 +332,7 @@ async function checkApiCalidad() {
     $calidad("calidadEstado").classList.remove("ok");
     $calidad("calidadEstado").classList.add("warn");
     await cargarCatalogoCalidadLocal();
-    if (!criteriosCalidad.length || !sembradores.length) estadoCalidad("error", "Conéctate una vez para descargar el catálogo de Calidad Siembra.");
+    if (!criteriosCalidad.length || !sembradores.length) estadoCalidad("error", "Conéctate una vez para descargar el catálogo de Calidad.");
   } finally {
     await actualizarPendientesCalidad();
   }
