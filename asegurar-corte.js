@@ -3,7 +3,7 @@
 // agregan pares Item de calidad → Observación (cascada, mismo patrón que Variedad→Clon).
 // Guarda siempre local primero (offline-first) — nunca llama directo al API al guardar.
 
-const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
+const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
 if (!sesion) {
   window.location.href = "./login.html";
 }
