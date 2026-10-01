@@ -15,6 +15,13 @@ const criteriosPreparacionCamas = [
   { id: 10, nombre: "Instalación de Mangueras de Goteo" },
 ];
 
+const criteriosDesbotonPompon = [
+  { id: 1, nombre: "Tallos con Botón Principal" },
+  { id: 2, nombre: "Tallos con Tacón Largo" },
+  { id: 3, nombre: "Daño Mecánico" },
+  { id: 4, nombre: "Aseo de Labor" },
+];
+
 const criteriosCalidadGenericos = [
   { id: 1, nombre: "Siembra conforme" },
   { id: 2, nombre: "Estado de la planta" },
@@ -33,10 +40,13 @@ const criteriosCalidadGenericos = [
 
 const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
 const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
+const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
 
 let criteriosCalidad = esFormularioPreparacionCamas
   ? [...criteriosPreparacionCamas]
-  : [...criteriosCalidadGenericos];
+  : esFormularioDesbotonPompon
+    ? [...criteriosDesbotonPompon]
+    : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
@@ -262,7 +272,7 @@ function limpiarFormularioCalidad() {
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && catalogo.items.length) {
+  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && catalogo.items.length) {
     criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
   }
   renderCriterios();
