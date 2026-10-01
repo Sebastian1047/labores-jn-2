@@ -34,18 +34,18 @@
 
           <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
             <div><span class="scan-label">Semana</span><p class="hint" id="semanaActual" style="margin: 6px 0 0;">Cargando calendario…</p></div>
-            <div><span class="scan-label">Revisión</span><p class="hint" id="sembradorRevision" style="margin: 6px 0 0;">Selecciona un sembrador</p></div>
+            <div><span class="scan-label">Revisión</span><p class="hint" id="colaboradorRevision" style="margin: 6px 0 0;">Selecciona un colaborador</p></div>
           </div>
 
           <div>
-            <span class="scan-label">Sembrador</span>
-            <input id="sembradorBuscar" type="text" placeholder="Buscar sembrador por nombre o código…" />
-            <div id="sembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
+            <span class="scan-label">Colaborador</span>
+            <input id="colaboradorBuscar" type="text" placeholder="Buscar colaborador por nombre o código…" />
+            <div id="colaboradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
           </div>
 
           <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
-            <div><span class="scan-label">Nombre</span><p class="hint" id="sembradorNombre" style="margin: 6px 0 0;">Sin sembrador seleccionado</p></div>
-            <div><span class="scan-label">Código</span><p class="hint" id="sembradorCodigo" style="margin: 6px 0 0;">—</p></div>
+            <div><span class="scan-label">Nombre</span><p class="hint" id="colaboradorNombre" style="margin: 6px 0 0;">Sin colaborador seleccionado</p></div>
+            <div><span class="scan-label">Código</span><p class="hint" id="colaboradorCodigo" style="margin: 6px 0 0;">—</p></div>
           </div>
 
           <div>
@@ -58,7 +58,7 @@
             <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
           </div>
           <section class="result-card" aria-live="polite">
-            <div class="result-status" id="calidadResultado"><span class="dot"></span><strong id="calidadMensaje">Selecciona un sembrador para iniciar una evaluación.</strong></div>
+            <div class="result-status" id="calidadResultado"><span class="dot"></span><strong id="calidadMensaje">Selecciona un colaborador para iniciar una evaluación.</strong></div>
           </section>
           <section id="calidadPendientesDetalle" class="result-card" hidden>
             <h3 style="margin-top:0">Evaluaciones pendientes de sincronizar</h3>
