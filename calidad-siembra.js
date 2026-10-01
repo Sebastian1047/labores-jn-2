@@ -22,6 +22,14 @@ const criteriosDesbotonPompon = [
   { id: 4, nombre: "Aseo de Labor" },
 ];
 
+const criteriosDesbotonSpiderCremon = [
+  { id: 1, nombre: "Plantas con Botón o Tacón" },
+  { id: 2, nombre: "Plantas con Tacón Largo" },
+  { id: 3, nombre: "Daño Mecánico" },
+  { id: 4, nombre: "Desbotón a 15 cm de la Base" },
+  { id: 5, nombre: "Aseo Caminos" },
+];
+
 const criteriosCalidadGenericos = [
   { id: 1, nombre: "Siembra conforme" },
   { id: 2, nombre: "Estado de la planta" },
@@ -41,12 +49,15 @@ const criteriosCalidadGenericos = [
 const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
 const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
 const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
+const esFormularioDesbotonSpiderCremon = window.location.pathname.endsWith("/calidad-desboton-spider-cremon.html");
 
 let criteriosCalidad = esFormularioPreparacionCamas
   ? [...criteriosPreparacionCamas]
   : esFormularioDesbotonPompon
     ? [...criteriosDesbotonPompon]
-    : [...criteriosCalidadGenericos];
+    : esFormularioDesbotonSpiderCremon
+      ? [...criteriosDesbotonSpiderCremon]
+      : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
@@ -272,7 +283,7 @@ function limpiarFormularioCalidad() {
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && catalogo.items.length) {
+  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && !esFormularioDesbotonSpiderCremon && catalogo.items.length) {
     criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
   }
   renderCriterios();
