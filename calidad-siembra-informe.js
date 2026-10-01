@@ -1,4 +1,4 @@
-const sesionInforme = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesionInforme = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesionInforme) window.location.href = "./login.html";
 
 const ALMACENAMIENTO_CALIDAD = "calidadSiembraEvaluacionesLocal";
