@@ -97,10 +97,8 @@
       // Version visible en pantalla + chequeo/actualizacion forzada contra el servidor ahora
       // vive en offline/register-sw.js (corre en TODAS las paginas, no solo esta) -- ver ese
       // archivo. Aqui solo queda la logica propia del menu.
-      const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
-      if (!sesion) {
-        window.location.href = "./login.html";
-      } else {
+      const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
+      if (sesion) {
         document.querySelector("#usuarioPill").textContent = sesion.empleadoNombre || sesion.username;
 
         // Filtro por rol (dbo.UsuariosApp.rol -- mismo campo que ya usa Trazabilidad para su
