@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pronósticos JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Pronósticos</p>
+          <h1>Estimación de floración por variedad</h1>
+        </div>
+        <section class="status-strip" aria-label="Estado operativo">
+          <span class="pill strong">Sede JN</span>
+          <span class="pill" id="apiStatusPill">API...</span>
+          <span class="pill">Usuario: <span id="usuarioLabel">prueba.web</span></span>
+          <a href="./floracion-siembra.html" class="pill">🗺️ Floración x Siembra</a>
+          <a href="./menu.html" class="pill">← Menú</a>
+        </section>
+      </header>
+
+      <p class="hint">
+        <strong>Sbr</strong> es el pronóstico base por ciclo de siembra: fijo, nunca se recalcula.
+        <strong>Nuevo total</strong> es lo que corte va a manejar: parte del Sbr y se ajusta con movimientos entre semanas.
+      </p>
+
+      <section class="workspace">
+        <article class="scanner-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Filtro</p>
+              <h2 id="variedadTitulo">Selecciona una variedad</h2>
+            </div>
+          </div>
+
+          <form class="exit-row" style="flex-wrap: wrap; gap: 12px;" onsubmit="return false;">
+            <label>Variedad
+              <select id="variedadSelect">
+                <option value="">Cargando variedades…</option>
+              </select>
+            </label>
+            <label>Buscar
+              <input id="variedadBuscar" type="text" placeholder="nombre o código" />
+            </label>
+            <label>Semana inicial
+              <input id="semanaInicio" type="number" min="1" max="53" />
+            </label>
+            <label>Año
+              <input id="ano" type="number" value="2026" />
+            </label>
+          </form>
+
+          <div id="semanasContenedor" class="semanas-list">
+            <p class="hint">Elige una variedad para ver sus semanas.</p>
+          </div>
+        </article>
+
+        <aside class="side-panel">
+          <section class="tabs">
+            <button class="tab active" type="button">Resumen</button>
+          </section>
+          <div class="pending-list" id="resumenVariedad" style="padding: 12px;">
+            <p class="hint">Sin variedad seleccionada.</p>
+          </div>
+
+          <div class="action-row" style="margin-bottom: 0; flex-direction: column; align-items: stretch;">
+            <button id="refreshBtn" class="ghost-btn" type="button">Actualizar</button>
+            <button id="sincronizarBtn" class="success-btn" type="button">Sincronizar pronóstico a corte</button>
+            <button id="exportarExcelBtn" class="ghost-btn" type="button">📊 Exportar Excel</button>
+          </div>
+          <p class="hint" id="syncEstado" style="margin: 0;"></p>
+        </aside>
+      </section>
+    </main>
+
+    <div id="moverRamosModal" class="modal-backdrop" hidden>
+      <div class="modal-card">
+        <div class="panel-heading">
+          <h2>Mover ramos</h2>
+          <button id="moverCerrarBtn" class="ghost-btn" type="button">Cerrar</button>
+        </div>
+        <p class="hint" id="moverVariedadLabel"></p>
+
+        <form class="exit-row" style="flex-wrap: wrap; gap: 12px;" onsubmit="return false;">
+          <label>Día de origen
+            <select id="moverDiaOrigen"></select>
+          </label>
+          <label>Semana destino
+            <select id="moverSemanaDestino"></select>
+          </label>
+          <label>Cantidad
+            <input id="moverCantidad" type="number" min="1" step="1" />
+          </label>
+          <label style="flex-basis: 100%;">Observación
+            <input id="moverObservacion" type="text" placeholder="Motivo del movimiento" />
+          </label>
+        </form>
+
+        <div class="action-row">
+          <button id="moverConfirmarBtn" class="success-btn" type="button">Confirmar movimiento</button>
+        </div>
+        <section class="result-card" aria-live="polite">
+          <div class="result-status">
+            <span class="dot"></span>
+            <strong id="moverResultado">Sin mover aún</strong>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="movimientosDiaModal" class="modal-backdrop" hidden>
+      <div class="modal-card">
+        <div class="panel-heading">
+          <h2>Movimientos del día</h2>
+          <button id="movimientosCerrarBtn" class="ghost-btn" type="button">Cerrar</button>
+        </div>
+        <p class="hint" id="movimientosVariedadLabel"></p>
+        <div id="movimientosLista" class="pending-list" style="max-height: 320px;"></div>
+      </div>
+    </div>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./app.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
