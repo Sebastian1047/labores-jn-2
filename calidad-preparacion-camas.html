@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preparación Camas — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Calidad</p>
+          <h1>🛏️ Preparación Camas</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill" id="calidadEstado">Sin conexión</span>
+          <span class="pill" id="calidadPendientes" hidden>0 pendiente(s)</span>
+          <button id="sincronizarCalidadBtn" class="pill" type="button">↻ Sincronizar</button>
+          <span class="pill strong" id="calidadUsuario">Usuario</span>
+          <a href="./calidad-siembra-informe.html" class="pill">📊 Informe</a>
+          <a href="./calidad-menu.html" class="pill">← Calidad</a>
+        </section>
+      </header>
+
+      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+        <article class="scanner-panel">
+          <div>
+            <span class="scan-label">Evaluador</span>
+            <p class="hint" id="evaluadorNombre" style="margin: 6px 0 0;">Usuario actual</p>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+            <div><span class="scan-label">Semana</span><p class="hint" id="semanaActual" style="margin: 6px 0 0;">Cargando calendario…</p></div>
+            <div><span class="scan-label">Revisión</span><p class="hint" id="sembradorRevision" style="margin: 6px 0 0;">Selecciona un sembrador</p></div>
+          </div>
+
+          <div>
+            <span class="scan-label">Sembrador</span>
+            <input id="sembradorBuscar" type="text" placeholder="Buscar sembrador por nombre o código…" />
+            <div id="sembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+            <div><span class="scan-label">Nombre</span><p class="hint" id="sembradorNombre" style="margin: 6px 0 0;">Sin sembrador seleccionado</p></div>
+            <div><span class="scan-label">Código</span><p class="hint" id="sembradorCodigo" style="margin: 6px 0 0;">—</p></div>
+          </div>
+
+          <div>
+            <span class="scan-label">Criterios de calidad</span>
+            <p class="hint" style="margin: 6px 0 10px;">Marca únicamente los criterios que no cumplen. Si no marcas ninguno, la evaluación se guarda con todos los criterios cumplidos.</p>
+            <div id="criteriosLista" class="calidad-criterios"></div>
+          </div>
+
+          <div class="action-row" style="margin-top: 16px;">
+            <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
+          </div>
+          <section class="result-card" aria-live="polite">
+            <div class="result-status" id="calidadResultado"><span class="dot"></span><strong id="calidadMensaje">Selecciona un sembrador para iniciar una evaluación.</strong></div>
+          </section>
+          <section id="calidadPendientesDetalle" class="result-card" hidden>
+            <h3 style="margin-top:0">Evaluaciones pendientes de sincronizar</h3>
+            <div id="calidadPendientesLista" class="pending-list"></div>
+          </section>
+        </article>
+      </section>
+    </main>
+    <div class="modal-backdrop" id="confirmacionConformeModal" hidden>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmacionConformeTitulo">
+        <p class="eyebrow">Confirmar evaluación</p>
+        <h2 id="confirmacionConformeTitulo" style="margin: 0 0 10px;">¿Guardar sin incumplimientos?</h2>
+        <p class="hint" style="margin: 0;">No seleccionaste ningún ítem. Todos los criterios serán considerados cumplidos en esta evaluación.</p>
+        <div class="action-row" style="margin-top: 20px;">
+          <button id="cancelarConformeBtn" class="ghost-btn" type="button">Revisar ítems</button>
+          <button id="confirmarConformeBtn" class="success-btn" type="button">Guardar evaluación</button>
+        </div>
+      </section>
+    </div>
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./calidad-siembra.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
