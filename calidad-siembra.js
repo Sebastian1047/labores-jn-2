@@ -2,7 +2,7 @@
 const sesionCalidad = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
 if (!sesionCalidad) window.location.href = "./login.html";
 
-const criteriosSiembraCampo = [
+const criteriosPreparacionCamas = [
   { id: 1, nombre: "Cama Conforme" },
   { id: 2, nombre: "Limpieza de Terreno" },
   { id: 3, nombre: "Distribución de Enmiendas" },
@@ -31,8 +31,12 @@ const criteriosCalidadGenericos = [
   { id: 13, nombre: "Conteo de líneas" },
 ];
 
+const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
 const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
-let criteriosCalidad = esFormularioPreparacionCamas ? [...criteriosSiembraCampo] : [...criteriosCalidadGenericos];
+
+let criteriosCalidad = esFormularioPreparacionCamas
+  ? [...criteriosPreparacionCamas]
+  : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
@@ -258,7 +262,7 @@ function limpiarFormularioCalidad() {
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (!esFormularioPreparacionCamas && catalogo.items.length) {
+  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && catalogo.items.length) {
     criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
   }
   renderCriterios();
