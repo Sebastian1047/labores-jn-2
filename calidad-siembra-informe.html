@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Informe Calidad Siembra — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .report-sheet { background: #fff; border: 1px solid var(--line); padding: 18px; box-shadow: var(--shadow); font-size: 12px; }
+      .report-brand { display: grid; grid-template-columns: 1fr 1.18fr 1fr; border: 1px solid #777; }
+      .report-logo { min-height: 0; height: auto; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; }
+      .report-logo:first-child { border-right: 1px solid #777; }
+      .report-logo.assurance-logo { border-left: 1px solid #777; }
+      .report-brand > .assurance-logo { grid-column: 3; grid-row: 1 / span 3; }
+      .report-logo img { display: block; max-width: 82%; max-height: 82px; object-fit: contain; }
+      .report-logo.assurance-logo img { max-width: 78%; max-height: 150px; }
+      .report-logo-caption { font-size: 10px; line-height: 1.15; font-weight: 700; }
+      .report-company-wide { grid-column: 1 / 3; grid-row: 2; border: 1px solid #777; padding: 6px; text-align: center; font-size: 12px; font-weight: 700; }
+      .report-meta { display: contents; }
+      .report-route, .report-company { grid-column: 2; grid-row: 1; text-align: center; padding: 8px; border-bottom: 1px solid #777; }
+      .report-route { min-height: 36px; display: flex; align-items: center; justify-content: center; font-size: 13px; letter-spacing: .08em; line-height: 1.1; }
+      .report-company { font-size: 12px; }
+      .report-details { grid-column: 1 / 3; grid-row: 3; display: grid; grid-template-columns: 1fr 1fr; }
+      .report-details > div { padding: 3px 8px; min-height: 16px; text-align: center; border-bottom: 1px solid #999; }
+      .report-details > div:nth-child(odd) { border-right: 1px solid #999; font-weight: 700; font-style: italic; }
+      .table-title { text-align: center; border: 1px solid #777; border-bottom: 0; margin: 12px 0 0; padding: 6px; }
+      .table-scroll { overflow: auto; }
+      .conformity-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      .conformity-table th, .conformity-table td, .mini-table th, .mini-table td { border: 1px solid #777; padding: 5px; text-align: center; height: 34px; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+      .conformity-table th { font-size: 7.5px; vertical-align: middle; white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: none; line-height: 1.15; height: 62px; }
+      .conformity-table th:first-child, .conformity-table td:first-child { width: 24%; }
+      .conformity-table td:first-child { font-size: 8.5px; }
+      .conformity-table th:not(:first-child), .conformity-table td:not(:first-child) { width: 6.91%; }
+      .conformity-table th:nth-child(4), .conformity-table td:nth-child(4) { width: calc(6.91% - 6px); }
+      .conformity-table th:last-child, .conformity-table td:last-child { width: calc(6.91% + 6px); }
+      .conformity-table .namecell { text-align: left; white-space: nowrap; }
+      .weekly-summary { display: grid; grid-template-columns: 280px 1fr; gap: 35px; margin-top: 18px; align-items: end; }
+      .mini-table { width: 100%; border-collapse: collapse; }
+      .print-chart { text-align: center; }
+      .print-bars { height: 190px; display: flex; align-items: flex-end; justify-content: center; gap: 8px; border-bottom: 1px solid #777; padding: 0 20px; }
+      .print-bar-item { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; font-size: 10px; }
+      .print-bar { width: 32px; background: #666; }
+      .signature-grid { display: grid; grid-template-columns: 1fr 1fr; margin-top: 25px; border: 1px solid #777; }
+      .signature-grid > div { padding: 6px; border: 1px solid #aaa; min-height: 26px; }
+      @media (max-width: 900px) {
+        .app-shell { width: 100%; max-width: 100% !important; padding: 10px; box-sizing: border-box; }
+        .topbar { gap: 12px; flex-wrap: wrap; }
+        .topbar h1 { font-size: clamp(1.7rem, 6vw, 2.4rem); }
+        .status-strip { width: 100%; flex-wrap: wrap; }
+        .scanner-panel, .report-sheet { padding: 10px; }
+        .report-brand { grid-template-columns: 1fr; }
+        .report-brand > .report-logo:first-child { grid-column: 1; grid-row: 1; }
+        .report-brand > .report-meta { grid-column: 1; grid-row: 2; }
+        .report-brand > .assurance-logo { grid-column: 1; grid-row: 5; }
+        .report-route, .report-company { grid-column: 1; grid-row: 2; }
+        .report-company-wide { grid-column: 1; grid-row: 3; }
+        .report-details { grid-column: 1; grid-row: 4; }
+        .report-logo img { max-width: 70%; }
+        .report-logo.assurance-logo img { max-width: 45%; max-height: 110px; }
+        .exit-row { grid-template-columns: 1fr !important; gap: 10px; }
+        .exit-row button { width: 100%; }
+        .table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .conformity-table { min-width: 980px; }
+        .weekly-summary { grid-template-columns: 1fr; gap: 18px; }
+        .weekly-summary .mini-table { max-width: 100%; }
+        .print-chart { width: 100%; overflow: hidden; }
+        .print-bars { overflow-x: auto; justify-content: flex-start; padding: 0 10px; }
+        .signature-grid { grid-template-columns: 1fr; }
+      }
+      @media print {
+        body { background: #fff; }
+        .topbar { display: none !important; }
+        /* La hoja apaisada puede activar la regla móvil por su ancho en px. El
+           encabezado debe conservar las tres columnas del formato impreso. */
+        .report-brand { grid-template-columns: 1fr 1.18fr 1fr !important; }
+        .report-brand > .report-logo:first-child { grid-column: 1 !important; grid-row: 1 !important; }
+        .report-brand > .report-meta { display: contents !important; }
+        .report-route { grid-column: 2 !important; grid-row: 1 !important; }
+        .report-brand > .assurance-logo { grid-column: 3 !important; grid-row: 1 / span 3 !important; }
+        .report-company-wide { grid-column: 1 / 3 !important; grid-row: 2 !important; }
+        .report-details { grid-column: 1 / 3 !important; grid-row: 3 !important; }
+        .conformity-table { border-collapse: separate; border-spacing: 0; }
+        .conformity-table th, .conformity-table td { border: 0.5px solid #888 !important; border-right: 0.5px solid #888 !important; border-bottom: 0.5px solid #888 !important; }
+        .conformity-table tr:first-child th { border-top: 0.5px solid #888 !important; }
+        .conformity-table th:first-child, .conformity-table td:first-child { border-left: 0.5px solid #888 !important; }
+        .conformity-table, .mini-table { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .no-print, .topbar .status-strip { display: none !important; }
+        .app-shell { max-width: none; padding: 0; }
+        .scanner-panel { box-shadow: none; border: 0; padding: 0; margin: 0 !important; }
+        .report-sheet { border: 0; box-shadow: none; margin: 0; padding: 0; font-size: 9px; }
+        .report-logo { min-height: 0; height: auto; padding: 3px; }
+        .report-logo img { max-width: 82%; max-height: 55px; }
+        .report-logo.assurance-logo img { max-width: 78%; max-height: 105px; }
+        .report-logo-caption { font-size: 7px; }
+        .report-route { min-height: 28px; font-size: 9px; }
+        .report-company, .report-meta > div:not(.report-route):not(.report-company) { padding: 2px 4px; font-size: 8px; }
+        .report-company-wide { padding: 2px; font-size: 8px; }
+        .report-details > div { padding: 2px 4px; min-height: 14px; }
+        .table-scroll { overflow: visible; }
+        .conformity-table { min-width: 0; }
+        .conformity-table th, .conformity-table td { padding: 2px 3px; font-size: 8.2px; height: auto !important; min-height: 0; line-height: 1.08; }
+        .conformity-table td:not(:first-child) { font-size: 9px; }
+        .conformity-table th { font-size: 8px; font-weight: 700; color: #222; overflow-wrap: normal; word-break: normal; }
+        .weekly-summary { grid-template-columns: 205px 1fr; gap: 16px; break-inside: avoid; }
+        .weekly-summary .mini-table th, .weekly-summary .mini-table td { padding: 2px 4px; height: 22px; font-size: 7.5px; }
+        .print-chart h3 { font-size: 10px; }
+        .print-bars { height: 110px; min-height: 110px; justify-content: center; gap: 8px; }
+        .print-bar-item { height: 100%; min-height: 110px; }
+        .print-bar { width: 28px; min-height: 10px; background: #666 !important; border: 1px solid #555; box-shadow: inset 0 0 0 1000px #666; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .signature-grid { grid-template-columns: 1fr 1fr !important; margin-top: 12px; }
+        .signature-grid > div { min-height: 18px; padding: 4px 6px; }
+        @page { size: landscape; margin: 8mm; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell" style="max-width: 1440px;">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Siembra</p>
+          <h1>📊 Informe de Calidad Siembra</h1>
+        </div>
+        <section class="status-strip no-print">
+          <span class="pill strong" id="informeUsuario">Usuario</span>
+          <a href="./calidad-siembra.html" class="pill">← Calidad Siembra</a>
+          <a href="./menu.html" class="pill">← Menú</a>
+        </section>
+      </header>
+
+      <section class="scanner-panel no-print">
+        <div class="exit-row" style="grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) auto auto;">
+          <label>Año
+            <select id="anioSelect"></select>
+          </label>
+          <label>Semana
+            <select id="semanaSelect"></select>
+          </label>
+          <label>Informe seleccionado
+            <select id="periodoSelect"></select>
+          </label>
+          <button id="imprimirBtn" class="ghost-btn" type="button">🖨 Imprimir</button>
+          <button id="pdfBtn" class="success-btn" type="button">⬇ Descargar PDF</button>
+        </div>
+        <p class="hint" style="margin-bottom:0;">Los datos se calculan con las evaluaciones guardadas en este equipo. “Descargar PDF” abre la impresión del navegador para guardar el archivo como PDF.</p>
+      </section>
+
+      <section class="scanner-panel" style="margin-top: 18px;">
+        <div id="informeContenido"></div>
+      </section>
+    </main>
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./calidad-siembra-informe.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
