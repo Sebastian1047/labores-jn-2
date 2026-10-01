@@ -1,0 +1,13 @@
+{
+  "name": "Labores JN — Pronósticos y Siembra",
+  "short_name": "Labores JN",
+  "start_url": "./login.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f0",
+  "theme_color": "#187a4d",
+  "lang": "es",
+  "icons": [
+    { "src": "./icons/icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" }
+  ]
+}
