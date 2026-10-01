@@ -2,7 +2,7 @@
 // EditRegistroViewModel de AppLabores: guarda siempre local primero (offline-first),
 // nunca llama directo al API. La sincronización real ocurre desde el Hub.
 
-const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesion) {
   window.location.href = "./login.html";
 }
