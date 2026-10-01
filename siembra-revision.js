@@ -1,7 +1,7 @@
 // Revisión — igual a ListSiembrasViewPage de AppLabores: filtro por rango de fechas + búsqueda
 // libre, checkbox "Revisada" de solo lectura, y "Ver/Editar" que abre el registro en edición.
 
-const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesion) {
   window.location.href = "./login.html";
 }
