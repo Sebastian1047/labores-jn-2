@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menú — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      @keyframes girar {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      #cargaOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        background: rgba(20, 34, 28, 0.82);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        padding: 24px;
+        text-align: center;
+      }
+      #cargaOverlay[hidden] {
+        display: none;
+      }
+      #cargaSpinner {
+        font-size: 72px;
+        line-height: 1;
+        animation: girar 1.1s linear infinite;
+      }
+      #descargaAviso {
+        color: #fff;
+        font-size: 1.05rem;
+        font-weight: 800;
+        max-width: 320px;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cargaOverlay">
+      <div id="cargaSpinner">🌸</div>
+      <p id="descargaAviso">Descargando información del servidor, espere por favor…</p>
+    </div>
+
+    <main class="app-shell" style="max-width: 640px;">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Labores</p>
+          <h1>🌱 Panel de opciones</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <button id="logoutBtn" class="ghost-btn" type="button">Salir</button>
+        </section>
+      </header>
+
+      <section class="workspace" style="grid-template-columns: 1fr 1fr;">
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardPronosticos">
+          <h2>📈 Pronósticos</h2>
+          <p class="hint">Sbr por variedad, nuevo total, mover ramos y sincronizar a corte.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardSiembra">
+          <h2>🌾 Siembra Campo</h2>
+          <p class="hint">Registrar, editar y ver las últimas siembras capturadas.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardAsegurarCorte">
+          <h2>✅ Asegurar Corte</h2>
+          <p class="hint">Auditar calidad de corte por cortador: items de control y observaciones.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardDesbotonadoMallas">
+          <h2>🌸 Desbotonado y Mallas</h2>
+          <p class="hint">Registrar camas, medios cuadros y rendimiento por desbotonador.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardCalidadSiembra">
+          <h2>🌱 Calidad Siembra</h2>
+          <p class="hint">Evaluar sembradores por criterios de calidad.</p>
+        </article>
+      </section>
+
+      <footer style="text-align: center; opacity: 0.55; font-size: 0.75rem; margin-top: 16px;" id="appVersion"></footer>
+    </main>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <!-- register-sw.js va ANTES del script del menu a proposito: si detecta version vieja,
+         recarga la pagina antes de que precargarTodo() alcance a gastar una descarga que de
+         todos modos se va a botar con el recargue. -->
+    <script src="./offline/register-sw.js"></script>
+    <script>
+      // Version visible en pantalla + chequeo/actualizacion forzada contra el servidor ahora
+      // vive en offline/register-sw.js (corre en TODAS las paginas, no solo esta) -- ver ese
+      // archivo. Aqui solo queda la logica propia del menu.
+      const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+      if (!sesion) {
+        window.location.href = "./login.html";
+      } else {
+        document.querySelector("#usuarioPill").textContent = sesion.empleadoNombre || sesion.username;
+
+        // Filtro por rol (dbo.UsuariosApp.rol -- mismo campo que ya usa Trazabilidad para su
+        // menu). Si el rol no coincide con ninguna tarjeta conocida (vacio, "Administrador",
+        // etc.) se muestran todas -- comportamiento de siempre, no se restringe por defecto.
+        // "Asegurar Corte" queda fuera de este filtro a proposito (17/09/2026): ningun rol
+        // real en UsuariosApp.rol contiene "corte" todavia (Administrador, Despachos, Gestion
+        // Humana, JefeArea, Planeacion, Porteria, Pronosticos, Siembra, SST, Supervisor), asi
+        // que filtrarla la habria dejado invisible para todo el mundo con rol especifico.
+        // Vuelve a filtrarse el dia que exista un rol real para calidad de corte.
+        const rol = String(sesion.role || "").toLowerCase();
+        const tarjetas = {
+          pronostico: document.querySelector("#cardPronosticos"),
+          siembra: document.querySelector("#cardSiembra"),
+        };
+        const coincidencias = Object.keys(tarjetas).filter((clave) => rol.includes(clave));
+        if (coincidencias.length > 0) {
+          Object.entries(tarjetas).forEach(([clave, el]) => {
+            el.hidden = !coincidencias.includes(clave);
+          });
+        }
+      }
+
+      document.querySelector("#logoutBtn").addEventListener("click", () => {
+        sessionStorage.removeItem("labores_usuario");
+        window.location.href = "./login.html";
+      });
+      document.querySelector("#cardPronosticos").addEventListener("click", () => {
+        window.location.href = "./index.html";
+      });
+      document.querySelector("#cardSiembra").addEventListener("click", () => {
+        window.location.href = "./siembra-hub.html";
+      });
+      document.querySelector("#cardAsegurarCorte").addEventListener("click", () => {
+        window.location.href = "./asegurar-corte.html";
+      });
+      document.querySelector("#cardDesbotonadoMallas").addEventListener("click", () => {
+        window.location.href = "./desbotonado-mallas.html";
+      });
+      document.querySelector("#cardCalidadSiembra").addEventListener("click", () => {
+        window.location.href = "./calidad-siembra.html";
+      });
+
+      // Precarga forzada de los 3 módulos al entrar al menú -- antes había que abrir cada
+      // pantalla al menos una vez con señal para que quedara lista offline. Esto no reemplaza
+      // eso al 100% (Pronósticos solo se precarga para la semana actual, no para cualquier
+      // rango que alguien pida después), pero cubre el caso real de "llegó con señal, sale a
+      // campo ya" sin depender de que alguien recuerde visitar las 3 pantallas primero. Pedido
+      // 18/09/2026.
+      const cargaOverlay = document.querySelector("#cargaOverlay");
+      const cargaSpinner = document.querySelector("#cargaSpinner");
+      const descargaAviso = document.querySelector("#descargaAviso");
+      async function precargarPronosticosSemanaActual() {
+        const hoy = new Date();
+        const semana = SyncEngine.semanaQueContiene(await OfflineDb.getAll("semanas"), hoy);
+        const semanaInicio = semana ? semana.semana : 1;
+        const ano = semana ? semana.ano : hoy.getFullYear();
+        const HORIZONTE = 8;
+        const [resumen, dias, movimientos] = await Promise.all([
+          SyncEngine.apiGetOnline(`/api/pronosticos/resumen-agrupado/${semanaInicio}?ano=${ano}`),
+          SyncEngine.apiGetOnline(`/api/pronosticos/dias?sedeCodigo=JN&ano=${ano}&semanaInicio=${semanaInicio}&semanas=${HORIZONTE}`),
+          SyncEngine.apiGetOnline(`/api/pronosticos/movimientos?sedeCodigo=JN&ano=${ano}&semanaInicio=${semanaInicio}&semanas=${HORIZONTE}`),
+        ]);
+        await OfflineDb.clear("pronosticosResumen");
+        await OfflineDb.putMany("pronosticosResumen", resumen.map((v) => ({ variedadCodigo: v.codigoVariedad, ano, semanaInicio, datos: v })));
+        await OfflineDb.clear("movimientosHistorial");
+        await OfflineDb.putMany("movimientosHistorial", movimientos);
+      }
+
+      async function precargarTodo() {
+        if (!sesion) {
+          cargaOverlay.hidden = true;
+          return;
+        }
+        try {
+          const resultados = await Promise.allSettled([
+            SyncEngine.sincronizarCatalogos(),
+            SyncEngine.sincronizarCatalogoCorte(),
+            precargarPronosticosSemanaActual(),
+            SyncEngine.sincronizarSiembrasRecientes(7),
+          ]);
+          // Calidad Siembra se ejecuta al final: al correr junto con todos los catálogos,
+          // el navegador podía dejar esta descarga pendiente mientras las demás saturaban
+          // las solicitudes iniciales. Al abrir Calidad directamente sí terminaba; aquí se
+          // garantiza la misma descarga antes de habilitar el menú.
+          try {
+            await SyncEngine.sincronizarCatalogoCalidad();
+            const calidadLocal = await SyncEngine.obtenerCatalogoCalidadLocal();
+            if (!calidadLocal.colaboradores.length) throw new Error("No se guardaron colaboradores de Calidad Siembra en este equipo.");
+            resultados.push({ status: "fulfilled" });
+          } catch (error) {
+            resultados.push({ status: "rejected", reason: error });
+          }
+          const fallidos = resultados.filter((r) => r.status === "rejected");
+          if (fallidos.length === 0) {
+            cargaSpinner.style.animation = "none";
+            cargaSpinner.textContent = "✅";
+            descargaAviso.textContent = "Información descargada -- listo para trabajar sin conexión.";
+          } else if (fallidos.length < resultados.length) {
+            cargaSpinner.style.animation = "none";
+            cargaSpinner.textContent = "⚠️";
+            descargaAviso.textContent = "Parte de la información no se pudo descargar -- revise antes de salir a campo.";
+          } else {
+            throw fallidos[0].reason;
+          }
+        } catch (err) {
+          cargaSpinner.style.animation = "none";
+          cargaSpinner.textContent = "⚠️";
+          descargaAviso.textContent = "Sin conexión: no se pudo descargar información nueva -- entre a cada módulo con señal antes de salir a campo.";
+        } finally {
+          // Se queda visible un momento mostrando el resultado (con el icono ya quieto) antes
+          // de desbloquear la pantalla -- bloquea toda interaccion mientras descarga (pedido
+          // 18/09/2026: "que no deje hacer nada mientras baja").
+          setTimeout(() => { cargaOverlay.hidden = true; }, 1800);
+        }
+      }
+      precargarTodo();
+    </script>
+  </body>
+</html>
+
+
