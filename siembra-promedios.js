@@ -7,7 +7,7 @@
 // muestra de solo lectura como la suma de lo ya guardado día por día (para el reporte/export).
 // Exporta a Excel offline con SheetJS (Android lo hace on-device con EPPlus).
 
-const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesion) {
   window.location.href = "./login.html";
 }
