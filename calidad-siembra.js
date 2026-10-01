@@ -73,7 +73,20 @@ let criteriosCalidad = esFormularioPreparacionCamas
         ? [...criteriosBandejasEnraizamiento]
         : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
-const $calidad = (id) => document.querySelector(`#${id}`);
+
+// Compatibilidad temporal: algunos navegadores pueden conservar en caché una versión
+// del HTML donde los IDs internos también fueron renombrados de "sembrador" a "colaborador".
+// La interfaz siempre muestra "Colaborador", pero el JS acepta ambas versiones del DOM.
+const aliasIdsCalidad = {
+  sembradorRevision: "colaboradorRevision",
+  sembradorBuscar: "colaboradorBuscar",
+  sembradorLista: "colaboradorLista",
+  sembradorNombre: "colaboradorNombre",
+  sembradorCodigo: "colaboradorCodigo",
+};
+const $calidad = (id) =>
+  document.querySelector(`#${id}`) ||
+  (aliasIdsCalidad[id] ? document.querySelector(`#${aliasIdsCalidad[id]}`) : null);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
 let sembradores = [];
 let sembradorSeleccionado = null;
