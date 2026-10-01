@@ -30,6 +30,17 @@ const criteriosDesbotonSpiderCremon = [
   { id: 5, nombre: "Aseo Caminos" },
 ];
 
+const criteriosBandejasEnraizamiento = [
+  { id: 1, nombre: "Siembra Conforme" },
+  { id: 2, nombre: "Estado de Esqueje" },
+  { id: 3, nombre: "Ubicación del Esqueje" },
+  { id: 4, nombre: "Esqueje Inclinado" },
+  { id: 5, nombre: "Espacios Vacíos" },
+  { id: 6, nombre: "Daño Mecánico" },
+  { id: 7, nombre: "Hundimiento del Sustrato al momento de la Siembra" },
+  { id: 8, nombre: "Marcación" },
+];
+
 const criteriosCalidadGenericos = [
   { id: 1, nombre: "Siembra conforme" },
   { id: 2, nombre: "Estado de la planta" },
@@ -50,6 +61,7 @@ const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-sie
 const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
 const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
 const esFormularioDesbotonSpiderCremon = window.location.pathname.endsWith("/calidad-desboton-spider-cremon.html");
+const esFormularioBandejasEnraizamiento = window.location.pathname.endsWith("/calidad-bandejas-enraizamiento.html");
 
 let criteriosCalidad = esFormularioPreparacionCamas
   ? [...criteriosPreparacionCamas]
@@ -57,7 +69,9 @@ let criteriosCalidad = esFormularioPreparacionCamas
     ? [...criteriosDesbotonPompon]
     : esFormularioDesbotonSpiderCremon
       ? [...criteriosDesbotonSpiderCremon]
-      : [...criteriosCalidadGenericos];
+      : esFormularioBandejasEnraizamiento
+        ? [...criteriosBandejasEnraizamiento]
+        : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
@@ -283,7 +297,7 @@ function limpiarFormularioCalidad() {
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && !esFormularioDesbotonSpiderCremon && catalogo.items.length) {
+  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && !esFormularioDesbotonSpiderCremon && !esFormularioBandejasEnraizamiento && catalogo.items.length) {
     criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
   }
   renderCriterios();
