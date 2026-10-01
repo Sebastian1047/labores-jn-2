@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro Siembra — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Siembra Campo</p>
+          <h1 id="formTitulo">Registro Siembra Campo</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill" id="apiStatusPill">API…</span>
+          <span class="pill" id="modoEtiqueta">Nuevo</span>
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <a href="./siembra-hub.html" class="pill">← Hub</a>
+        </section>
+      </header>
+
+      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+        <article class="scanner-panel">
+          <form id="siembraForm" onsubmit="return false;">
+            <div class="exit-row">
+              <label>Fecha
+                <input id="fecha" type="date" required />
+              </label>
+              <label>Origen
+                <select id="origen"></select>
+              </label>
+              <label>Líneas (opcional -- en blanco = pendiente de conteo)
+                <input id="lineas" type="text" inputmode="numeric" maxlength="3" />
+              </label>
+              <label>Densidad
+                <input id="densidad" type="text" inputmode="numeric" maxlength="5" required />
+              </label>
+              <label>Semana planeación
+                <input id="semanaProgramada" type="number" min="1" max="53" />
+              </label>
+              <label>Año planeación
+                <input id="anoProgramado" type="number" />
+              </label>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+              <div>
+                <span class="scan-label">Bloque</span>
+                <input id="bloqueBuscar" type="text" placeholder="Buscar bloque…" />
+                <div id="bloqueLista" class="pending-list" style="max-height: 140px; margin-top: 8px;"></div>
+                <p class="hint" id="bloqueSeleccionado" style="margin: 4px 0 0;">Sin bloque seleccionado</p>
+              </div>
+              <div>
+                <span class="scan-label">Cama</span>
+                <input id="camaBuscar" type="text" placeholder="Buscar cama… (elige primero el bloque)" />
+                <div id="camaLista" class="pending-list" style="max-height: 140px; margin-top: 8px;"></div>
+                <p class="hint" id="camaSeleccionada" style="margin: 4px 0 0;">Sin cama seleccionada</p>
+              </div>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+              <div>
+                <span class="scan-label">Variedad</span>
+                <input id="variedadBuscar" type="text" placeholder="Buscar variedad…" />
+                <div id="variedadLista" class="pending-list" style="max-height: 140px; margin-top: 8px;"></div>
+                <p class="hint" id="variedadSeleccionada" style="margin: 4px 0 0;">Sin variedad seleccionada</p>
+              </div>
+              <div>
+                <span class="scan-label">Clon</span>
+                <input id="clonBuscar" type="text" placeholder="Buscar clon… (opcional)" />
+                <div id="clonLista" class="pending-list" style="max-height: 140px; margin-top: 8px;"></div>
+                <p class="hint" id="clonSeleccionado" style="margin: 4px 0 0;">(ninguno)</p>
+              </div>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns: 1fr;">
+              <div>
+                <span class="scan-label">Empleado</span>
+                <input id="empleadoBuscar" type="text" placeholder="Buscar empleado…" />
+                <div id="empleadoLista" class="pending-list" style="max-height: 140px; margin-top: 8px;"></div>
+                <p class="hint" id="empleadoSeleccionado" style="margin: 4px 0 0;">Sin empleado seleccionado</p>
+              </div>
+            </div>
+
+            <label id="revisoWrap" hidden style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+              <input id="reviso" type="checkbox" style="width: 20px; height: 20px;" />
+              <span>Marcar como revisada</span>
+            </label>
+          </form>
+
+          <div class="action-row">
+            <button id="guardarBtn" class="success-btn" type="button">Guardar</button>
+            <button id="nuevoBtn" class="ghost-btn" type="button" hidden>+ Nuevo registro</button>
+          </div>
+
+          <section class="result-card" aria-live="polite">
+            <div class="result-status" id="resultStatus">
+              <span class="dot"></span>
+              <strong id="resultState">Sin guardar aún</strong>
+            </div>
+          </section>
+        </article>
+      </section>
+    </main>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./siembra.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>

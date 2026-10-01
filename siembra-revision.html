@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Revisión Siembra — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Siembra Campo</p>
+          <h1>🔍 Revisión</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill" id="apiStatusPill">API…</span>
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <a href="./siembra-hub.html" class="pill">← Hub</a>
+        </section>
+      </header>
+
+      <article class="scanner-panel">
+        <form class="exit-row" style="grid-template-columns: repeat(4, minmax(140px, 1fr));" onsubmit="return false;">
+          <label>Fecha inicial
+            <input id="fechaInicio" type="date" />
+          </label>
+          <label>Fecha final
+            <input id="fechaFinal" type="date" />
+          </label>
+          <label style="grid-column: span 2;">Buscar
+            <input id="buscar" type="text" placeholder="Bloque, cama, variedad, clon, origen, empleado…" />
+          </label>
+        </form>
+        <div class="action-row">
+          <button id="verBtn" class="success-btn" type="button">Ver fechas</button>
+          <button id="exportarBtn" class="ghost-btn" type="button">⬇️ Exportar JSON</button>
+        </div>
+
+        <div class="summary-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+          <div class="summary-card"><span>Siembras</span><strong id="totalSiembras">0</strong></div>
+          <div class="summary-card"><span>Esquejes totales</span><strong id="totalEsquejes">0</strong></div>
+        </div>
+
+        <div id="listaRevision" class="pending-list" style="max-height: 560px;"></div>
+      </article>
+    </main>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./siembra-revision.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
