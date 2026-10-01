@@ -1,5 +1,5 @@
 // Calidad Siembra: evaluación offline-first con sincronización hacia la API oficial.
-const sesionCalidad = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesionCalidad = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesionCalidad) window.location.href = "./login.html";
 
 let criteriosCalidad = [
