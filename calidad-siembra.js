@@ -57,11 +57,11 @@ const criteriosCalidadGenericos = [
   { id: 13, nombre: "Conteo de líneas" },
 ];
 
-const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
-const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
-const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
-const esFormularioDesbotonSpiderCremon = window.location.pathname.endsWith("/calidad-desboton-spider-cremon.html");
-const esFormularioBandejasEnraizamiento = window.location.pathname.endsWith("/calidad-bandejas-enraizamiento.html");
+const esFormularioSiembraCampo = window.location.pathname.match(/\/calidad-siembra(?:-v2)?\.html$/);
+const esFormularioPreparacionCamas = window.location.pathname.match(/\/calidad-preparacion-camas(?:-v2)?\.html$/);
+const esFormularioDesbotonPompon = window.location.pathname.match(/\/calidad-desboton-pompon(?:-v2)?\.html$/);
+const esFormularioDesbotonSpiderCremon = window.location.pathname.match(/\/calidad-desboton-spider-cremon(?:-v2)?\.html$/);
+const esFormularioBandejasEnraizamiento = window.location.pathname.match(/\/calidad-bandejas-enraizamiento(?:-v2)?\.html$/);
 
 let criteriosCalidad = esFormularioPreparacionCamas
   ? [...criteriosPreparacionCamas]
