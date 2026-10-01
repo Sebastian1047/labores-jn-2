@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Siembra Campo — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" style="max-width: 640px;">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Siembra Campo</p>
+          <h1>🌾 Siembra</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill" id="apiStatusPill">API…</span>
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <a href="./menu.html" class="pill">← Menú</a>
+        </section>
+      </header>
+
+      <p class="hint" id="pendientesAviso"></p>
+
+      <section class="workspace" style="grid-template-columns: 1fr 1fr;">
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardRegistro">
+          <h2>📝 Registro</h2>
+          <p class="hint">Registrar una nueva siembra de campo.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardRevision">
+          <h2>🔍 Revisión</h2>
+          <p class="hint">Buscar, revisar y editar siembras ya registradas.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardDetalle">
+          <h2>📊 Detalle</h2>
+          <p class="hint">Promedios de rendimiento por colaborador.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardSincronizar">
+          <h2>🔄 Sincronizar</h2>
+          <p class="hint" id="cardSincronizarHint">Info OffLine</p>
+        </article>
+      </section>
+      <p class="hint" id="ultimaSincroAviso" style="text-align: center; margin-top: 8px;"></p>
+    </main>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./siembra-hub.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
