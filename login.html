@@ -1,52 +1,20 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ingreso — Labores JN</title>
-    <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#187a4d" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="app-shell" style="max-width: 420px; padding-top: 60px;">
-      <header class="topbar" style="justify-content: center; text-align: center;">
-        <div>
-          <p class="eyebrow">Labores JN</p>
-          <h1>Iniciar sesión</h1>
-        </div>
-      </header>
-
-      <article class="scanner-panel">
-        <form id="loginForm" onsubmit="return false;">
-          <label style="display: block; margin-bottom: 14px;">
-            <span class="scan-label">Usuario</span>
-            <input id="username" type="text" autocomplete="username" required />
-          </label>
-          <label style="display: block; margin-bottom: 14px;">
-            <span class="scan-label">Contraseña</span>
-            <input id="password" type="password" autocomplete="current-password" required />
-          </label>
-        </form>
-
-        <div class="action-row" style="margin-bottom: 0;">
-          <button id="loginBtn" class="success-btn" type="button" style="width: 100%;">Ingresar</button>
-        </div>
-
-        <section class="result-card" aria-live="polite" style="margin-top: 14px;">
-          <div class="result-status" id="loginResultStatus">
-            <span class="dot"></span>
-            <strong id="loginMensaje">Ingresa tus credenciales</strong>
-          </div>
-        </section>
-        <p class="hint" id="offlineHint" style="margin-top: 10px;"></p>
-      </article>
-    </main>
-
-    <script src="./offline/api-base.js"></script>
-    <script src="./offline/db.js"></script>
-    <script src="./offline/vendor/bcrypt.min.js"></script>
-    <script src="./login.js"></script>
-    <script src="./offline/register-sw.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labores JN</title>
+  <meta http-equiv="refresh" content="0; url=./menu.html" />
+  <script>
+    sessionStorage.setItem("labores_usuario", JSON.stringify({
+      username: "PRUEBA.WEB",
+      role: "Administrador",
+      empleadoNombre: "Modo prueba"
+    }));
+    window.location.replace("./menu.html");
+  </script>
+</head>
+<body>
+  <p>Redirigiendo a la aplicación...</p>
+</body>
 </html>
