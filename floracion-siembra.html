@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Floración x Siembra — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Pronósticos</p>
+          <h1>🗺️ Floración x Siembra</h1>
+        </div>
+        <section class="status-strip" aria-label="Estado operativo">
+          <span class="pill strong">Sede JN</span>
+          <span class="pill" id="apiStatusPill">API...</span>
+          <span class="pill">Usuario: <span id="usuarioLabel">prueba.web</span></span>
+          <a href="./index.html" class="pill">← Pronósticos</a>
+        </section>
+      </header>
+
+      <p class="hint">
+        Panorama desglosado por bloque y cama de la floración estimada — misma fórmula que el
+        <strong>Sbr</strong>, solo que aquí no se agrega: se ve variedad → semana → día → bloque → cama.
+      </p>
+
+      <article class="scanner-panel" style="margin-bottom: 14px;">
+        <form class="exit-row" style="grid-template-columns: repeat(6, minmax(120px, 1fr));" onsubmit="return false;">
+          <label>Semana inicial
+            <input id="semanaInicio" type="number" min="1" max="53" />
+          </label>
+          <label>Año
+            <input id="ano" type="number" value="2026" />
+          </label>
+          <label>Semana
+            <select id="semanaSelect"><option value="">Todas</option></select>
+          </label>
+          <label>Variedad
+            <select id="variedadSelect"><option value="Todos">Todos</option></select>
+          </label>
+          <label>Categoría
+            <select id="categoriaSelect"><option value="Todos">Todos</option></select>
+          </label>
+          <label>Bloque
+            <select id="bloqueSelect"><option value="Todos">Todos</option></select>
+          </label>
+        </form>
+        <div class="action-row">
+          <button id="refreshBtn" class="ghost-btn" type="button">Actualizar</button>
+          <button id="limpiarBtn" class="ghost-btn" type="button">Limpiar filtros</button>
+        </div>
+        <p class="hint" id="resumenTotales" style="font-weight: 800; margin: 0;"></p>
+      </article>
+
+      <div id="resultadoContenedor"></div>
+    </main>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./floracion-siembra.js"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
