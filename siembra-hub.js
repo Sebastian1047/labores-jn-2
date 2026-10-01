@@ -1,4 +1,4 @@
-const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesion) {
   window.location.href = "./login.html";
 }
