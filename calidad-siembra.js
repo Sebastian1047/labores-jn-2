@@ -31,8 +31,8 @@ const criteriosCalidadGenericos = [
   { id: 13, nombre: "Conteo de líneas" },
 ];
 
-const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
-let criteriosCalidad = esFormularioSiembraCampo ? [...criteriosSiembraCampo] : [...criteriosCalidadGenericos];
+const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
+let criteriosCalidad = esFormularioPreparacionCamas ? [...criteriosSiembraCampo] : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
@@ -258,7 +258,7 @@ function limpiarFormularioCalidad() {
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (!esFormularioSiembraCampo && catalogo.items.length) {
+  if (!esFormularioPreparacionCamas && catalogo.items.length) {
     criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
   }
   renderCriterios();
