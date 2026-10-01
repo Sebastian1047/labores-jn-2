@@ -3,7 +3,7 @@
 // "Limpiar filtros", igual que la pantalla Android. Misma fuente/fórmula que el Sbr de
 // Pronósticos (dbo.SiembraCamp), solo que aquí no se agrega bloque/cama.
 
-const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
+const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null") || { username: "PRUEBA.WEB", role: "Administrador", empleadoNombre: "Modo prueba" };
 if (!sesion) {
   window.location.href = "./login.html";
 }
