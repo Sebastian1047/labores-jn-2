@@ -2,7 +2,20 @@
 const sesionCalidad = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
 if (!sesionCalidad) window.location.href = "./login.html";
 
-let criteriosCalidad = [
+const criteriosSiembraCampo = [
+  { id: 1, nombre: "Cama Conforme" },
+  { id: 2, nombre: "Limpieza de Terreno" },
+  { id: 3, nombre: "Distribución de Enmiendas" },
+  { id: 4, nombre: "Nivelación del Suelo" },
+  { id: 5, nombre: "(Estado, Distribución y Cantidad de Durmientes)" },
+  { id: 6, nombre: "Profundidad de la Preparación" },
+  { id: 7, nombre: "Riego" },
+  { id: 8, nombre: "Aseo" },
+  { id: 9, nombre: "Instalación de la Malla" },
+  { id: 10, nombre: "Instalación de Mangueras de Goteo" },
+];
+
+const criteriosCalidadGenericos = [
   { id: 1, nombre: "Siembra conforme" },
   { id: 2, nombre: "Estado de la planta" },
   { id: 3, nombre: "Distribución" },
@@ -17,6 +30,9 @@ let criteriosCalidad = [
   { id: 12, nombre: "Acuerdos de oro" },
   { id: 13, nombre: "Conteo de líneas" },
 ];
+
+const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
+let criteriosCalidad = esFormularioSiembraCampo ? [...criteriosSiembraCampo] : [...criteriosCalidadGenericos];
 const CATALOGO_CALIDAD_VERSION = 2;
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
@@ -242,7 +258,9 @@ function limpiarFormularioCalidad() {
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (catalogo.items.length) criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
+  if (!esFormularioSiembraCampo && catalogo.items.length) {
+    criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
+  }
   renderCriterios();
   sembradores = catalogo.colaboradores.filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
   renderSembradores();
