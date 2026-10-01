@@ -231,7 +231,7 @@ function renderSembradores(filtro = "") {
   const texto = filtro.trim().toLowerCase();
   const visibles = sembradores.filter((x) => nombreSembrador(x).toLowerCase().includes(texto)).slice(0, 40);
   const lista = $calidad("sembradorLista");
-  lista.innerHTML = visibles.length ? visibles.map((item, i) => `<div class="pending-item" data-index="${i}" style="cursor:pointer;padding:8px 10px"><span>${nombreSembrador(item)}</span></div>`).join("") : '<p class="hint" style="margin:0">No hay sembradores disponibles en el catálogo local.</p>';
+  lista.innerHTML = visibles.length ? visibles.map((item, i) => `<div class="pending-item" data-index="${i}" style="cursor:pointer;padding:8px 10px"><span>${nombreSembrador(item)}</span></div>`).join("") : '<p class="hint" style="margin:0">No hay colaboradores disponibles en el catálogo local.</p>';
   lista.querySelectorAll("[data-index]").forEach((el) => el.addEventListener("mousedown", (event) => {
     event.preventDefault();
     seleccionarSembrador(visibles[Number(el.dataset.index)]);
@@ -271,7 +271,7 @@ function mostrarRevisionCalidad() {
   $calidad("sembradorRevision").textContent = siguienteRevisionCalidad > 30 ? "Completa (30/30)" : String(siguienteRevisionCalidad);
   $calidad("guardarCalidadBtn").disabled = siguienteRevisionCalidad > 30;
   if (siguienteRevisionCalidad > 30) {
-    estadoCalidad("error", `${$calidad("sembradorNombre").textContent} ya tiene las 30 revisiones de la semana. Selecciona otro sembrador.`);
+    estadoCalidad("error", `${$calidad("sembradorNombre").textContent} ya tiene las 30 revisiones de la semana. Selecciona otro colaborador.`);
     return;
   }
   estadoCalidad(null, "Selecciona los criterios que no cumplen y guarda la evaluación.");
@@ -288,9 +288,9 @@ function limpiarFormularioCalidad() {
   siguienteRevisionCalidad = null;
   $calidad("sembradorBuscar").value = "";
   $calidad("sembradorLista").innerHTML = "";
-  $calidad("sembradorNombre").textContent = "Sin sembrador seleccionado";
+  $calidad("sembradorNombre").textContent = "Sin colaborador seleccionado";
   $calidad("sembradorCodigo").textContent = "—";
-  $calidad("sembradorRevision").textContent = "Selecciona un sembrador";
+  $calidad("sembradorRevision").textContent = "Selecciona un colaborador";
   $calidad("guardarCalidadBtn").disabled = false;
   document.querySelectorAll("#criteriosLista input").forEach((item) => { item.checked = false; });
 }
@@ -327,9 +327,9 @@ async function checkApiCalidad() {
 
 async function guardarCalidad() {
   if (guardandoCalidad) return;
-  if (!sembradorSeleccionado) return estadoCalidad("error", "Selecciona un sembrador antes de guardar.");
+  if (!sembradorSeleccionado) return estadoCalidad("error", "Selecciona un colaborador antes de guardar.");
   if (!semanaActual) return estadoCalidad("error", "No hay semana válida descargada desde la base de datos. Conéctate y vuelve a intentar.");
-  if (!siguienteRevisionCalidad || siguienteRevisionCalidad > 30) return estadoCalidad("error", "Selecciona un sembrador con revisiones disponibles.");
+  if (!siguienteRevisionCalidad || siguienteRevisionCalidad > 30) return estadoCalidad("error", "Selecciona un colaborador con revisiones disponibles.");
 
   guardandoCalidad = true;
   $calidad("guardarCalidadBtn").disabled = true;
