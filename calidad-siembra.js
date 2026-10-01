@@ -57,11 +57,11 @@ const criteriosCalidadGenericos = [
   { id: 13, nombre: "Conteo de líneas" },
 ];
 
-const esFormularioSiembraCampo = window.location.pathname.match(/\/calidad-siembra(?:-v2)?\.html$/);
-const esFormularioPreparacionCamas = window.location.pathname.match(/\/calidad-preparacion-camas(?:-v2)?\.html$/);
-const esFormularioDesbotonPompon = window.location.pathname.match(/\/calidad-desboton-pompon(?:-v2)?\.html$/);
-const esFormularioDesbotonSpiderCremon = window.location.pathname.match(/\/calidad-desboton-spider-cremon(?:-v2)?\.html$/);
-const esFormularioBandejasEnraizamiento = window.location.pathname.match(/\/calidad-bandejas-enraizamiento(?:-v2)?\.html$/);
+const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
+const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
+const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
+const esFormularioDesbotonSpiderCremon = window.location.pathname.endsWith("/calidad-desboton-spider-cremon.html");
+const esFormularioBandejasEnraizamiento = window.location.pathname.endsWith("/calidad-bandejas-enraizamiento.html");
 
 let criteriosCalidad = esFormularioPreparacionCamas
   ? [...criteriosPreparacionCamas]
@@ -72,21 +72,7 @@ let criteriosCalidad = esFormularioPreparacionCamas
       : esFormularioBandejasEnraizamiento
         ? [...criteriosBandejasEnraizamiento]
         : [...criteriosCalidadGenericos];
-const CATALOGO_CALIDAD_VERSION = 2;
-
-// Compatibilidad temporal: algunos navegadores pueden conservar en caché una versión
-// del HTML donde los IDs internos también fueron renombrados de "sembrador" a "colaborador".
-// La interfaz siempre muestra "Colaborador", pero el JS acepta ambas versiones del DOM.
-const aliasIdsCalidad = {
-  sembradorRevision: "colaboradorRevision",
-  sembradorBuscar: "colaboradorBuscar",
-  sembradorLista: "colaboradorLista",
-  sembradorNombre: "colaboradorNombre",
-  sembradorCodigo: "colaboradorCodigo",
-};
-const $calidad = (id) =>
-  document.querySelector(`#${id}`) ||
-  (aliasIdsCalidad[id] ? document.querySelector(`#${aliasIdsCalidad[id]}`) : null);
+const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
 let sembradores = [];
 let sembradorSeleccionado = null;
