@@ -73,6 +73,10 @@
           <h2>✅ Asegurar Corte</h2>
           <p class="hint">Auditar calidad de corte por cortador: items de control y observaciones.</p>
         </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardDesbotonadoMallas">
+          <h2>🌸 Desbotonado y Mallas</h2>
+          <p class="hint">Registrar camas, medios cuadros y rendimiento por desbotonador.</p>
+        </article>
         <article class="scanner-panel" style="text-align: center; cursor: pointer;" id="cardCalidadSiembra">
           <h2>✅ Calidad</h2>
           <p class="hint">Desbotón Spider/Cremon, Desbotón Pompón y Mallas.</p>
@@ -144,6 +148,9 @@
       });
       document.querySelector("#cardAsegurarCorte").addEventListener("click", () => {
         window.location.href = "./asegurar-corte.html";
+      });
+      document.querySelector("#cardDesbotonadoMallas").addEventListener("click", () => {
+        window.location.href = "./desbotonado-mallas.html";
       });
       document.querySelector("#cardCalidadSiembra").addEventListener("click", () => {
         window.location.href = "./calidad-menu.html";
