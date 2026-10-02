@@ -5,11 +5,19 @@
     recogedor: "Recogedor",
   };
 
-  const vistaAuxiliar = document.querySelector("#vistaAuxiliar");
+  const CRITERIOS_POMPON = [
+    { id: 1, nombre: "Tallos con Botón Principal" },
+    { id: 2, nombre: "Tallos con Tacón Largo" },
+    { id: 3, nombre: "Daño Mecánico" },
+    { id: 4, nombre: "Aseo de Labor" },
+    { id: 5, nombre: "Conforme" },
+  ];
+
+  const STORAGE_KEY = "calidadCorteAuxEvaluacionesLocal";
+
   const evaluadorNombre = document.querySelector("#auxEvaluadorNombre");
   const semanaActualEl = document.querySelector("#auxSemanaActual");
   const revisionEl = document.querySelector("#auxRevision");
-  const rolEtiqueta = document.querySelector("#auxRolEtiqueta");
   const buscar = document.querySelector("#auxColaboradorBuscar");
   const lista = document.querySelector("#auxColaboradorLista");
   const nombreEl = document.querySelector("#auxColaboradorNombre");
@@ -24,13 +32,10 @@
   let colaboradores = [];
   let semanaActual = null;
   let colaboradorSeleccionado = null;
+  let siguienteRevision = null;
 
   function nombreRol() {
     return ROLES[rolActivo] || "Colaborador";
-  }
-
-  function nombreRolMinuscula() {
-    return nombreRol().toLowerCase();
   }
 
   function estado(tipo, texto) {
@@ -45,15 +50,42 @@
     return `${nombre} (${codigo})`;
   }
 
+  function renderCriterios() {
+    criteriosLista.innerHTML = CRITERIOS_POMPON
+      .map((item) => `<label class="calidad-criterio"><input type="checkbox" value="${item.id}" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">${item.nombre}</span></label>`)
+      .join("");
+  }
+
+  function registrosLocales() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  function guardarRegistrosLocales(registros) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+  }
+
+  function calcularSiguienteRevision(codigo) {
+    const semana = semanaActual?.semana || 0;
+    const max = registrosLocales()
+      .filter((x) => x.rol === rolActivo && String(x.colaborador) === String(codigo) && Number(x.semana) === Number(semana))
+      .reduce((acc, x) => Math.max(acc, Number(x.revision) || 0), 0);
+    return max + 1;
+  }
+
   function limpiar() {
     colaboradorSeleccionado = null;
+    siguienteRevision = null;
     buscar.value = "";
     lista.innerHTML = "";
-    nombreEl.textContent = `Sin ${nombreRolMinuscula()} seleccionado`;
+    nombreEl.textContent = "Sin colaborador seleccionado";
     codigoEl.textContent = "—";
     revisionEl.textContent = "Selecciona un colaborador";
-    criteriosLista.innerHTML = '<p class="hint" style="margin:0;">Criterios pendientes de configurar.</p>';
-    guardarBtn.disabled = true;
+    document.querySelectorAll("#auxCriteriosLista input").forEach((item) => { item.checked = false; });
+    guardarBtn.disabled = false;
   }
 
   function renderLista(filtro = "") {
@@ -76,9 +108,11 @@
         buscar.value = "";
         lista.innerHTML = "";
         nombreEl.textContent = item.nombre || item.empleadoNombre || "Sin nombre";
-        codigoEl.textContent = item.codigo || item.docid || item.id || "—";
-        revisionEl.textContent = "Pendiente de configurar";
-        estado(null, `${nombreRol()} seleccionado. Los criterios de calidad aún están pendientes de configurar.`);
+        const codigo = item.codigo || item.docid || item.id || "—";
+        codigoEl.textContent = codigo;
+        siguienteRevision = calcularSiguienteRevision(codigo);
+        revisionEl.textContent = String(siguienteRevision);
+        estado(null, "Selecciona los criterios que no cumplen y guarda la evaluación.");
       });
     });
   }
@@ -91,6 +125,7 @@
         ? `Semana ${semanaActual.semana} de ${semanaActual.ano}`
         : "Sin calendario descargado";
     } catch {
+      semanaActual = null;
       semanaActualEl.textContent = "Sin calendario descargado";
     }
   }
@@ -114,32 +149,62 @@
       apiStatus.textContent = "En línea";
       apiStatus.classList.remove("warn");
       apiStatus.classList.add("ok");
-      estado("ok", `Catálogo actualizado. Los criterios de ${nombreRol()} siguen pendientes de configurar.`);
+      estado("ok", "Catálogo de colaboradores actualizado.");
     } catch {
       apiStatus.textContent = "Sin conexión";
       apiStatus.classList.remove("ok");
       apiStatus.classList.add("warn");
-      estado("warning", "No fue posible actualizar el catálogo. Se usarán los colaboradores guardados en este equipo.");
+      estado("warning", "No fue posible actualizar el catálogo. Se usarán los datos guardados en este equipo.");
     }
+  }
+
+  function guardarEvaluacion() {
+    if (!colaboradorSeleccionado) {
+      estado("error", "Selecciona un colaborador antes de guardar.");
+      return;
+    }
+
+    const codigo = colaboradorSeleccionado.codigo || colaboradorSeleccionado.docid || colaboradorSeleccionado.id;
+    const incumplimientos = [...document.querySelectorAll("#auxCriteriosLista input:checked")].map((x) => Number(x.value));
+
+    const registros = registrosLocales();
+    registros.push({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      rol: rolActivo,
+      rolNombre: nombreRol(),
+      fecha: new Date().toISOString(),
+      semana: semanaActual?.semana || 0,
+      asegurador: sesionAux?.username || "",
+      colaborador: String(codigo),
+      revision: siguienteRevision || calcularSiguienteRevision(codigo),
+      incumplimientos,
+      estado: "Local",
+    });
+    guardarRegistrosLocales(registros);
+
+    estado("ok", `Revisión #${siguienteRevision || 1} de ${colaboradorSeleccionado.nombre || "colaborador"} guardada localmente.`);
+    limpiar();
   }
 
   async function activarRol(rol) {
     rolActivo = ROLES[rol] ? rol : "garruchero";
-    const nombre = nombreRol();
-    rolEtiqueta.textContent = nombre;
-    buscar.placeholder = `Buscar ${nombre.toLowerCase()} por nombre o código…`;
     limpiar();
     evaluadorNombre.textContent = sesionAux?.empleadoNombre || sesionAux?.username || "Usuario actual";
+    renderCriterios();
     await cargarSemana();
     await cargarColaboradores();
-    estado(null, `Vista de ${nombre} lista. Los criterios de calidad están pendientes de configurar.`);
+    estado(null, "Selecciona un colaborador para iniciar una evaluación.");
   }
 
   buscar.addEventListener("focus", () => renderLista(buscar.value));
   buscar.addEventListener("input", () => renderLista(buscar.value));
+  guardarBtn.addEventListener("click", guardarEvaluacion);
+
   document.addEventListener("click", (event) => {
     if (event.target !== buscar && !lista.contains(event.target)) lista.innerHTML = "";
   });
+
+  renderCriterios();
 
   window.CalidadCorteAux = {
     activarRol,

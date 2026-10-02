@@ -93,6 +93,8 @@ function aplicarVistaRol(nuevoRol) {
   const esCortador = rolActivo === "cortador";
   vistaCortador.hidden = !esCortador;
   vistaAuxiliar.hidden = esCortador;
+  vistaCortador.style.display = esCortador ? "" : "none";
+  vistaAuxiliar.style.display = esCortador ? "none" : "";
 
   if (esCortador) {
     rolEtiqueta.textContent = "Cortador";
