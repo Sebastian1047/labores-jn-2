@@ -62,21 +62,39 @@ const criteriosCalidadGenericos = [
   { id: -Infinity, nombre: "Conforme" },
 ];
 
+const criteriosMallas = [];
+
 const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
 const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
 const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
 const esFormularioDesbotonSpiderCremon = window.location.pathname.endsWith("/calidad-desboton-spider-cremon.html");
 const esFormularioBandejasEnraizamiento = window.location.pathname.endsWith("/calidad-bandejas-enraizamiento.html");
+const esFormularioDesbotonMallasUnificado = window.location.pathname.endsWith("/calidad-menu.html");
 
-let criteriosCalidad = esFormularioPreparacionCamas
-  ? [...criteriosPreparacionCamas]
-  : esFormularioDesbotonPompon
-    ? [...criteriosDesbotonPompon]
-    : esFormularioDesbotonSpiderCremon
-      ? [...criteriosDesbotonSpiderCremon]
-      : esFormularioBandejasEnraizamiento
-        ? [...criteriosBandejasEnraizamiento]
-        : [...criteriosCalidadGenericos];
+const vistaSolicitada = esFormularioDesbotonMallasUnificado
+  ? new URLSearchParams(window.location.search).get("vista")
+  : null;
+let vistaCalidadDesbotonMallas = ["spider", "pompon", "mallas"].includes(vistaSolicitada)
+  ? vistaSolicitada
+  : "spider";
+
+function criteriosVistaDesbotonMallas(vista) {
+  if (vista === "pompon") return [...criteriosDesbotonPompon];
+  if (vista === "mallas") return [...criteriosMallas];
+  return [...criteriosDesbotonSpiderCremon];
+}
+
+let criteriosCalidad = esFormularioDesbotonMallasUnificado
+  ? criteriosVistaDesbotonMallas(vistaCalidadDesbotonMallas)
+  : esFormularioPreparacionCamas
+    ? [...criteriosPreparacionCamas]
+    : esFormularioDesbotonPompon
+      ? [...criteriosDesbotonPompon]
+      : esFormularioDesbotonSpiderCremon
+        ? [...criteriosDesbotonSpiderCremon]
+        : esFormularioBandejasEnraizamiento
+          ? [...criteriosBandejasEnraizamiento]
+          : [...criteriosCalidadGenericos];
 const $calidad = (id) => document.querySelector(`#${id}`);
 const almacenamientoCalidad = "calidadSiembraEvaluacionesLocal";
 let sembradores = [];
@@ -282,7 +300,12 @@ function mostrarRevisionCalidad() {
 }
 
 function renderCriterios() {
-  $calidad("criteriosLista").innerHTML = criteriosCalidad
+  const lista = $calidad("criteriosLista");
+  if (esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas" && criteriosCalidad.length === 0) {
+    lista.innerHTML = '<p class="hint" style="margin:0;">Los criterios de calidad de Mallas están pendientes de configurar.</p>';
+    return;
+  }
+  lista.innerHTML = criteriosCalidad
     .map((item) => `<label class="calidad-criterio"><input type="checkbox" value="${item.id}" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">${item.nombre}</span></label>`)
     .join("");
 }
@@ -295,13 +318,51 @@ function limpiarFormularioCalidad() {
   $calidad("sembradorNombre").textContent = "Sin colaborador seleccionado";
   $calidad("sembradorCodigo").textContent = "—";
   $calidad("sembradorRevision").textContent = "Selecciona un colaborador";
-  $calidad("guardarCalidadBtn").disabled = false;
+  $calidad("guardarCalidadBtn").disabled = esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas";
   document.querySelectorAll("#criteriosLista input").forEach((item) => { item.checked = false; });
+}
+
+function aplicarVistaDesbotonMallas(vista) {
+  if (!esFormularioDesbotonMallasUnificado) return;
+  vistaCalidadDesbotonMallas = ["spider", "pompon", "mallas"].includes(vista) ? vista : "spider";
+  criteriosCalidad = criteriosVistaDesbotonMallas(vistaCalidadDesbotonMallas);
+
+  const nombres = {
+    spider: "Spider/Cremon",
+    pompon: "Pompón",
+    mallas: "Mallas",
+  };
+  const titulo = $calidad("vistaCalidadTitulo");
+  if (titulo) titulo.textContent = `✅ Calidad Desbotón y Mallas - ${nombres[vistaCalidadDesbotonMallas]}`;
+
+  document.querySelectorAll("[data-calidad-vista]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.calidadVista === vistaCalidadDesbotonMallas);
+  });
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("vista", vistaCalidadDesbotonMallas);
+  window.history.replaceState({}, "", url);
+
+  limpiarFormularioCalidad();
+  renderCriterios();
+
+  if (vistaCalidadDesbotonMallas === "mallas") {
+    $calidad("guardarCalidadBtn").disabled = true;
+    estadoCalidad(null, "Vista de Mallas lista. Los criterios de calidad están pendientes de configurar.");
+  } else {
+    estadoCalidad(null, "Selecciona un colaborador para iniciar una evaluación.");
+  }
+}
+
+if (esFormularioDesbotonMallasUnificado) {
+  document.querySelectorAll("[data-calidad-vista]").forEach((btn) => {
+    btn.addEventListener("click", () => aplicarVistaDesbotonMallas(btn.dataset.calidadVista));
+  });
 }
 
 async function cargarCatalogoCalidadLocal() {
   const catalogo = await SyncEngine.obtenerCatalogoCalidadLocal();
-  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && !esFormularioDesbotonSpiderCremon && !esFormularioBandejasEnraizamiento && catalogo.items.length) {
+  if (!esFormularioSiembraCampo && !esFormularioPreparacionCamas && !esFormularioDesbotonPompon && !esFormularioDesbotonSpiderCremon && !esFormularioBandejasEnraizamiento && !esFormularioDesbotonMallasUnificado && catalogo.items.length) {
     criteriosCalidad = catalogo.items.map((item) => ({ id: Number(item.id), nombre: item.nombre }));
   }
   renderCriterios();
@@ -331,6 +392,9 @@ async function checkApiCalidad() {
 
 async function guardarCalidad() {
   if (guardandoCalidad) return;
+  if (esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas" && criteriosCalidad.length === 0) {
+    return estadoCalidad("warning", "Los criterios de calidad de Mallas aún no están configurados.");
+  }
   if (!sembradorSeleccionado) return estadoCalidad("error", "Selecciona un colaborador antes de guardar.");
   if (!semanaActual) return estadoCalidad("error", "No hay semana válida descargada desde la base de datos. Conéctate y vuelve a intentar.");
   if (!siguienteRevisionCalidad || siguienteRevisionCalidad > 30) return estadoCalidad("error", "Selecciona un colaborador con revisiones disponibles.");
@@ -389,6 +453,10 @@ window.addEventListener("offline", () => {
 (async function iniciarCalidad() {
   await migrarEvaluacionesCalidadAnteriores();
   await cargarCatalogoCalidadLocal();
+  if (esFormularioDesbotonMallasUnificado) aplicarVistaDesbotonMallas(vistaCalidadDesbotonMallas);
   await cargarSemanaActual();
   await checkApiCalidad();
+  if (esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas") {
+    aplicarVistaDesbotonMallas("mallas");
+  }
 })();
