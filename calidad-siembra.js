@@ -13,6 +13,7 @@ const criteriosPreparacionCamas = [
   { id: 8, nombre: "Aseo" },
   { id: 9, nombre: "Instalación de la Malla" },
   { id: 10, nombre: "Instalación de Mangueras de Goteo" },
+  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosDesbotonPompon = [
@@ -20,6 +21,7 @@ const criteriosDesbotonPompon = [
   { id: 2, nombre: "Tallos con Tacón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
   { id: 4, nombre: "Aseo de Labor" },
+  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosDesbotonSpiderCremon = [
@@ -28,6 +30,7 @@ const criteriosDesbotonSpiderCremon = [
   { id: 3, nombre: "Daño Mecánico" },
   { id: 4, nombre: "Desbotón a 15 cm de la Base" },
   { id: 5, nombre: "Aseo Caminos" },
+  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosBandejasEnraizamiento = [
@@ -39,6 +42,7 @@ const criteriosBandejasEnraizamiento = [
   { id: 6, nombre: "Daño Mecánico" },
   { id: 7, nombre: "Hundimiento del Sustrato al momento de la Siembra" },
   { id: 8, nombre: "Marcación" },
+  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosCalidadGenericos = [
@@ -55,6 +59,7 @@ const criteriosCalidadGenericos = [
   { id: 11, nombre: "Uso de EPP" },
   { id: 12, nombre: "Acuerdos de oro" },
   { id: 13, nombre: "Conteo de líneas" },
+  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
