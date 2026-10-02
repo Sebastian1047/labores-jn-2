@@ -28,6 +28,40 @@
         margin: 0;
         text-align: center;
       }
+      .module-card {
+        border: 1px solid rgba(20, 34, 28, 0.08);
+        border-top-width: 4px;
+        box-shadow: 0 7px 18px rgba(20, 34, 28, 0.08);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+      .module-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(20, 34, 28, 0.12);
+      }
+      .module-card.pair-siembra {
+        background: linear-gradient(180deg, #f6fbf3 0%, #ffffff 100%);
+        border-top-color: #8bbf72;
+      }
+      .module-card.pair-desboton {
+        background: linear-gradient(180deg, #fff6f8 0%, #ffffff 100%);
+        border-top-color: #d98aa0;
+      }
+      .module-card.pair-corte {
+        background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%);
+        border-top-color: #7b9ed8;
+      }
+      .module-card.pair-bandejas {
+        background: linear-gradient(180deg, #f1fbf9 0%, #ffffff 100%);
+        border-top-color: #75b8aa;
+      }
+      .module-card.pair-preparacion {
+        background: linear-gradient(180deg, #fff9ef 0%, #ffffff 100%);
+        border-top-color: #d6aa68;
+      }
+      .module-card.pronosticos-card {
+        background: linear-gradient(180deg, #f7f7fb 0%, #ffffff 100%);
+        border-top-color: #9a9eb3;
+      }
     </style>
     <style>
       @keyframes girar {
@@ -83,57 +117,57 @@
       </header>
 
       <section class="workspace" style="grid-template-columns: 1fr 1fr;">
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 1 / 3; grid-row: 1; justify-self: center; width: calc(50% - 8px);" id="cardPronosticos">
+        <article class="scanner-panel module-card pronosticos-card" style="text-align: center; cursor: pointer; grid-column: 1 / 3; grid-row: 1; justify-self: center; width: calc(50% - 8px);" id="cardPronosticos">
           <div class="module-icon" aria-hidden="true">📈</div>
           <h2>Pronósticos</h2>
           <p class="hint">Sbr por variedad, nuevo total, mover ramos y sincronizar a corte.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 2;" id="cardSiembra">
+        <article class="scanner-panel module-card pair-siembra" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 2;" id="cardSiembra">
           <div class="module-icon" aria-hidden="true">🌾</div>
           <h2>Siembra Campo</h2>
           <p class="hint">Registrar, editar y ver las últimas siembras capturadas.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 4;" id="cardCalidadCorte">
+        <article class="scanner-panel module-card pair-corte" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 4;" id="cardCalidadCorte">
           <div class="module-icon" aria-hidden="true">✅</div>
           <h2>Calidad Corte</h2>
           <p class="hint">Auditar calidad de corte por cortador: items de control y observaciones.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 3;" id="cardDesbotonadoMallas">
+        <article class="scanner-panel module-card pair-desboton" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 3;" id="cardDesbotonadoMallas">
           <div class="module-icon" aria-hidden="true">🌸</div>
           <h2>Desbotonado y Mallas</h2>
           <p class="hint">Registrar camas, medios cuadros y rendimiento por desbotonador.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 4;" id="cardCorte">
+        <article class="scanner-panel module-card pair-corte" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 4;" id="cardCorte">
           <div class="module-icon" aria-hidden="true">✂️</div>
           <h2>Corte</h2>
           <p class="hint">Módulo de Corte.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 3;" id="cardCalidadSiembra">
+        <article class="scanner-panel module-card pair-desboton" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 3;" id="cardCalidadSiembra">
           <div class="module-icon" aria-hidden="true">✅</div>
           <h2>Calidad Desbotón y Mallas</h2>
           <p class="hint">Evaluaciones de Desbotón Spider/Cremon, Desbotón Pompón y Mallas.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 2;" id="cardCalidadSiembraCampo">
+        <article class="scanner-panel module-card pair-siembra" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 2;" id="cardCalidadSiembraCampo">
           <div class="module-icon" aria-hidden="true">✅</div>
           <h2>Calidad Siembra Campo</h2>
           <p class="hint">Formulario de evaluación de calidad de Siembra Campo.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 5;" id="cardCalidadBandejasEnraizamiento">
+        <article class="scanner-panel module-card pair-bandejas" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 5;" id="cardCalidadBandejasEnraizamiento">
           <div class="module-icon" aria-hidden="true">✅</div>
           <h2>Calidad Bandejas Enraizamiento</h2>
           <p class="hint">Formulario de evaluación de calidad de Bandejas Enraizamiento.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 5;" id="cardBandejasEnraizamiento">
+        <article class="scanner-panel module-card pair-bandejas" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 5;" id="cardBandejasEnraizamiento">
           <div class="module-icon" aria-hidden="true">🪴</div>
           <h2>Bandejas Enraizamiento</h2>
           <p class="hint">Módulo de Bandejas Enraizamiento.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 6;" id="cardCalidadPreparacionCamas">
+        <article class="scanner-panel module-card pair-preparacion" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 6;" id="cardCalidadPreparacionCamas">
           <div class="module-icon" aria-hidden="true">✅</div>
           <h2>Calidad Preparación Camas</h2>
           <p class="hint">Formulario de evaluación de calidad de Preparación Camas.</p>
         </article>
-        <article class="scanner-panel module-card" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 6;" id="cardPreparacionCamas">
+        <article class="scanner-panel module-card pair-preparacion" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 6;" id="cardPreparacionCamas">
           <div class="module-icon" aria-hidden="true">🛏️</div>
           <h2>Preparación Camas</h2>
           <p class="hint">Módulo de Preparación Camas.</p>
