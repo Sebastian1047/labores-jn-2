@@ -8,11 +8,13 @@
   const CRITERIOS_POR_ROL = {
     // Transportador conserva temporalmente la réplica de Pompón.
     garruchero: [
-      { id: 1, nombre: "Tallos con Botón Principal" },
-      { id: 2, nombre: "Tallos con Tacón Largo" },
-      { id: 3, nombre: "Daño Mecánico" },
-      { id: 4, nombre: "Aseo de Labor" },
-      { id: 5, nombre: "Conforme" },
+      { id: 1, nombre: "Conforme" },
+      { id: 2, nombre: "Cuidado de Ramos Campo" },
+      { id: 3, nombre: "Hidratación en Balde" },
+      { id: 4, nombre: "Cantidad de Ramos en Balde" },
+      { id: 5, nombre: "Cuidado de Ramos Poscosecha" },
+      { id: 6, nombre: "Descargue de Flor en Sala" },
+      { id: 7, nombre: "EE PP" },
     ],
     recogedor: [
       { id: 1, nombre: "Conforme" },
