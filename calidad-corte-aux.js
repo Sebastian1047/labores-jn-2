@@ -5,13 +5,28 @@
     recogedor: "Recogedor",
   };
 
-  const CRITERIOS_POMPON = [
-    { id: 1, nombre: "Tallos con Botón Principal" },
-    { id: 2, nombre: "Tallos con Tacón Largo" },
-    { id: 3, nombre: "Daño Mecánico" },
-    { id: 4, nombre: "Aseo de Labor" },
-    { id: 5, nombre: "Conforme" },
-  ];
+  const CRITERIOS_POR_ROL = {
+    // Transportador conserva temporalmente la réplica de Pompón.
+    garruchero: [
+      { id: 1, nombre: "Tallos con Botón Principal" },
+      { id: 2, nombre: "Tallos con Tacón Largo" },
+      { id: 3, nombre: "Daño Mecánico" },
+      { id: 4, nombre: "Aseo de Labor" },
+      { id: 5, nombre: "Conforme" },
+    ],
+    recogedor: [
+      { id: 1, nombre: "Conforme" },
+      { id: 2, nombre: "Ramos Excelentes" },
+      { id: 3, nombre: "Cuidado de Ramos" },
+      { id: 4, nombre: "Marcación de etiquetas" },
+      { id: 5, nombre: "Cantidad" },
+      { id: 6, nombre: "Hidratación en Balde" },
+      { id: 7, nombre: "Mezcla de Medidas" },
+      { id: 8, nombre: "Ramos en la Malla Caminos" },
+      { id: 9, nombre: "Desplazamiento de Baldes" },
+      { id: 10, nombre: "Acuerdos de Oro" },
+    ],
+  };
 
   const STORAGE_KEY = "calidadCorteAuxEvaluacionesLocal";
 
@@ -51,7 +66,8 @@
   }
 
   function renderCriterios() {
-    criteriosLista.innerHTML = CRITERIOS_POMPON
+    const criterios = CRITERIOS_POR_ROL[rolActivo] || [];
+    criteriosLista.innerHTML = criterios
       .map((item) => `<label class="calidad-criterio"><input type="checkbox" value="${item.id}" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">${item.nombre}</span></label>`)
       .join("");
   }
