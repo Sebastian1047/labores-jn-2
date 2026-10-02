@@ -47,7 +47,6 @@ const criteriosBandejasEnraizamiento = [
 
 const criteriosCalidadGenericos = [
   { id: -Infinity, nombre: "Conforme" },
-  { id: 1, nombre: "Siembra conforme" },
   { id: 2, nombre: "Estado de la planta" },
   { id: 3, nombre: "Distribución" },
   { id: 4, nombre: "Densidad" },
