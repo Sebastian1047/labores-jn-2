@@ -97,9 +97,13 @@
           <h2>🪴 Bandejas Enraizamiento</h2>
           <p class="hint">Módulo de Bandejas Enraizamiento.</p>
         </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 6;" id="cardCalidadPreparacionCamas">
+          <h2>✅ Calidad Preparación Camas</h2>
+          <p class="hint">Formulario de evaluación de calidad de Preparación Camas.</p>
+        </article>
         <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 6;" id="cardPreparacionCamas">
           <h2>🛏️ Preparación Camas</h2>
-          <p class="hint">Formulario de evaluación de calidad.</p>
+          <p class="hint">Módulo de Preparación Camas.</p>
         </article>
       </section>
 
@@ -175,8 +179,11 @@
       document.querySelector("#cardBandejasEnraizamiento").addEventListener("click", () => {
         window.location.href = "./bandejas-enraizamiento.html";
       });
-      document.querySelector("#cardPreparacionCamas").addEventListener("click", () => {
+      document.querySelector("#cardCalidadPreparacionCamas").addEventListener("click", () => {
         window.location.href = "./calidad-preparacion-camas.html";
+      });
+      document.querySelector("#cardPreparacionCamas").addEventListener("click", () => {
+        window.location.href = "./preparacion-camas.html";
       });
 
       // Precarga forzada de los 3 módulos al entrar al menú -- antes había que abrir cada
