@@ -57,7 +57,8 @@
         <button class="quality-role-tab" type="button" data-rol="recogedor">Recogedor</button>
       </nav>
 
-      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+      <!-- CORTADOR: se conserva el formulario existente sin cambiar su diseño ni su lógica. -->
+      <section id="vistaCortador" class="workspace" style="grid-template-columns: minmax(0, 1fr);">
         <article class="scanner-panel">
           <div>
             <span class="scan-label">Asegurador (quien revisa)</span>
@@ -123,12 +124,75 @@
           </section>
         </article>
       </section>
+
+      <!-- TRANSPORTADOR / RECOGEDOR: réplica del diseño del formulario Pompón de Calidad Desbotón y Mallas. -->
+      <section id="vistaAuxiliar" class="workspace" style="grid-template-columns: minmax(0, 1fr);" hidden>
+        <article class="scanner-panel">
+          <div>
+            <span class="scan-label">Evaluador</span>
+            <p class="hint" id="auxEvaluadorNombre" style="margin: 6px 0 0;">Usuario actual</p>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+            <div>
+              <span class="scan-label">Semana</span>
+              <p class="hint" id="auxSemanaActual" style="margin: 6px 0 0;">Cargando calendario…</p>
+            </div>
+            <div>
+              <span class="scan-label">Revisión</span>
+              <p class="hint" id="auxRevision" style="margin: 6px 0 0;">Selecciona un colaborador</p>
+            </div>
+          </div>
+
+          <div>
+            <span class="scan-label" id="auxRolEtiqueta">Transportador</span>
+            <input id="auxColaboradorBuscar" type="text" placeholder="Buscar transportador por nombre o código…" autocomplete="off" />
+            <div id="auxColaboradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+            <div>
+              <span class="scan-label">Nombre</span>
+              <p class="hint" id="auxColaboradorNombre" style="margin: 6px 0 0;">Sin transportador seleccionado</p>
+            </div>
+            <div>
+              <span class="scan-label">Código</span>
+              <p class="hint" id="auxColaboradorCodigo" style="margin: 6px 0 0;">—</p>
+            </div>
+          </div>
+
+          <div>
+            <span class="scan-label">Criterios de calidad</span>
+            <p class="hint" style="margin: 6px 0 10px;">Los criterios de esta labor se agregarán cuando estén definidos.</p>
+            <div id="auxCriteriosLista" class="calidad-criterios">
+              <p class="hint" style="margin:0;">Criterios pendientes de configurar.</p>
+            </div>
+          </div>
+
+          <div class="action-row" style="margin-top: 16px;">
+            <button id="auxGuardarCalidadBtn" class="success-btn" type="button" disabled>Guardar evaluación</button>
+          </div>
+
+          <section class="result-card" aria-live="polite">
+            <div class="result-status" id="auxCalidadResultado">
+              <span class="dot"></span>
+              <strong id="auxCalidadMensaje">Selecciona un transportador para iniciar una evaluación.</strong>
+            </div>
+          </section>
+
+          <section id="auxPendientesDetalle" class="result-card" hidden>
+            <h3 style="margin-top:0">Evaluaciones pendientes de sincronizar</h3>
+            <div id="auxPendientesLista" class="pending-list"></div>
+          </section>
+        </article>
+      </section>
     </main>
 
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./asegurar-corte.js?v=1.0.15"></script>
+    <script src="./calidad-corte-aux.js?v=1.0.18"></script>
+    <script src="./asegurar-corte.js?v=1.0.18"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

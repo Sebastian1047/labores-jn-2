@@ -15,6 +15,8 @@ const sincronizarBtn = document.querySelector("#sincronizarBtn");
 const vistaTitulo = document.querySelector("#vistaTitulo");
 const rolEtiqueta = document.querySelector("#rolEtiqueta");
 const roleTabs = [...document.querySelectorAll(".quality-role-tab")];
+const vistaCortador = document.querySelector("#vistaCortador");
+const vistaAuxiliar = document.querySelector("#vistaAuxiliar");
 
 const aseguradorSeleccionadoEl = document.querySelector("#aseguradorSeleccionado");
 
@@ -84,27 +86,26 @@ function resetearRevisionVista() {
 function aplicarVistaRol(nuevoRol) {
   rolActivo = ROLES_CALIDAD_CORTE[nuevoRol] ? nuevoRol : "cortador";
   const nombre = nombreRol();
-  const nombreMin = nombre.toLowerCase();
 
   roleTabs.forEach((btn) => btn.classList.toggle("active", btn.dataset.rol === rolActivo));
   vistaTitulo.textContent = `✅ Calidad Corte - ${nombre}`;
-  rolEtiqueta.textContent = nombre;
-  colaboradorBuscar.placeholder = `Buscar ${nombreMin} por nombre o código…`;
 
-  resetearRevisionVista();
-  renderItems();
+  const esCortador = rolActivo === "cortador";
+  vistaCortador.hidden = !esCortador;
+  vistaAuxiliar.hidden = esCortador;
 
-  if (rolActivo === "cortador") {
-    agregarBtn.disabled = false;
-    guardarBtn.disabled = false;
-    marcarResultado(null, `Selecciona un ${nombreMin} para iniciar una revisión.`);
-  } else {
-    agregarBtn.disabled = true;
-    guardarBtn.disabled = true;
-    marcarResultado(
-      null,
-      `Vista de ${nombre} lista. Los ítems y observaciones están pendientes de configurar.`
-    );
+  if (esCortador) {
+    rolEtiqueta.textContent = "Cortador";
+    colaboradorBuscar.placeholder = "Buscar cortador por nombre o código…";
+    renderItems();
+    actualizarPendientes();
+    marcarResultado(null, "Selecciona un cortador para iniciar una revisión.");
+    return;
+  }
+
+  pendientesPill.hidden = true;
+  if (window.CalidadCorteAux) {
+    window.CalidadCorteAux.activarRol(rolActivo);
   }
 }
 
@@ -390,6 +391,15 @@ async function checkApi() {
 }
 
 async function sincronizar() {
+  if (rolActivo !== "cortador" && window.CalidadCorteAux) {
+    sincronizarBtn.disabled = true;
+    try {
+      await window.CalidadCorteAux.sincronizar();
+    } finally {
+      sincronizarBtn.disabled = false;
+    }
+    return;
+  }
   sincronizarBtn.disabled = true;
   try {
     const resultado = await SyncEngine.sincronizarPendientesCorte();
