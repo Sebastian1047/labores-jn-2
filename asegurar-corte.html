@@ -2,100 +2,10 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Calidad Corte - Cortador — Labores JN</title>
-    <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#187a4d" />
-    <link rel="stylesheet" href="./styles.css" />
+    <meta http-equiv="refresh" content="0; url=./calidad-corte.html" />
+    <title>Calidad Corte — Labores JN</title>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Producción / Calidad Corte</p>
-          <h1>✅ Calidad Corte - Cortador</h1>
-        </div>
-        <section class="status-strip">
-          <span class="pill" id="apiStatusPill">API…</span>
-          <span class="pill" id="pendientesPill" hidden>0 pendiente(s)</span>
-          <span class="pill strong" id="usuarioPill">Usuario</span>
-          <button id="sincronizarBtn" class="pill" type="button" style="cursor: pointer;">🔄 Sincronizar</button>
-          <a href="./calidad-corte.html" class="pill">← Calidad Corte</a>
-        </section>
-      </header>
-
-      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
-        <article class="scanner-panel">
-          <div>
-            <span class="scan-label">Asegurador (quien revisa)</span>
-            <p class="hint" id="aseguradorSeleccionado" style="margin: 6px 0 0;">Resolviendo…</p>
-          </div>
-
-          <div>
-            <span class="scan-label">Cortador</span>
-            <input id="colaboradorBuscar" type="text" placeholder="Buscar cortador por nombre o código…" />
-            <div id="colaboradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
-          </div>
-
-          <div class="exit-row" style="grid-template-columns: repeat(3, 1fr); margin-top: 16px;">
-            <div>
-              <span class="scan-label">Nombre</span>
-              <p class="hint" id="colaboradorNombre" style="margin: 6px 0 0;">Sin cortador seleccionado</p>
-            </div>
-            <div>
-              <span class="scan-label">Código</span>
-              <p class="hint" id="colaboradorCodigo" style="margin: 6px 0 0;">—</p>
-            </div>
-            <div>
-              <span class="scan-label">Revisión</span>
-              <p class="hint" id="colaboradorRevision" style="margin: 6px 0 0;">—</p>
-            </div>
-          </div>
-
-          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
-            <label>Modalidad
-              <select id="modalidad">
-                <option value="1">CORTE POMPOM</option>
-                <option value="2">CORTE SPIDER</option>
-              </select>
-            </label>
-            <div></div>
-          </div>
-
-          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
-            <label>Item de calidad
-              <select id="item"></select>
-            </label>
-            <label>Observación
-              <select id="observacion"></select>
-            </label>
-          </div>
-
-          <div class="action-row">
-            <button id="agregarBtn" class="primary-btn" type="button">+ Agregar</button>
-          </div>
-
-          <p class="hint" id="temporalesVacio" style="margin-top: 0;">Todavía no has agregado ningún item de control a esta revisión.</p>
-          <div id="temporalesLista" class="pending-list" style="max-height: 260px;"></div>
-
-          <div class="action-row" style="margin-top: 16px;">
-            <button id="guardarBtn" class="success-btn" type="button">Guardar Revisión</button>
-          </div>
-
-          <section class="result-card" aria-live="polite">
-            <div class="result-status" id="resultStatus">
-              <span class="dot"></span>
-              <strong id="resultState">Selecciona un cortador para iniciar una revisión.</strong>
-            </div>
-          </section>
-        </article>
-      </section>
-    </main>
-
-    <script src="./offline/api-base.js"></script>
-    <script src="./offline/db.js"></script>
-    <script src="./offline/sync-engine.js"></script>
-    <script src="./asegurar-corte.js"></script>
-    <script src="./offline/register-sw.js"></script>
+    <script>window.location.replace("./calidad-corte.html");</script>
   </body>
 </html>

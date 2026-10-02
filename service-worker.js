@@ -1,7 +1,7 @@
 // Service Worker — cache-first del app shell completo (HTML/CSS/JS/vendor/íconos) para que
 // Pronósticos y Siembra abran y funcionen sin red, igual que AppLabores en Android.
 // Subir CACHE_VERSION en cada deploy para invalidar la caché anterior.
-const CACHE_VERSION = "labores-jn-1.0.14";
+const CACHE_VERSION = "labores-jn-1.0.15";
 
 const APP_SHELL = [
   "./",
@@ -26,8 +26,6 @@ const APP_SHELL = [
   "./corte-cortador.html",
   "./corte-recogedor.html",
   "./corte-garruchero.html",
-  "./calidad-corte-recogedor.html",
-  "./calidad-corte-garruchero.html",
   "./calidad-corte.html",
   "./calidad-menu.html",
   "./calidad-siembra.html",

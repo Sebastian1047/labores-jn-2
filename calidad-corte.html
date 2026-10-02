@@ -8,68 +8,127 @@
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
     <style>
-      .module-card {
+      .quality-role-tabs {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 140px;
+        gap: 10px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        padding-bottom: 2px;
       }
-      .module-icon {
-        font-size: 2.2rem;
-        line-height: 1;
-        margin-bottom: 10px;
+      .quality-role-tab {
+        flex: 1 0 150px;
+        min-height: 46px;
+        border: 1px solid rgba(24, 122, 77, 0.22);
+        border-radius: 12px;
+        background: #f5faf7;
+        color: #184c35;
+        font-weight: 800;
+        cursor: pointer;
       }
-      .module-card h2 {
-        margin: 0 0 8px;
-        text-align: center;
+      .quality-role-tab.active {
+        background: #187a4d;
+        color: #fff;
+        box-shadow: 0 6px 16px rgba(24, 122, 77, 0.18);
       }
-      .module-card .hint {
-        margin: 0;
-        text-align: center;
+      .quality-role-tab:not(.active):hover {
+        background: #eaf5ef;
       }
     </style>
   </head>
   <body>
-    <main class="app-shell" style="max-width: 760px;">
+    <main class="app-shell">
       <header class="topbar">
         <div>
           <p class="eyebrow">Producción / Calidad Corte</p>
-          <h1>✅ Calidad Corte</h1>
+          <h1 id="vistaTitulo">✅ Calidad Corte - Cortador</h1>
         </div>
         <section class="status-strip">
+          <span class="pill" id="apiStatusPill">API…</span>
+          <span class="pill" id="pendientesPill" hidden>0 pendiente(s)</span>
           <span class="pill strong" id="usuarioPill">Usuario</span>
-          <a href="./menu.html" class="pill">← Menú principal</a>
+          <button id="sincronizarBtn" class="pill" type="button" style="cursor: pointer;">🔄 Sincronizar</button>
+          <a href="./menu.html" class="pill">← Menú</a>
         </section>
       </header>
 
-      <section class="workspace" style="grid-template-columns: 1fr 1fr;">
-        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./calidad-corte-garruchero.html'">
-          <div class="module-icon" aria-hidden="true">✅</div>
-          <h2>Garruchero</h2>
-          <p class="hint">Evaluación de calidad para Garruchero.</p>
-        </article>
-        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./calidad-corte-recogedor.html'">
-          <div class="module-icon" aria-hidden="true">✅</div>
-          <h2>Recogedor</h2>
-          <p class="hint">Evaluación de calidad para Recogedor.</p>
-        </article>
-        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./asegurar-corte.html'">
-          <div class="module-icon" aria-hidden="true">✅</div>
-          <h2>Cortador</h2>
-          <p class="hint">Evaluación de calidad para Cortador.</p>
+      <nav class="quality-role-tabs" aria-label="Tipo de revisión de Calidad Corte">
+        <button class="quality-role-tab active" type="button" data-rol="cortador">Cortador</button>
+        <button class="quality-role-tab" type="button" data-rol="garruchero">Garruchero</button>
+        <button class="quality-role-tab" type="button" data-rol="recogedor">Recogedor</button>
+      </nav>
+
+      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+        <article class="scanner-panel">
+          <div>
+            <span class="scan-label">Asegurador (quien revisa)</span>
+            <p class="hint" id="aseguradorSeleccionado" style="margin: 6px 0 0;">Resolviendo…</p>
+          </div>
+
+          <div>
+            <span class="scan-label" id="rolEtiqueta">Cortador</span>
+            <input id="colaboradorBuscar" type="text" placeholder="Buscar cortador por nombre o código…" />
+            <div id="colaboradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: repeat(3, 1fr); margin-top: 16px;">
+            <div>
+              <span class="scan-label">Nombre</span>
+              <p class="hint" id="colaboradorNombre" style="margin: 6px 0 0;">Sin cortador seleccionado</p>
+            </div>
+            <div>
+              <span class="scan-label">Código</span>
+              <p class="hint" id="colaboradorCodigo" style="margin: 6px 0 0;">—</p>
+            </div>
+            <div>
+              <span class="scan-label">Revisión</span>
+              <p class="hint" id="colaboradorRevision" style="margin: 6px 0 0;">—</p>
+            </div>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+            <label>Modalidad
+              <select id="modalidad">
+                <option value="1">CORTE POMPOM</option>
+                <option value="2">CORTE SPIDER</option>
+              </select>
+            </label>
+            <div></div>
+          </div>
+
+          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+            <label>Item de calidad
+              <select id="item"></select>
+            </label>
+            <label>Observación
+              <select id="observacion"></select>
+            </label>
+          </div>
+
+          <div class="action-row">
+            <button id="agregarBtn" class="primary-btn" type="button">+ Agregar</button>
+          </div>
+
+          <p class="hint" id="temporalesVacio" style="margin-top: 0;">Todavía no has agregado ningún item de control a esta revisión.</p>
+          <div id="temporalesLista" class="pending-list" style="max-height: 260px;"></div>
+
+          <div class="action-row" style="margin-top: 16px;">
+            <button id="guardarBtn" class="success-btn" type="button">Guardar Revisión</button>
+          </div>
+
+          <section class="result-card" aria-live="polite">
+            <div class="result-status" id="resultStatus">
+              <span class="dot"></span>
+              <strong id="resultState">Selecciona un cortador para iniciar una revisión.</strong>
+            </div>
+          </section>
         </article>
       </section>
     </main>
 
-    <script>
-      const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
-      if (!sesion) {
-        window.location.href = "./login.html";
-      } else {
-        document.querySelector("#usuarioPill").textContent = sesion.empleadoNombre || sesion.username;
-      }
-    </script>
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./asegurar-corte.js?v=1.0.15"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

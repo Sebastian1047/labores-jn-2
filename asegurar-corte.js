@@ -12,6 +12,9 @@ const apiStatusPill = document.querySelector("#apiStatusPill");
 const pendientesPill = document.querySelector("#pendientesPill");
 const usuarioPill = document.querySelector("#usuarioPill");
 const sincronizarBtn = document.querySelector("#sincronizarBtn");
+const vistaTitulo = document.querySelector("#vistaTitulo");
+const rolEtiqueta = document.querySelector("#rolEtiqueta");
+const roleTabs = [...document.querySelectorAll(".quality-role-tab")];
 
 const aseguradorSeleccionadoEl = document.querySelector("#aseguradorSeleccionado");
 
@@ -36,6 +39,12 @@ const resultStatus = document.querySelector("#resultStatus");
 usuarioPill.textContent = sesion ? sesion.empleadoNombre || sesion.username : "Usuario";
 
 let catalogo = { items: [], observaciones: [], colaboradores: [] };
+const ROLES_CALIDAD_CORTE = {
+  cortador: "Cortador",
+  garruchero: "Garruchero",
+  recogedor: "Recogedor",
+};
+let rolActivo = "cortador";
 let colaboradorSeleccionado = null;
 // El asegurador es "el mismo usuario" logueado (pedido explicito, sin selector) -- pero
 // tblcorte.asegurador es varchar(6), el mismo codigo de Empleado que colaborador, no el
@@ -51,6 +60,57 @@ function marcarResultado(estado, mensaje) {
   if (estado) resultStatus.classList.add(estado);
   resultState.textContent = mensaje;
 }
+
+function nombreRol() {
+  return ROLES_CALIDAD_CORTE[rolActivo] || "Colaborador";
+}
+
+function nombreRolMinuscula() {
+  return nombreRol().toLowerCase();
+}
+
+function resetearRevisionVista() {
+  colaboradorSeleccionado = null;
+  siguienteRevision = null;
+  colaboradorNombre.textContent = `Sin ${nombreRolMinuscula()} seleccionado`;
+  colaboradorCodigo.textContent = "—";
+  colaboradorRevision.textContent = "—";
+  colaboradorBuscar.value = "";
+  colaboradorLista.innerHTML = "";
+  temporales = [];
+  renderTemporales();
+}
+
+function aplicarVistaRol(nuevoRol) {
+  rolActivo = ROLES_CALIDAD_CORTE[nuevoRol] ? nuevoRol : "cortador";
+  const nombre = nombreRol();
+  const nombreMin = nombre.toLowerCase();
+
+  roleTabs.forEach((btn) => btn.classList.toggle("active", btn.dataset.rol === rolActivo));
+  vistaTitulo.textContent = `✅ Calidad Corte - ${nombre}`;
+  rolEtiqueta.textContent = nombre;
+  colaboradorBuscar.placeholder = `Buscar ${nombreMin} por nombre o código…`;
+
+  resetearRevisionVista();
+  renderItems();
+
+  if (rolActivo === "cortador") {
+    agregarBtn.disabled = false;
+    guardarBtn.disabled = false;
+    marcarResultado(null, `Selecciona un ${nombreMin} para iniciar una revisión.`);
+  } else {
+    agregarBtn.disabled = true;
+    guardarBtn.disabled = true;
+    marcarResultado(
+      null,
+      `Vista de ${nombre} lista. Los ítems y observaciones están pendientes de configurar.`
+    );
+  }
+}
+
+roleTabs.forEach((btn) => {
+  btn.addEventListener("click", () => aplicarVistaRol(btn.dataset.rol));
+});
 
 // ---------------------------------------------------------------------------
 // Buscador de cortador — mismo patrón crearListaFiltrable de siembra.js (mousedown, no click,
@@ -115,7 +175,7 @@ crearListaFiltrable({
   listaEl: colaboradorLista,
   obtenerItems: () => catalogo.colaboradores,
   getLabel: (c) => `${c.nombre} (${c.codigo})`,
-  mensajeVacio: "No hay cortadores cargados -- sincroniza con red antes de salir a campo.",
+  mensajeVacio: "No hay colaboradores cargados -- sincroniza con red antes de salir a campo.",
   onSeleccionar: (c) => seleccionarColaborador(c),
 });
 
@@ -131,7 +191,7 @@ async function seleccionarColaborador(c) {
 
   if (siguienteRevision > 10) {
     colaboradorRevision.textContent = "Completa (10/10)";
-    marcarResultado("error", `${c.nombre} ya tiene las 10 revisiones del día. Selecciona otro cortador.`);
+    marcarResultado("error", `${c.nombre} ya tiene las 10 revisiones del día. Selecciona otro ${nombreRolMinuscula()}.`);
     guardarBtn.disabled = true;
   } else {
     colaboradorRevision.textContent = String(siguienteRevision);
@@ -148,11 +208,25 @@ async function seleccionarColaborador(c) {
 // ---------------------------------------------------------------------------
 
 function renderItems() {
+  if (rolActivo !== "cortador") {
+    itemSelect.innerHTML = "";
+    observacionSelect.innerHTML = "";
+    itemSelect.disabled = true;
+    observacionSelect.disabled = true;
+    return;
+  }
+
+  itemSelect.disabled = false;
+  observacionSelect.disabled = false;
   itemSelect.innerHTML = catalogo.items.map((it) => `<option value="${it.id}">${it.nombre}</option>`).join("");
   renderObservaciones();
 }
 
 function renderObservaciones() {
+  if (rolActivo !== "cortador") {
+    observacionSelect.innerHTML = "";
+    return;
+  }
   const itemId = Number(itemSelect.value);
   const hijos = SyncEngine.observacionesDelItem(catalogo.observaciones, itemId);
   observacionSelect.innerHTML = hijos.map((o) => `<option value="${o.id}">${o.nombre}</option>`).join("");
@@ -189,8 +263,12 @@ function renderTemporales() {
 }
 
 function agregarObservacion() {
+  if (rolActivo !== "cortador") {
+    marcarResultado("error", `Los ítems y observaciones de ${nombreRol()} aún no están configurados.`);
+    return;
+  }
   if (!colaboradorSeleccionado) {
-    marcarResultado("error", "Selecciona primero un cortador.");
+    marcarResultado("error", `Selecciona primero un ${nombreRolMinuscula()}.`);
     return;
   }
   const idItem = Number(itemSelect.value);
@@ -228,12 +306,16 @@ agregarBtn.addEventListener("click", agregarObservacion);
 // ---------------------------------------------------------------------------
 
 async function guardarRevision() {
+  if (rolActivo !== "cortador") {
+    marcarResultado("error", `Los ítems y observaciones de ${nombreRol()} aún no están configurados.`);
+    return;
+  }
   if (!aseguradorSeleccionado) {
     marcarResultado("error", "Selecciona quién está haciendo la revisión (Asegurador).");
     return;
   }
   if (!colaboradorSeleccionado) {
-    marcarResultado("error", "Selecciona un cortador.");
+    marcarResultado("error", `Selecciona un ${nombreRolMinuscula()}.`);
     return;
   }
   if (temporales.length === 0) {
@@ -262,7 +344,7 @@ async function guardarRevision() {
 
   colaboradorSeleccionado = null;
   siguienteRevision = null;
-  colaboradorNombre.textContent = "Sin cortador seleccionado";
+  colaboradorNombre.textContent = `Sin ${nombreRolMinuscula()} seleccionado`;
   colaboradorCodigo.textContent = "—";
   colaboradorRevision.textContent = "—";
   guardarBtn.disabled = false;
@@ -300,7 +382,7 @@ async function checkApi() {
     apiStatusPill.textContent = "Sin conexión (modo offline)";
     apiStatusPill.classList.add("warn");
   } finally {
-    if (catalogo.items.length === 0) {
+    if (rolActivo === "cortador" && catalogo.items.length === 0) {
       marcarResultado("error", "⚠ Catálogo vacío en este equipo. Conéctate a internet una vez antes de salir a campo.");
     }
     await actualizarPendientes();
@@ -345,6 +427,7 @@ window.addEventListener("offline", () => {
 
 (async function iniciar() {
   await cargarCatalogoLocal();
+  aplicarVistaRol("cortador");
   await resolverAseguradorActual();
   checkApi();
 })();
