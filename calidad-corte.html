@@ -7,6 +7,28 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .module-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 140px;
+      }
+      .module-icon {
+        font-size: 2.2rem;
+        line-height: 1;
+        margin-bottom: 10px;
+      }
+      .module-card h2 {
+        margin: 0 0 8px;
+        text-align: center;
+      }
+      .module-card .hint {
+        margin: 0;
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
     <main class="app-shell" style="max-width: 760px;">
@@ -22,16 +44,19 @@
       </header>
 
       <section class="workspace" style="grid-template-columns: 1fr 1fr;">
-        <article class="scanner-panel" style="text-align:center;cursor:pointer" onclick="location.href='./calidad-corte-garruchero.html'">
-          <h2>✅ Garruchero</h2>
+        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./calidad-corte-garruchero.html'">
+          <div class="module-icon" aria-hidden="true">✅</div>
+          <h2>Garruchero</h2>
           <p class="hint">Evaluación de calidad para Garruchero.</p>
         </article>
-        <article class="scanner-panel" style="text-align:center;cursor:pointer" onclick="location.href='./calidad-corte-recogedor.html'">
-          <h2>✅ Recogedor</h2>
+        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./calidad-corte-recogedor.html'">
+          <div class="module-icon" aria-hidden="true">✅</div>
+          <h2>Recogedor</h2>
           <p class="hint">Evaluación de calidad para Recogedor.</p>
         </article>
-        <article class="scanner-panel" style="text-align:center;cursor:pointer" onclick="location.href='./asegurar-corte.html'">
-          <h2>✅ Cortador</h2>
+        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./asegurar-corte.html'">
+          <div class="module-icon" aria-hidden="true">✅</div>
+          <h2>Cortador</h2>
           <p class="hint">Evaluación de calidad para Cortador.</p>
         </article>
       </section>
