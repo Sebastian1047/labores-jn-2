@@ -18,7 +18,6 @@
     ],
     recogedor: [
       { id: 1, nombre: "Conforme" },
-      { id: 2, nombre: "Ramos Excelentes" },
       { id: 3, nombre: "Cuidado de Ramos" },
       { id: 4, nombre: "Marcación de etiquetas" },
       { id: 5, nombre: "Cantidad" },
