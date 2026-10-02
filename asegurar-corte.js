@@ -221,7 +221,12 @@ function renderItems() {
 
   itemSelect.disabled = false;
   observacionSelect.disabled = false;
-  itemSelect.innerHTML = catalogo.items.map((it) => `<option value="${it.id}">${it.nombre}</option>`).join("");
+  const itemsOrdenados = [...catalogo.items].sort((a, b) => {
+    const aConforme = /conforme/i.test(String(a.nombre || ""));
+    const bConforme = /conforme/i.test(String(b.nombre || ""));
+    return Number(bConforme) - Number(aConforme);
+  });
+  itemSelect.innerHTML = itemsOrdenados.map((it) => `<option value="${it.id}">${it.nombre}</option>`).join("");
   renderObservaciones();
 }
 

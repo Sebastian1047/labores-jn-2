@@ -3,6 +3,7 @@ const sesionCalidad = JSON.parse(sessionStorage.getItem("labores_usuario") || "n
 if (!sesionCalidad) window.location.href = "./login.html";
 
 const criteriosPreparacionCamas = [
+  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Cama Conforme" },
   { id: 2, nombre: "Limpieza de Terreno" },
   { id: 3, nombre: "Distribución de Enmiendas" },
@@ -13,27 +14,27 @@ const criteriosPreparacionCamas = [
   { id: 8, nombre: "Aseo" },
   { id: 9, nombre: "Instalación de la Malla" },
   { id: 10, nombre: "Instalación de Mangueras de Goteo" },
-  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosDesbotonPompon = [
+  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Tallos con Botón Principal" },
   { id: 2, nombre: "Tallos con Tacón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
   { id: 4, nombre: "Aseo de Labor" },
-  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosDesbotonSpiderCremon = [
+  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Plantas con Botón o Tacón" },
   { id: 2, nombre: "Plantas con Tacón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
   { id: 4, nombre: "Desbotón a 15 cm de la Base" },
   { id: 5, nombre: "Aseo Caminos" },
-  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosBandejasEnraizamiento = [
+  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Siembra Conforme" },
   { id: 2, nombre: "Estado de Esqueje" },
   { id: 3, nombre: "Ubicación del Esqueje" },
@@ -42,10 +43,10 @@ const criteriosBandejasEnraizamiento = [
   { id: 6, nombre: "Daño Mecánico" },
   { id: 7, nombre: "Hundimiento del Sustrato al momento de la Siembra" },
   { id: 8, nombre: "Marcación" },
-  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosCalidadGenericos = [
+  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Siembra conforme" },
   { id: 2, nombre: "Estado de la planta" },
   { id: 3, nombre: "Distribución" },
@@ -59,7 +60,6 @@ const criteriosCalidadGenericos = [
   { id: 11, nombre: "Uso de EPP" },
   { id: 12, nombre: "Acuerdos de oro" },
   { id: 13, nombre: "Conteo de líneas" },
-  { id: -Infinity, nombre: "Conforme" },
 ];
 
 const criteriosMallas = [];
