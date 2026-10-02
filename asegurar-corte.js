@@ -41,7 +41,7 @@ usuarioPill.textContent = sesion ? sesion.empleadoNombre || sesion.username : "U
 let catalogo = { items: [], observaciones: [], colaboradores: [] };
 const ROLES_CALIDAD_CORTE = {
   cortador: "Cortador",
-  garruchero: "Garruchero",
+  garruchero: "Transportador",
   recogedor: "Recogedor",
 };
 let rolActivo = "cortador";
