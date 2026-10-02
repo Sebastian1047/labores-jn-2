@@ -69,13 +69,17 @@
           <h2>🌾 Siembra Campo</h2>
           <p class="hint">Registrar, editar y ver las últimas siembras capturadas.</p>
         </article>
-        <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 4;" id="cardAsegurarCorte">
-          <h2>✅ Asegurar Corte</h2>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 4;" id="cardCalidadCorte">
+          <h2>✅ Calidad Corte</h2>
           <p class="hint">Auditar calidad de corte por cortador: items de control y observaciones.</p>
         </article>
         <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 3;" id="cardDesbotonadoMallas">
           <h2>🌸 Desbotonado y Mallas</h2>
           <p class="hint">Registrar camas, medios cuadros y rendimiento por desbotonador.</p>
+        </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 4;" id="cardCorte">
+          <h2>✂️ Corte</h2>
+          <p class="hint">Módulo de Corte.</p>
         </article>
         <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 3;" id="cardCalidadSiembra">
           <h2>✅ Calidad Desbotón y Mallas</h2>
@@ -146,8 +150,11 @@
       document.querySelector("#cardSiembra").addEventListener("click", () => {
         window.location.href = "./siembra-hub.html";
       });
-      document.querySelector("#cardAsegurarCorte").addEventListener("click", () => {
+      document.querySelector("#cardCalidadCorte").addEventListener("click", () => {
         window.location.href = "./asegurar-corte.html";
+      });
+      document.querySelector("#cardCorte").addEventListener("click", () => {
+        window.location.href = "./corte.html";
       });
       document.querySelector("#cardDesbotonadoMallas").addEventListener("click", () => {
         window.location.href = "./desbotonado-mallas.html";
