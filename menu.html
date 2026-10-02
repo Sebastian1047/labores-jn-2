@@ -89,9 +89,13 @@
           <h2>🌱 Calidad Siembra Campo</h2>
           <p class="hint">Formulario de evaluación de calidad de Siembra Campo.</p>
         </article>
+        <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 2; grid-row: 5;" id="cardCalidadBandejasEnraizamiento">
+          <h2>✅ Calidad Bandejas Enraizamiento</h2>
+          <p class="hint">Formulario de evaluación de calidad de Bandejas Enraizamiento.</p>
+        </article>
         <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 5;" id="cardBandejasEnraizamiento">
           <h2>🪴 Bandejas Enraizamiento</h2>
-          <p class="hint">Formulario de evaluación de calidad.</p>
+          <p class="hint">Módulo de Bandejas Enraizamiento.</p>
         </article>
         <article class="scanner-panel" style="text-align: center; cursor: pointer; grid-column: 1; grid-row: 6;" id="cardPreparacionCamas">
           <h2>🛏️ Preparación Camas</h2>
@@ -165,8 +169,11 @@
       document.querySelector("#cardCalidadSiembraCampo").addEventListener("click", () => {
         window.location.href = "./calidad-siembra.html";
       });
-      document.querySelector("#cardBandejasEnraizamiento").addEventListener("click", () => {
+      document.querySelector("#cardCalidadBandejasEnraizamiento").addEventListener("click", () => {
         window.location.href = "./calidad-bandejas-enraizamiento.html";
+      });
+      document.querySelector("#cardBandejasEnraizamiento").addEventListener("click", () => {
+        window.location.href = "./bandejas-enraizamiento.html";
       });
       document.querySelector("#cardPreparacionCamas").addEventListener("click", () => {
         window.location.href = "./calidad-preparacion-camas.html";
