@@ -30,7 +30,14 @@
                 <input id="fecha" type="date" required />
               </label>
               <label>Densidad
-                <input id="densidad" type="text" inputmode="numeric" maxlength="6" placeholder="Ingrese densidad" required />
+                <select id="densidad" required>
+                  <option value="">Seleccione una densidad</option>
+                  <option value="117">117</option>
+                  <option value="130">130</option>
+                  <option value="170">170</option>
+                  <option value="112">112</option>
+                  <option value="128">128</option>
+                </select>
               </label>
             </div>
 
@@ -77,7 +84,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.25"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.26"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
