@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 15;
+const DB_VERSION = 16;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -145,6 +145,13 @@ function abrirDb() {
         const tiempos = db.createObjectStore("bandejasTiempos", { keyPath: "id" });
         tiempos.createIndex("fecha", "fecha");
         tiempos.createIndex("syncStatus", "syncStatus");
+      }
+      // Corte — tiempos por Cortador, Transportador y Recogedor.
+      if (!db.objectStoreNames.contains("corteTiempos")) {
+        const corteTiempos = db.createObjectStore("corteTiempos", { keyPath: "id" });
+        corteTiempos.createIndex("fecha", "fecha");
+        corteTiempos.createIndex("rol", "rol");
+        corteTiempos.createIndex("syncStatus", "syncStatus");
       }
     };
 
