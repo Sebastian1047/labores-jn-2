@@ -5,7 +5,7 @@ if (!sesionCorte) {
 
 const ROLES_CORTE = {
   cortador: { nombre: "Cortador", icono: "✂️" },
-  garruchero: { nombre: "Garruchero", icono: "🪝" },
+  garruchero: { nombre: "Transportador", icono: "🪝" },
   recogedor: { nombre: "Recogedor", icono: "🧺" },
 };
 
