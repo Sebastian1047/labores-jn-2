@@ -7,6 +7,57 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .bandejas-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .bandejas-tab {
+        flex: 1;
+        min-height: 48px;
+        border: 1px solid rgba(24, 122, 77, 0.22);
+        border-radius: 12px;
+        background: #f5faf7;
+        color: #184c35;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .bandejas-tab.active {
+        background: #187a4d;
+        color: #fff;
+        box-shadow: 0 6px 16px rgba(24, 122, 77, 0.18);
+      }
+      .bandejas-tab:not(.active):hover {
+        background: #eaf5ef;
+      }
+      .bandejas-view[hidden] {
+        display: none !important;
+      }
+      .time-card {
+        border: 1px solid rgba(20, 34, 28, 0.12);
+        border-radius: 14px;
+        padding: 14px;
+        background: #fff;
+      }
+      .time-card label {
+        display: block;
+        font-weight: 800;
+      }
+      .time-card input {
+        margin-top: 8px;
+      }
+      .time-summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 640px) {
+        .time-summary {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
     <main class="app-shell" style="max-width: 760px;">
@@ -22,9 +73,15 @@
         </section>
       </header>
 
-      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
-        <article class="scanner-panel">
-          <form id="bandejasForm" onsubmit="return false;">
+      <nav class="bandejas-tabs" aria-label="Vistas de Bandejas Enraizamiento">
+        <button class="bandejas-tab active" type="button" data-bandejas-vista="registro">Registro de labor</button>
+        <button class="bandejas-tab" type="button" data-bandejas-vista="tiempos">Tiempos otras actividades</button>
+      </nav>
+
+      <section id="vistaRegistro" class="bandejas-view">
+        <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+          <article class="scanner-panel">
+            <form id="bandejasForm" onsubmit="return false;">
             <div class="exit-row" style="grid-template-columns: 1fr;">
               <label>Fecha
                 <input id="fecha" type="date" required />
@@ -97,13 +154,112 @@
           </div>
         </div>
         <div id="registrosLista" class="pending-list"></div>
+        </section>
+      </section>
+
+      <section id="vistaTiempos" class="bandejas-view" hidden>
+        <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+          <article class="scanner-panel">
+            <div>
+              <span class="scan-label">Fecha</span>
+              <input id="tiempoFecha" type="date" required />
+            </div>
+
+            <div style="margin-top:16px;">
+              <span class="scan-label">Sembrador</span>
+              <input id="tiempoSembradorBuscar" type="text" placeholder="Buscar sembrador por nombre o código…" autocomplete="off" />
+              <div id="tiempoSembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
+              <p class="hint" id="tiempoSembradorSeleccionado" style="margin: 6px 0 0;">Sin sembrador seleccionado</p>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:18px;">
+              <div class="time-card">
+                <label>Horas Laborales
+                  <input id="horasLaboralesMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Horas Extra
+                  <input id="horasExtraMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>PMadres
+                  <input id="pMadresMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>PAbuelas
+                  <input id="pAbuelasMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Desplazamiento
+                  <input id="desplazamientoMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Calistenia, Acondicionamiento, Fortalecimiento
+                  <input id="calisteniaMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Capacitación, Reunión
+                  <input id="capacitacionMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Otras labores (automático)
+                  <input id="otrasLaboresMin" type="number" value="0" readonly />
+                </label>
+              </div>
+            </div>
+
+            <div class="time-summary" style="margin-top:16px;">
+              <section class="result-card">
+                <div>
+                  <span class="scan-label">Tiempo disponible</span>
+                  <strong id="tiempoDisponibleTexto" style="display:block;margin-top:6px;">0 min</strong>
+                </div>
+              </section>
+              <section class="result-card">
+                <div>
+                  <span class="scan-label">Tiempo real dedicado a la labor</span>
+                  <strong id="tiempoRealTexto" style="display:block;margin-top:6px;">0 min</strong>
+                </div>
+              </section>
+            </div>
+
+            <div class="action-row" style="margin-top:18px;">
+              <button id="guardarTiemposBtn" class="success-btn" type="button">Guardar tiempos</button>
+              <button id="limpiarTiemposBtn" class="ghost-btn" type="button">Limpiar</button>
+            </div>
+
+            <section class="result-card" aria-live="polite">
+              <div class="result-status" id="tiemposResultStatus">
+                <span class="dot"></span>
+                <strong id="tiemposResultState">Ingresa los tiempos en minutos para calcular el tiempo real de labor.</strong>
+              </div>
+            </section>
+          </article>
+        </section>
+
+        <section class="scanner-panel" style="margin-top:16px;">
+          <div class="panel-heading">
+            <div>
+              <span class="scan-label">Registros de tiempo guardados en este equipo</span>
+              <p class="hint" style="margin:6px 0 0;">Se guardan localmente mientras se define la API del módulo.</p>
+            </div>
+          </div>
+          <div id="tiemposRegistrosLista" class="pending-list"></div>
+        </section>
       </section>
     </main>
 
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.29"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.30"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

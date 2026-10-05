@@ -226,10 +226,36 @@ const resultStatus = document.querySelector("#resultStatus");
 const resultState = document.querySelector("#resultState");
 const registrosLista = document.querySelector("#registrosLista");
 
+const bandejasTabs = [...document.querySelectorAll("[data-bandejas-vista]")];
+const vistaRegistro = document.querySelector("#vistaRegistro");
+const vistaTiempos = document.querySelector("#vistaTiempos");
+
+const tiempoFechaInput = document.querySelector("#tiempoFecha");
+const tiempoSembradorBuscar = document.querySelector("#tiempoSembradorBuscar");
+const tiempoSembradorLista = document.querySelector("#tiempoSembradorLista");
+const tiempoSembradorSeleccionadoEl = document.querySelector("#tiempoSembradorSeleccionado");
+
+const horasLaboralesMin = document.querySelector("#horasLaboralesMin");
+const horasExtraMin = document.querySelector("#horasExtraMin");
+const pMadresMin = document.querySelector("#pMadresMin");
+const pAbuelasMin = document.querySelector("#pAbuelasMin");
+const desplazamientoMin = document.querySelector("#desplazamientoMin");
+const calisteniaMin = document.querySelector("#calisteniaMin");
+const capacitacionMin = document.querySelector("#capacitacionMin");
+const otrasLaboresMin = document.querySelector("#otrasLaboresMin");
+const tiempoDisponibleTexto = document.querySelector("#tiempoDisponibleTexto");
+const tiempoRealTexto = document.querySelector("#tiempoRealTexto");
+const guardarTiemposBtn = document.querySelector("#guardarTiemposBtn");
+const limpiarTiemposBtn = document.querySelector("#limpiarTiemposBtn");
+const tiemposResultStatus = document.querySelector("#tiemposResultStatus");
+const tiemposResultState = document.querySelector("#tiemposResultState");
+const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
+
 usuarioPill.textContent = sesionBandejas?.empleadoNombre || sesionBandejas?.username || "Usuario";
 
 let catalogos = { empleados: [] };
 let sembradorSeleccionado = null;
+let tiempoSembradorSeleccionado = null;
 
 function fechaLocal() {
   const hoy = new Date();
@@ -291,6 +317,18 @@ crearBuscador({
   },
 });
 
+crearBuscador({
+  input: tiempoSembradorBuscar,
+  lista: tiempoSembradorLista,
+  items: () => catalogos.empleados,
+  etiqueta: etiquetaEmpleado,
+  mensajeVacio: "No hay sembradores disponibles en el catálogo local.",
+  seleccionar: (item) => {
+    tiempoSembradorSeleccionado = item;
+    tiempoSembradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
+  },
+});
+
 function cargarVariedadesDelTipo() {
   const tipo = tipoFlorSelect.value;
   const variedades = VARIEDADES_POR_TIPO[tipo] || [];
@@ -309,6 +347,132 @@ function cargarVariedadesDelTipo() {
 }
 
 tipoFlorSelect.addEventListener("change", cargarVariedadesDelTipo);
+
+function aplicarVistaBandejas(vista) {
+  const esTiempos = vista === "tiempos";
+  vistaRegistro.hidden = esTiempos;
+  vistaTiempos.hidden = !esTiempos;
+  bandejasTabs.forEach((btn) => btn.classList.toggle("active", btn.dataset.bandejasVista === vista));
+}
+
+bandejasTabs.forEach((btn) => {
+  btn.addEventListener("click", () => aplicarVistaBandejas(btn.dataset.bandejasVista));
+});
+
+function minutosCampo(input) {
+  const valor = Number(input.value || 0);
+  return Number.isFinite(valor) && valor > 0 ? Math.floor(valor) : 0;
+}
+
+function formatoMinutos(total) {
+  const minutos = Math.max(0, Number(total) || 0);
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  return horas > 0 ? `${horas} h ${resto} min` : `${resto} min`;
+}
+
+function actualizarCalculoTiempos() {
+  const laborales = minutosCampo(horasLaboralesMin);
+  const extras = minutosCampo(horasExtraMin);
+  const otros =
+    minutosCampo(pMadresMin) +
+    minutosCampo(pAbuelasMin) +
+    minutosCampo(desplazamientoMin) +
+    minutosCampo(calisteniaMin) +
+    minutosCampo(capacitacionMin);
+
+  const disponible = laborales + extras;
+  const real = Math.max(0, disponible - otros);
+
+  otrasLaboresMin.value = String(otros);
+  tiempoDisponibleTexto.textContent = formatoMinutos(disponible);
+  tiempoRealTexto.textContent = formatoMinutos(real);
+
+  return { laborales, extras, otros, disponible, real };
+}
+
+[horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
+  .forEach((input) => input.addEventListener("input", actualizarCalculoTiempos));
+
+function marcarResultadoTiempos(tipo, mensaje) {
+  tiemposResultStatus.classList.remove("ok", "warning", "error");
+  if (tipo) tiemposResultStatus.classList.add(tipo);
+  tiemposResultState.textContent = mensaje;
+}
+
+function limpiarFormularioTiempos() {
+  tiempoFechaInput.value = fechaLocal();
+  tiempoSembradorSeleccionado = null;
+  tiempoSembradorBuscar.value = "";
+  tiempoSembradorLista.innerHTML = "";
+  tiempoSembradorSeleccionadoEl.textContent = "Sin sembrador seleccionado";
+  [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
+    .forEach((input) => { input.value = ""; });
+  actualizarCalculoTiempos();
+}
+
+async function renderRegistrosTiempos() {
+  const registros = (await OfflineDb.getAll("bandejasTiempos"))
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+
+  tiemposRegistrosLista.innerHTML = registros.length
+    ? registros.slice(0, 20).map((r) => `
+        <article class="pending-item">
+          <strong>${r.fecha} · ${r.sembradorNombre}</strong>
+          <span>Laborales: ${formatoMinutos(r.horasLaboralesMin)} · Extra: ${formatoMinutos(r.horasExtraMin)}</span>
+          <span>Otras actividades: ${formatoMinutos(r.otrasLaboresMin)}</span>
+          <span>Tiempo real de labor: ${formatoMinutos(r.tiempoRealMin)}</span>
+        </article>
+      `).join("")
+    : '<p class="hint" style="margin:0;">Todavía no hay registros de tiempo guardados.</p>';
+}
+
+async function guardarTiempos() {
+  const fecha = tiempoFechaInput.value;
+  if (!fecha) return marcarResultadoTiempos("error", "Selecciona la fecha.");
+  if (!tiempoSembradorSeleccionado) return marcarResultadoTiempos("error", "Selecciona un sembrador.");
+
+  const calculo = actualizarCalculoTiempos();
+  if (calculo.disponible <= 0) {
+    return marcarResultadoTiempos("error", "Ingresa los minutos de Horas Laborales o de Horas Extra.");
+  }
+
+  const sembradorCodigo =
+    tiempoSembradorSeleccionado.codigo ||
+    tiempoSembradorSeleccionado.docid ||
+    tiempoSembradorSeleccionado.id;
+
+  const registro = {
+    id: SyncEngine.generarUUID(),
+    fecha,
+    sembrador: String(sembradorCodigo),
+    sembradorNombre:
+      tiempoSembradorSeleccionado.nombre ||
+      tiempoSembradorSeleccionado.empleadoNombre ||
+      String(sembradorCodigo),
+    horasLaboralesMin: calculo.laborales,
+    horasExtraMin: calculo.extras,
+    pMadresMin: minutosCampo(pMadresMin),
+    pAbuelasMin: minutosCampo(pAbuelasMin),
+    desplazamientoMin: minutosCampo(desplazamientoMin),
+    calisteniaMin: minutosCampo(calisteniaMin),
+    capacitacionMin: minutosCampo(capacitacionMin),
+    otrasLaboresMin: calculo.otros,
+    tiempoDisponibleMin: calculo.disponible,
+    tiempoRealMin: calculo.real,
+    usuario: sesionBandejas?.username || "",
+    syncStatus: "PendienteBackend",
+    createdAt: new Date().toISOString(),
+  };
+
+  await OfflineDb.put("bandejasTiempos", registro);
+  marcarResultadoTiempos(
+    "ok",
+    `Tiempos guardados. Tiempo real dedicado a la labor: ${formatoMinutos(registro.tiempoRealMin)}.`
+  );
+  limpiarFormularioTiempos();
+  await renderRegistrosTiempos();
+}
 
 function limpiarFormulario() {
   fechaInput.value = fechaLocal();
@@ -403,6 +567,12 @@ async function cargarCatalogos() {
 }
 
 guardarBtn.addEventListener("click", guardarRegistro);
+guardarTiemposBtn.addEventListener("click", guardarTiempos);
+limpiarTiemposBtn.addEventListener("click", () => {
+  limpiarFormularioTiempos();
+  marcarResultadoTiempos(null, "Ingresa los tiempos en minutos para calcular el tiempo real de labor.");
+});
+
 limpiarBtn.addEventListener("click", () => {
   limpiarFormulario();
   marcarResultado(null, "Complete los datos para guardar el registro.");
@@ -412,6 +582,9 @@ window.addEventListener("online", cargarCatalogos);
 
 (async function iniciarBandejas() {
   limpiarFormulario();
+  limpiarFormularioTiempos();
+  aplicarVistaBandejas("registro");
   await cargarCatalogos();
   await renderRegistros();
+  await renderRegistrosTiempos();
 })();
