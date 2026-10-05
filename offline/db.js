@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 16;
+const DB_VERSION = 17;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -152,6 +152,12 @@ function abrirDb() {
         corteTiempos.createIndex("fecha", "fecha");
         corteTiempos.createIndex("rol", "rol");
         corteTiempos.createIndex("syncStatus", "syncStatus");
+      }
+      // Preparación Camas — tiempos por colaborador.
+      if (!db.objectStoreNames.contains("preparacionCamasTiempos")) {
+        const preparacionTiempos = db.createObjectStore("preparacionCamasTiempos", { keyPath: "id" });
+        preparacionTiempos.createIndex("fecha", "fecha");
+        preparacionTiempos.createIndex("syncStatus", "syncStatus");
       }
     };
 
