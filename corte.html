@@ -8,25 +8,30 @@
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
     <style>
-      .module-card {
+      .corte-tabs {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 140px;
+        gap: 10px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        padding-bottom: 2px;
       }
-      .module-icon {
-        font-size: 2.2rem;
-        line-height: 1;
-        margin-bottom: 10px;
+      .corte-tab {
+        flex: 1 0 150px;
+        min-height: 48px;
+        border: 1px solid rgba(24, 122, 77, 0.22);
+        border-radius: 12px;
+        background: #f5faf7;
+        color: #184c35;
+        font-weight: 800;
+        cursor: pointer;
       }
-      .module-card h2 {
-        margin: 0 0 8px;
-        text-align: center;
+      .corte-tab.active {
+        background: #187a4d;
+        color: #fff;
+        box-shadow: 0 6px 16px rgba(24, 122, 77, 0.18);
       }
-      .module-card .hint {
-        margin: 0;
-        text-align: center;
+      .corte-tab:not(.active):hover {
+        background: #eaf5ef;
       }
     </style>
   </head>
@@ -35,7 +40,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Producción / Corte</p>
-          <h1>✂️ Corte</h1>
+          <h1 id="corteTitulo">✂️ Corte - Cortador</h1>
         </div>
         <section class="status-strip">
           <span class="pill strong" id="usuarioPill">Usuario</span>
@@ -43,33 +48,30 @@
         </section>
       </header>
 
-      <section class="workspace" style="grid-template-columns: 1fr 1fr;">
-        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./corte-garruchero.html'">
-          <div class="module-icon" aria-hidden="true">🪝</div>
-          <h2>Garruchero</h2>
-          <p class="hint">Módulo de Corte para Garruchero.</p>
-        </article>
-        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./corte-recogedor.html'">
-          <div class="module-icon" aria-hidden="true">🧺</div>
-          <h2>Recogedor</h2>
-          <p class="hint">Módulo de Corte para Recogedor.</p>
-        </article>
-        <article class="scanner-panel module-card" style="text-align:center;cursor:pointer" onclick="location.href='./corte-cortador.html'">
-          <div class="module-icon" aria-hidden="true">✂️</div>
-          <h2>Cortador</h2>
-          <p class="hint">Módulo de Corte para Cortador.</p>
+      <nav class="corte-tabs" aria-label="Tipo de labor de Corte">
+        <button class="corte-tab active" type="button" data-corte-rol="cortador">Cortador</button>
+        <button class="corte-tab" type="button" data-corte-rol="garruchero">Garruchero</button>
+        <button class="corte-tab" type="button" data-corte-rol="recogedor">Recogedor</button>
+      </nav>
+
+      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+        <article class="scanner-panel">
+          <div>
+            <span class="scan-label">Labor seleccionada</span>
+            <p class="hint" id="rolSeleccionado" style="margin: 6px 0 0;">Cortador</p>
+          </div>
+
+          <section class="result-card" style="margin-top:16px;">
+            <div class="result-status">
+              <span class="dot"></span>
+              <strong id="estadoModulo">Formulario de Cortador listo para agregar sus campos.</strong>
+            </div>
+          </section>
         </article>
       </section>
     </main>
 
-    <script>
-      const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
-      if (!sesion) {
-        window.location.href = "./login.html";
-      } else {
-        document.querySelector("#usuarioPill").textContent = sesion.empleadoNombre || sesion.username;
-      }
-    </script>
+    <script src="./corte.js?v=1.0.32"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
