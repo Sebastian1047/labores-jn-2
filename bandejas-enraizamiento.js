@@ -5,6 +5,7 @@ const usuarioPill = document.querySelector("#usuarioPill");
 const estadoPill = document.querySelector("#estadoPill");
 const fechaInput = document.querySelector("#fecha");
 const densidadInput = document.querySelector("#densidad");
+const cantidadInput = document.querySelector("#cantidad");
 const sembradorBuscar = document.querySelector("#sembradorBuscar");
 const sembradorLista = document.querySelector("#sembradorLista");
 const sembradorSeleccionadoEl = document.querySelector("#sembradorSeleccionado");
@@ -312,6 +313,7 @@ tipoFlorSelect.addEventListener("change", cargarVariedadesDelTipo);
 function limpiarFormulario() {
   fechaInput.value = fechaLocal();
   densidadInput.value = "";
+  cantidadInput.value = "";
   sembradorSeleccionado = null;
   sembradorBuscar.value = "";
   sembradorLista.innerHTML = "";
@@ -330,7 +332,7 @@ async function renderRegistros() {
           <strong>${r.fecha} · ${r.variedadNombre}</strong>
           <span>Tipo de flor: ${r.tipoFlor || "—"}</span>
           <span>Sembrador: ${r.sembradorNombre}</span>
-          <span>Densidad: ${r.densidad}</span>
+          <span>Densidad: ${r.densidad} · Cantidad: ${r.cantidad ?? "—"}</span>
         </article>
       `).join("")
     : '<p class="hint" style="margin:0;">Todavía no hay registros guardados.</p>';
@@ -339,10 +341,12 @@ async function renderRegistros() {
 async function guardarRegistro() {
   const fecha = fechaInput.value;
   const densidad = densidadInput.value.trim();
+  const cantidad = cantidadInput.value.trim();
 
   if (!fecha) return marcarResultado("error", "Selecciona la fecha.");
-  if (!densidad) return marcarResultado("error", "Ingresa la densidad.");
-  if (!/^\d+$/.test(densidad)) return marcarResultado("error", "La densidad debe contener solo números.");
+  if (!densidad) return marcarResultado("error", "Selecciona la densidad.");
+  if (!cantidad) return marcarResultado("error", "Ingresa la cantidad.");
+  if (!/^\d+$/.test(cantidad) || Number(cantidad) <= 0) return marcarResultado("error", "La cantidad debe ser un número entero mayor que cero.");
   if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
   if (!tipoFlorSelect.value) return marcarResultado("error", "Selecciona el tipo de flor.");
   if (!variedadSelect.value) return marcarResultado("error", "Selecciona una variedad.");
@@ -355,6 +359,7 @@ async function guardarRegistro() {
     id: SyncEngine.generarUUID(),
     fecha,
     densidad: Number(densidad),
+    cantidad: Number(cantidad),
     sembrador: String(sembradorCodigo),
     sembradorNombre: sembradorSeleccionado.nombre || sembradorSeleccionado.empleadoNombre || String(sembradorCodigo),
     tipoFlor,
