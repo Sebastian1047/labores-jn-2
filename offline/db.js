@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 13;
+const DB_VERSION = 14;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -133,6 +133,12 @@ function abrirDb() {
         const horas = db.createObjectStore("horasColaborador", { keyPath: "clave" });
         horas.createIndex("fecha", "fecha");
         horas.createIndex("syncStatus", "syncStatus");
+      }
+      // Bandejas Enraizamiento — registros operativos locales mientras se define la API.
+      if (!db.objectStoreNames.contains("bandejasEnraizamiento")) {
+        const bandejas = db.createObjectStore("bandejasEnraizamiento", { keyPath: "id" });
+        bandejas.createIndex("fecha", "fecha");
+        bandejas.createIndex("syncStatus", "syncStatus");
       }
     };
 
