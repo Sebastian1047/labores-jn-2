@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 17;
+const DB_VERSION = 18;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -158,6 +158,12 @@ function abrirDb() {
         const preparacionTiempos = db.createObjectStore("preparacionCamasTiempos", { keyPath: "id" });
         preparacionTiempos.createIndex("fecha", "fecha");
         preparacionTiempos.createIndex("syncStatus", "syncStatus");
+      }
+      // Desbotonado y Mallas — tiempos por colaborador para calcular tiempo real de labor.
+      if (!db.objectStoreNames.contains("desbotonadoMallasTiempos")) {
+        const desbotonadoTiempos = db.createObjectStore("desbotonadoMallasTiempos", { keyPath: "id" });
+        desbotonadoTiempos.createIndex("fecha", "fecha");
+        desbotonadoTiempos.createIndex("syncStatus", "syncStatus");
       }
     };
 

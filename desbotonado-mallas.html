@@ -1,7 +1,246 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Desbotonado y Mallas — Labores JN</title><link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#187a4d"><link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./desbotonado-mallas.css"></head><body><main class="app-shell"><header class="topbar"><div><p class="eyebrow">Producción / Labores</p><h1>🌸 Desbotonado y Mallas</h1></div><section class="status-strip"><span class="pill" id="apiStatusPill">API…</span><span class="pill strong" id="usuarioPill">Usuario</span><span class="pill">Registro local</span><a href="./menu.html" class="pill">← Menú</a></section></header><section class="workspace" style="grid-template-columns:minmax(0,1fr);"><article class="scanner-panel"><div><span class="scan-label">Desbotonador (quien realiza la labor)</span><input id="desbotonadorBuscar" type="text" placeholder="Buscar desbotonador por nombre o código…" autocomplete="off"><div id="desbotonadorLista" class="pending-list" style="max-height:180px;margin-top:8px"></div><select id="desbotonador" required hidden><option value=""></option></select></div><div class="exit-row" style="grid-template-columns:1fr 1fr;"><div><span class="scan-label">Tipo de labor</span><p class="hint" id="nombreResumen" style="margin:6px 0 0;">Seleccione el tipo de labor al agregar una cama.</p></div><div><span class="scan-label">Estado</span><p class="hint" id="apiMensaje" style="margin:6px 0 0;">Registro local disponible</p></div></div><div><span class="scan-label">Registrar cama</span><form id="formDesbotonado" class="form-grid"><label>Desbotón o malla<select id="tipoLabor" required><option value="">Seleccione una opción</option><option value="Desbotón Pompón">Desbotón Pompón</option><option value="Desbotón Spider">Desbotón Spider</option><option value="Malla">Malla</option></select></label><label>Bloque<input id="bloque" autocomplete="off" placeholder="Buscar bloque por número…" required><div id="bloqueLista" class="pending-list" style="max-height:150px;margin-top:8px"></div></label><label>Número de cama<input id="camaBuscar" type="text" autocomplete="off" placeholder="Buscar cama por número…" required><div id="camaLista" class="pending-list" style="max-height:150px;margin-top:8px"></div><select id="cama" required hidden><option value=""></option></select></label><label>Tallos por cama<input id="tallosCama" type="number" min="0" required></label><label>Erradicaciones<input id="erradicaciones" type="number" min="0" value="0" required></label><label>Medios cuadros trabajados<input id="mediosCuadros" type="number" min="0.5" max="16" step="0.5" value="16" required></label><label>Hora de inicio<input id="horaInicio" type="time" required></label><label>Hora de finalización<input id="horaFin" type="time" required></label><div class="action-row"><button class="primary-btn" type="submit">+ Agregar cama</button><button class="ghost-btn" type="button" id="btnLimpiarCama">Limpiar</button></div></form></div><section class="result-card"><div class="result-status"><span class="dot"></span><strong>Registre las camas del desbotonador para calcular su rendimiento.</strong></div></section></article></section><section class="results-grid"><article class="metric"><span>Camas registradas</span><strong id="totalCamas">0</strong></article><article class="metric"><span>Tallos desbotonados</span><strong id="totalTallos">0</strong></article><article class="metric"><span>Tiempo trabajado</span><strong id="totalHoras">0 h</strong></article><article class="metric highlight"><span>Rendimiento acumulado</span><strong id="rendimientoAcumulado">0 tallos/h</strong></article></section><section class="scanner-panel"><div class="panel-heading"><div><span class="scan-label">Detalle de la jornada</span><p class="hint" id="nombreResumenTabla">Camas registradas en esta sesión.</p></div><button type="button" class="ghost-btn" id="btnNuevoDesbotonador">Nuevo desbotonador</button></div><div class="table-scroll"><table><thead><tr><th>Tipo</th><th>Bloque</th><th>Cama</th><th>Medios cuadros</th><th>Tallos</th><th>Tiempo</th><th>Rendimiento</th></tr></thead><tbody id="tablaRegistros"><tr><td colspan="7">Todavía no hay camas registradas.</td></tr></tbody></table></div></section></main><script>const sesion=JSON.parse(sessionStorage.getItem('labores_usuario')||'null');if(!sesion){window.location.replace('./login.html');}else{document.querySelector('#usuarioPill').textContent=sesion.empleadoNombre||sesion.username;}document.querySelector('#apiStatusPill').textContent=navigator.onLine?'En línea':'Sin conexión';</script><script src="./offline/api-base.js"></script><script src="./offline/db.js"></script><script src="./offline/sync-engine.js"></script><script src="./desbotonado-mallas.js"></script><script src="./offline/register-sw.js"></script></body></html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Desbotonado y Mallas — Labores JN</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#187a4d">
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.37">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Producción / Labores</p>
+          <h1>🌸 Desbotonado y Mallas</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill" id="apiStatusPill">API…</span>
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <span class="pill">Registro local</span>
+          <a href="./menu.html" class="pill">← Menú</a>
+        </section>
+      </header>
 
+      <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+        <article class="scanner-panel">
+          <div class="exit-row" style="grid-template-columns:1fr;">
+            <label>Fecha
+              <input id="fecha" type="date" required>
+            </label>
+          </div>
 
+          <div>
+            <span class="scan-label">Colaborador</span>
+            <input id="desbotonadorBuscar" type="text" placeholder="Buscar colaborador por nombre o código…" autocomplete="off">
+            <div id="desbotonadorLista" class="pending-list" style="max-height:180px;margin-top:8px"></div>
+            <select id="desbotonador" required hidden><option value=""></option></select>
+            <p class="hint" id="colaboradorSeleccionado" style="margin:6px 0 0;">Sin colaborador seleccionado</p>
+          </div>
 
+          <nav class="desbotonado-tabs" aria-label="Opciones de Desbotonado y Mallas" style="margin-top:16px;margin-bottom:0;">
+            <button class="desbotonado-tab active" type="button" data-desbotonado-vista="registro">Registrar labor</button>
+            <button class="desbotonado-tab" type="button" data-desbotonado-vista="tiempos">Tiempos</button>
+          </nav>
+        </article>
+      </section>
 
+      <section id="vistaRegistro" class="desbotonado-view">
+        <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+          <article class="scanner-panel">
+            <div class="exit-row" style="grid-template-columns:1fr 1fr;">
+              <div>
+                <span class="scan-label">Tipo de labor</span>
+                <p class="hint" id="nombreResumen" style="margin:6px 0 0;">Seleccione el tipo de labor al agregar una cama.</p>
+              </div>
+              <div>
+                <span class="scan-label">Estado</span>
+                <p class="hint" id="apiMensaje" style="margin:6px 0 0;">Registro local disponible</p>
+              </div>
+            </div>
 
+            <div>
+              <span class="scan-label">Registrar cama</span>
+              <form id="formDesbotonado" class="form-grid">
+                <label>Desbotón o malla
+                  <select id="tipoLabor" required>
+                    <option value="">Seleccione una opción</option>
+                    <option value="Desbotón Pompón">Desbotón Pompón</option>
+                    <option value="Desbotón Spider">Desbotón Spider</option>
+                    <option value="Malla">Malla</option>
+                  </select>
+                </label>
+                <label>Bloque
+                  <input id="bloque" autocomplete="off" placeholder="Buscar bloque por número…" required>
+                  <div id="bloqueLista" class="pending-list" style="max-height:150px;margin-top:8px"></div>
+                </label>
+                <label>Número de cama
+                  <input id="camaBuscar" type="text" autocomplete="off" placeholder="Buscar cama por número…" required>
+                  <div id="camaLista" class="pending-list" style="max-height:150px;margin-top:8px"></div>
+                  <select id="cama" required hidden><option value=""></option></select>
+                </label>
+                <label>Tallos por cama
+                  <input id="tallosCama" type="number" min="0" required>
+                </label>
+                <label>Erradicaciones
+                  <input id="erradicaciones" type="number" min="0" value="0" required>
+                </label>
+                <label>Medios cuadros trabajados
+                  <input id="mediosCuadros" type="number" min="0.5" max="16" step="0.5" value="16" required>
+                </label>
+                <div class="action-row">
+                  <button class="primary-btn" type="submit">+ Agregar cama</button>
+                  <button class="ghost-btn" type="button" id="btnLimpiarCama">Limpiar</button>
+                </div>
+              </form>
+            </div>
+
+            <section class="result-card">
+              <div class="result-status">
+                <span class="dot"></span>
+                <strong>Registre las camas del colaborador para consolidar la labor realizada.</strong>
+              </div>
+            </section>
+          </article>
+        </section>
+
+        <section class="results-grid desbotonado-results">
+          <article class="metric">
+            <span>Camas registradas</span>
+            <strong id="totalCamas">0</strong>
+          </article>
+          <article class="metric">
+            <span>Tallos desbotonados</span>
+            <strong id="totalTallos">0</strong>
+          </article>
+        </section>
+
+        <section class="scanner-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="scan-label">Detalle de la jornada</span>
+              <p class="hint" id="nombreResumenTabla">Camas registradas en esta sesión.</p>
+            </div>
+            <button type="button" class="ghost-btn" id="btnNuevoDesbotonador">Nuevo colaborador</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Bloque</th>
+                  <th>Cama</th>
+                  <th>Medios cuadros</th>
+                  <th>Tallos</th>
+                </tr>
+              </thead>
+              <tbody id="tablaRegistros">
+                <tr><td colspan="5">Todavía no hay camas registradas.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="vistaTiempos" class="desbotonado-view" hidden>
+        <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+          <article class="scanner-panel">
+            <div class="exit-row" style="grid-template-columns:1fr 1fr;">
+              <div class="time-card">
+                <label>Horas Laborales
+                  <input id="horasLaboralesMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Horas Extra
+                  <input id="horasExtraMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>PMadres
+                  <input id="pMadresMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>PAbuelas
+                  <input id="pAbuelasMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Desplazamiento
+                  <input id="desplazamientoMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Calistenia, Acondicionamiento, Fortalecimiento
+                  <input id="calisteniaMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Capacitación, Reunión
+                  <input id="capacitacionMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos">
+                </label>
+              </div>
+              <div class="time-card">
+                <label>Otras labores (automático)
+                  <input id="otrasLaboresMin" type="number" value="0" readonly>
+                </label>
+              </div>
+            </div>
+
+            <div class="time-summary" style="margin-top:16px;">
+              <section class="result-card">
+                <div>
+                  <span class="scan-label">Tiempo disponible</span>
+                  <strong id="tiempoDisponibleTexto" style="display:block;margin-top:6px;">0 min</strong>
+                </div>
+              </section>
+              <section class="result-card">
+                <div>
+                  <span class="scan-label">Tiempo real dedicado a la labor</span>
+                  <strong id="tiempoRealTexto" style="display:block;margin-top:6px;">0 min</strong>
+                </div>
+              </section>
+            </div>
+
+            <div class="action-row" style="margin-top:18px;">
+              <button id="guardarTiemposBtn" class="success-btn" type="button">Guardar tiempos</button>
+              <button id="limpiarTiemposBtn" class="ghost-btn" type="button">Limpiar</button>
+            </div>
+
+            <section class="result-card" aria-live="polite">
+              <div class="result-status" id="tiemposResultStatus">
+                <span class="dot"></span>
+                <strong id="tiemposResultState">Ingresa los tiempos en minutos para calcular el tiempo real de labor.</strong>
+              </div>
+            </section>
+          </article>
+        </section>
+
+        <section class="scanner-panel" style="margin-top:16px;">
+          <div class="panel-heading">
+            <div>
+              <span class="scan-label">Registros de tiempo guardados en este equipo</span>
+              <p class="hint" style="margin:6px 0 0;">Se guardan localmente mientras se define la API del módulo.</p>
+            </div>
+          </div>
+          <div id="tiemposRegistrosLista" class="pending-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const sesion=JSON.parse(sessionStorage.getItem('labores_usuario')||'null');
+      if(!sesion){window.location.replace('./login.html');}
+      else{document.querySelector('#usuarioPill').textContent=sesion.empleadoNombre||sesion.username;}
+      document.querySelector('#apiStatusPill').textContent=navigator.onLine?'En línea':'Sin conexión';
+    </script>
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./desbotonado-mallas.js?v=1.0.37"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>
