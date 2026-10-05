@@ -8,7 +8,217 @@ const densidadInput = document.querySelector("#densidad");
 const sembradorBuscar = document.querySelector("#sembradorBuscar");
 const sembradorLista = document.querySelector("#sembradorLista");
 const sembradorSeleccionadoEl = document.querySelector("#sembradorSeleccionado");
+const tipoFlorSelect = document.querySelector("#tipoFlor");
 const variedadSelect = document.querySelector("#variedad");
+
+const VARIEDADES_POR_TIPO = {
+  "CREMON": [
+    "9551° (KOLOUSSUS)",
+    "ABRIANA",
+    "ALJONKA DARK",
+    "ANDREA CR",
+    "ARCTIC QUEEN CR",
+    "ASTROID",
+    "BACHATA",
+    "BERNAL CR",
+    "CADIZ",
+    "CHESTNUT",
+    "CONTESSA",
+    "CORAZON",
+    "COOPER",
+    "FUZZBALL",
+    "GALORE",
+    "GRAND PRESTIGE",
+    "KAMALIYA",
+    "LAMIRA",
+    "LINETTE CR",
+    "LOTSO",
+    "MAGNUM",
+    "MAISY CR",
+    "MORGAN",
+    "PETRUSKA",
+    "PRIMAVERA",
+    "PURA",
+    "RED TORNADO",
+    "ROJO",
+    "ROSSANO",
+    "ROSSETA",
+    "SOLEMIO",
+    "TUSCA CR"
+  ],
+  "CUSHION": [
+    "ALLSTAR",
+    "ANDREA",
+    "ARCTIC QUEEN",
+    "AVILA",
+    "BERNAL",
+    "BRAZUCA",
+    "CHAMPAGNE YELLOW",
+    "CHIANTI",
+    "CORAZON",
+    "COOPER",
+    "CREME BRULEE",
+    "CRUISE",
+    "DARK COPPER",
+    "DORITO",
+    "FOGATA",
+    "FORRESTER",
+    "GRAND PRESTIGE",
+    "HERTZ",
+    "IMPULSE",
+    "LAMIRA",
+    "LEMONADA",
+    "LINETTE",
+    "LOVATO",
+    "LOVATO APRICOT",
+    "MADERA",
+    "MAISY",
+    "MAISY LIME",
+    "PRINZ",
+    "RANJA",
+    "RAPSBERRY BRULEE",
+    "REAL DEAL",
+    "ROCK",
+    "SEI RUBEUS",
+    "SKYLIE",
+    "SNOW CREST",
+    "SOLEADO",
+    "SWEET DREAMS",
+    "TESTARROSA",
+    "TRISSIA",
+    "VERITY",
+    "VERONICA",
+    "VERONICA PEACH",
+    "YOLANDA",
+    "ZUMBA"
+  ],
+  "DAISY": [
+    "AIRBRUSH",
+    "ALMA",
+    "AMETHYST DARK",
+    "AQUAREL PINK",
+    "ATLANTIS",
+    "ATLANTIS DARK PINK",
+    "ATLANTIS ORANGE",
+    "BRAHMA",
+    "BRASSA",
+    "BRAZILIAM",
+    "CANCAN",
+    "CAÑO CRISTALES",
+    "COLORADO SPRING",
+    "DENZEL",
+    "DOREMI",
+    "FACTOR",
+    "FELINA",
+    "FIREFLY",
+    "FUNSTRIPE",
+    "KALI PROV.",
+    "KANATA",
+    "KARLO",
+    "KINTARO",
+    "LINA",
+    "MADDOX",
+    "MANAGUA ORANGE",
+    "MELINDA",
+    "MELROSE",
+    "MELROSE DARK",
+    "MORNING",
+    "PLASMA",
+    "PRADA SWEET",
+    "RANDALL",
+    "RUBLE",
+    "SPECTRA",
+    "STRIPY",
+    "SUNNY DAY",
+    "TEQUILA SUNRISE",
+    "TOP DOLLAR",
+    "UVITA",
+    "VALENTINO",
+    "VESPA SPLENDID",
+    "VITAMIN C"
+  ],
+  "MICROPOMPON BUTTON": [
+    "CANDY CRUSH MINT",
+    "CANDY CRUSH PINK",
+    "CANDY CRUSH PURPLE",
+    "CANDY CRUSH RED",
+    "CANDY CRUSH WHITE",
+    "CANDY CRUSH YELLOW",
+    "DOTTY BRONZE",
+    "DOTTY PINK",
+    "KAROL (12038)",
+    "ORO"
+  ],
+  "MICROPOMPON DAISY": [
+    "ESPERANZA PURA",
+    "GREICY",
+    "ILSEY",
+    "KATY",
+    "LUCY",
+    "MOLLY PURPLE",
+    "MOLLY YELLOW",
+    "PANCRAS DARK",
+    "PICANTE",
+    "REESES",
+    "SUPER B",
+    "WALLACE",
+    "YING YANG XL",
+    "YODA"
+  ],
+  "NOVELTY": [
+    "AIPOM",
+    "ALEMANI",
+    "AMARIS",
+    "ARTIGAS",
+    "BLANCA NIEVES",
+    "BONSAI",
+    "CABARET",
+    "CHIKORITA",
+    "CRESTA PURPLE",
+    "DELIROCK",
+    "DELIROCK PINK",
+    "FLORANGE DARK",
+    "FUZZBALL",
+    "HOT ROD",
+    "HOW SWEET",
+    "LAURISSIA",
+    "LEXI",
+    "LIVY",
+    "MARK TWAIN",
+    "NIVEA",
+    "OKADA",
+    "PAINT BALL SUNNY",
+    "PASION BELEN",
+    "PILOT",
+    "PINKON",
+    "PRINCESS PEACH",
+    "ROSELLE",
+    "ROSSIA",
+    "SHORTCAKE",
+    "SHORTCAKE BRONZE",
+    "SOLAR ECLIPSE",
+    "TARAPACA",
+    "TIARA",
+    "WHATSAPP",
+    "ZIPPO"
+  ],
+  "SPIDER": [
+    "ALIS",
+    "ANASTASIA DARK GREEN",
+    "ANASTASIA YELLOW",
+    "BAMBU",
+    "CALAFURIA",
+    "CALAFURIA SUNNY",
+    "CHISPA",
+    "ELEVEN",
+    "MARCELA",
+    "MIMOSA",
+    "SELDIS",
+    "TIANA DARK",
+    "TOPSPIN",
+    "WALHALLA"
+  ]
+};
 const guardarBtn = document.querySelector("#guardarBtn");
 const limpiarBtn = document.querySelector("#limpiarBtn");
 const resultStatus = document.querySelector("#resultStatus");
@@ -80,6 +290,25 @@ crearBuscador({
   },
 });
 
+function cargarVariedadesDelTipo() {
+  const tipo = tipoFlorSelect.value;
+  const variedades = VARIEDADES_POR_TIPO[tipo] || [];
+
+  variedadSelect.innerHTML = "";
+  if (!tipo) {
+    variedadSelect.disabled = true;
+    variedadSelect.innerHTML = '<option value="">Seleccione primero el tipo de flor</option>';
+    return;
+  }
+
+  variedadSelect.disabled = false;
+  variedadSelect.innerHTML =
+    '<option value="">Seleccione una variedad</option>' +
+    variedades.map((nombre) => `<option value="${nombre}">${nombre}</option>`).join("");
+}
+
+tipoFlorSelect.addEventListener("change", cargarVariedadesDelTipo);
+
 function limpiarFormulario() {
   fechaInput.value = fechaLocal();
   densidadInput.value = "";
@@ -87,7 +316,8 @@ function limpiarFormulario() {
   sembradorBuscar.value = "";
   sembradorLista.innerHTML = "";
   sembradorSeleccionadoEl.textContent = "Sin sembrador seleccionado";
-  variedadSelect.value = "";
+  tipoFlorSelect.value = "";
+  cargarVariedadesDelTipo();
 }
 
 async function renderRegistros() {
@@ -98,6 +328,7 @@ async function renderRegistros() {
     ? registros.slice(0, 20).map((r) => `
         <article class="pending-item">
           <strong>${r.fecha} · ${r.variedadNombre}</strong>
+          <span>Tipo de flor: ${r.tipoFlor || "—"}</span>
           <span>Sembrador: ${r.sembradorNombre}</span>
           <span>Densidad: ${r.densidad}</span>
         </article>
@@ -113,9 +344,11 @@ async function guardarRegistro() {
   if (!densidad) return marcarResultado("error", "Ingresa la densidad.");
   if (!/^\d+$/.test(densidad)) return marcarResultado("error", "La densidad debe contener solo números.");
   if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
+  if (!tipoFlorSelect.value) return marcarResultado("error", "Selecciona el tipo de flor.");
   if (!variedadSelect.value) return marcarResultado("error", "Selecciona una variedad.");
 
   const sembradorCodigo = sembradorSeleccionado.codigo || sembradorSeleccionado.docid || sembradorSeleccionado.id;
+  const tipoFlor = tipoFlorSelect.value;
   const variedadNombre = variedadSelect.value;
 
   const registro = {
@@ -124,6 +357,7 @@ async function guardarRegistro() {
     densidad: Number(densidad),
     sembrador: String(sembradorCodigo),
     sembradorNombre: sembradorSeleccionado.nombre || sembradorSeleccionado.empleadoNombre || String(sembradorCodigo),
+    tipoFlor,
     variedad: variedadNombre,
     variedadNombre,
     usuario: sesionBandejas?.username || "",
