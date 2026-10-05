@@ -8,9 +8,7 @@ const densidadInput = document.querySelector("#densidad");
 const sembradorBuscar = document.querySelector("#sembradorBuscar");
 const sembradorLista = document.querySelector("#sembradorLista");
 const sembradorSeleccionadoEl = document.querySelector("#sembradorSeleccionado");
-const variedadBuscar = document.querySelector("#variedadBuscar");
-const variedadLista = document.querySelector("#variedadLista");
-const variedadSeleccionadaEl = document.querySelector("#variedadSeleccionada");
+const variedadSelect = document.querySelector("#variedad");
 const guardarBtn = document.querySelector("#guardarBtn");
 const limpiarBtn = document.querySelector("#limpiarBtn");
 const resultStatus = document.querySelector("#resultStatus");
@@ -19,9 +17,8 @@ const registrosLista = document.querySelector("#registrosLista");
 
 usuarioPill.textContent = sesionBandejas?.empleadoNombre || sesionBandejas?.username || "Usuario";
 
-let catalogos = { empleados: [], variedades: [] };
+let catalogos = { empleados: [] };
 let sembradorSeleccionado = null;
-let variedadSeleccionada = null;
 
 function fechaLocal() {
   const hoy = new Date();
@@ -39,10 +36,6 @@ function marcarResultado(tipo, mensaje) {
 
 function etiquetaEmpleado(item) {
   return `${item.nombre || item.empleadoNombre || item.codigo} (${item.codigo || item.docid || item.id})`;
-}
-
-function etiquetaVariedad(item) {
-  return item.nombre || item.descripcion || item.codigo;
 }
 
 function crearBuscador({ input, lista, items, etiqueta, seleccionar, mensajeVacio }) {
@@ -87,29 +80,14 @@ crearBuscador({
   },
 });
 
-crearBuscador({
-  input: variedadBuscar,
-  lista: variedadLista,
-  items: () => catalogos.variedades,
-  etiqueta: etiquetaVariedad,
-  mensajeVacio: "No hay variedades disponibles en el catálogo local.",
-  seleccionar: (item) => {
-    variedadSeleccionada = item;
-    variedadSeleccionadaEl.textContent = `${etiquetaVariedad(item)}${item.codigo ? ` (${item.codigo})` : ""}`;
-  },
-});
-
 function limpiarFormulario() {
   fechaInput.value = fechaLocal();
   densidadInput.value = "";
   sembradorSeleccionado = null;
-  variedadSeleccionada = null;
   sembradorBuscar.value = "";
-  variedadBuscar.value = "";
   sembradorLista.innerHTML = "";
-  variedadLista.innerHTML = "";
   sembradorSeleccionadoEl.textContent = "Sin sembrador seleccionado";
-  variedadSeleccionadaEl.textContent = "Sin variedad seleccionada";
+  variedadSelect.value = "";
 }
 
 async function renderRegistros() {
@@ -135,10 +113,10 @@ async function guardarRegistro() {
   if (!densidad) return marcarResultado("error", "Ingresa la densidad.");
   if (!/^\d+$/.test(densidad)) return marcarResultado("error", "La densidad debe contener solo números.");
   if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
-  if (!variedadSeleccionada) return marcarResultado("error", "Selecciona una variedad.");
+  if (!variedadSelect.value) return marcarResultado("error", "Selecciona una variedad.");
 
   const sembradorCodigo = sembradorSeleccionado.codigo || sembradorSeleccionado.docid || sembradorSeleccionado.id;
-  const variedadCodigo = variedadSeleccionada.codigo || variedadSeleccionada.id;
+  const variedadNombre = variedadSelect.value;
 
   const registro = {
     id: SyncEngine.generarUUID(),
@@ -146,8 +124,8 @@ async function guardarRegistro() {
     densidad: Number(densidad),
     sembrador: String(sembradorCodigo),
     sembradorNombre: sembradorSeleccionado.nombre || sembradorSeleccionado.empleadoNombre || String(sembradorCodigo),
-    variedad: String(variedadCodigo),
-    variedadNombre: variedadSeleccionada.nombre || variedadSeleccionada.descripcion || String(variedadCodigo),
+    variedad: variedadNombre,
+    variedadNombre,
     usuario: sesionBandejas?.username || "",
     syncStatus: "PendienteBackend",
     createdAt: new Date().toISOString(),
@@ -163,14 +141,12 @@ async function cargarCatalogos() {
   try {
     const local = await SyncEngine.obtenerCatalogosLocal();
     catalogos.empleados = (local.empleados || []).filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
-    catalogos.variedades = local.variedades || [];
 
     if (navigator.onLine) {
       try {
         await SyncEngine.sincronizarCatalogos();
         const actualizados = await SyncEngine.obtenerCatalogosLocal();
         catalogos.empleados = (actualizados.empleados || []).filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
-        catalogos.variedades = actualizados.variedades || [];
         estadoPill.textContent = "Catálogos actualizados";
         estadoPill.classList.add("ok");
       } catch {
@@ -179,8 +155,8 @@ async function cargarCatalogos() {
       }
     }
 
-    if (!catalogos.empleados.length || !catalogos.variedades.length) {
-      marcarResultado("warning", "Conéctate una vez para descargar sembradores y variedades.");
+    if (!catalogos.empleados.length) {
+      marcarResultado("warning", "Conéctate una vez para descargar los sembradores.");
     }
   } catch {
     marcarResultado("error", "No fue posible cargar los catálogos del equipo.");
