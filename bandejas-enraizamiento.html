@@ -73,29 +73,33 @@
         </section>
       </header>
 
-      <nav class="bandejas-tabs" aria-label="Vistas de Bandejas Enraizamiento">
-        <button class="bandejas-tab active" type="button" data-bandejas-vista="registro">Registro de labor</button>
-        <button class="bandejas-tab" type="button" data-bandejas-vista="tiempos">Tiempos otras actividades</button>
-      </nav>
+      <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+        <article class="scanner-panel">
+          <div class="exit-row" style="grid-template-columns: 1fr;">
+            <label>Fecha
+              <input id="fecha" type="date" required />
+            </label>
+          </div>
+
+          <div>
+            <span class="scan-label">Sembrador</span>
+            <input id="sembradorBuscar" type="text" placeholder="Buscar sembrador por nombre o código…" autocomplete="off" />
+            <div id="sembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
+            <p class="hint" id="sembradorSeleccionado" style="margin: 6px 0 0;">Sin sembrador seleccionado</p>
+          </div>
+
+          <nav class="bandejas-tabs" aria-label="Vistas de Bandejas Enraizamiento" style="margin-top:16px;margin-bottom:0;">
+            <button class="bandejas-tab active" type="button" data-bandejas-vista="registro">Registro de labor</button>
+            <button class="bandejas-tab" type="button" data-bandejas-vista="tiempos">Tiempos otras actividades</button>
+          </nav>
+        </article>
+      </section>
 
       <section id="vistaRegistro" class="bandejas-view">
         <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
           <article class="scanner-panel">
             <form id="bandejasForm" onsubmit="return false;">
-            <div class="exit-row" style="grid-template-columns: 1fr;">
-              <label>Fecha
-                <input id="fecha" type="date" required />
-              </label>
-            </div>
-
-            <div>
-              <span class="scan-label">Sembrador</span>
-              <input id="sembradorBuscar" type="text" placeholder="Buscar sembrador por nombre o código…" autocomplete="off" />
-              <div id="sembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
-              <p class="hint" id="sembradorSeleccionado" style="margin: 6px 0 0;">Sin sembrador seleccionado</p>
-            </div>
-
-            <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+            <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
               <label>Densidad
                 <select id="densidad" required>
                   <option value="">Seleccione una densidad</option>
@@ -160,18 +164,6 @@
       <section id="vistaTiempos" class="bandejas-view" hidden>
         <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
           <article class="scanner-panel">
-            <div>
-              <span class="scan-label">Fecha</span>
-              <input id="tiempoFecha" type="date" required />
-            </div>
-
-            <div style="margin-top:16px;">
-              <span class="scan-label">Sembrador</span>
-              <input id="tiempoSembradorBuscar" type="text" placeholder="Buscar sembrador por nombre o código…" autocomplete="off" />
-              <div id="tiempoSembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
-              <p class="hint" id="tiempoSembradorSeleccionado" style="margin: 6px 0 0;">Sin sembrador seleccionado</p>
-            </div>
-
             <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:18px;">
               <div class="time-card">
                 <label>Horas Laborales
@@ -259,7 +251,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.30"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.31"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

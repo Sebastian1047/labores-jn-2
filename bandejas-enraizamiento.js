@@ -230,11 +230,6 @@ const bandejasTabs = [...document.querySelectorAll("[data-bandejas-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
 const vistaTiempos = document.querySelector("#vistaTiempos");
 
-const tiempoFechaInput = document.querySelector("#tiempoFecha");
-const tiempoSembradorBuscar = document.querySelector("#tiempoSembradorBuscar");
-const tiempoSembradorLista = document.querySelector("#tiempoSembradorLista");
-const tiempoSembradorSeleccionadoEl = document.querySelector("#tiempoSembradorSeleccionado");
-
 const horasLaboralesMin = document.querySelector("#horasLaboralesMin");
 const horasExtraMin = document.querySelector("#horasExtraMin");
 const pMadresMin = document.querySelector("#pMadresMin");
@@ -255,7 +250,6 @@ usuarioPill.textContent = sesionBandejas?.empleadoNombre || sesionBandejas?.user
 
 let catalogos = { empleados: [] };
 let sembradorSeleccionado = null;
-let tiempoSembradorSeleccionado = null;
 
 function fechaLocal() {
   const hoy = new Date();
@@ -314,18 +308,6 @@ crearBuscador({
   seleccionar: (item) => {
     sembradorSeleccionado = item;
     sembradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
-  },
-});
-
-crearBuscador({
-  input: tiempoSembradorBuscar,
-  lista: tiempoSembradorLista,
-  items: () => catalogos.empleados,
-  etiqueta: etiquetaEmpleado,
-  mensajeVacio: "No hay sembradores disponibles en el catálogo local.",
-  seleccionar: (item) => {
-    tiempoSembradorSeleccionado = item;
-    tiempoSembradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
   },
 });
 
@@ -401,11 +383,6 @@ function marcarResultadoTiempos(tipo, mensaje) {
 }
 
 function limpiarFormularioTiempos() {
-  tiempoFechaInput.value = fechaLocal();
-  tiempoSembradorSeleccionado = null;
-  tiempoSembradorBuscar.value = "";
-  tiempoSembradorLista.innerHTML = "";
-  tiempoSembradorSeleccionadoEl.textContent = "Sin sembrador seleccionado";
   [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
   actualizarCalculoTiempos();
@@ -428,9 +405,9 @@ async function renderRegistrosTiempos() {
 }
 
 async function guardarTiempos() {
-  const fecha = tiempoFechaInput.value;
+  const fecha = fechaInput.value;
   if (!fecha) return marcarResultadoTiempos("error", "Selecciona la fecha.");
-  if (!tiempoSembradorSeleccionado) return marcarResultadoTiempos("error", "Selecciona un sembrador.");
+  if (!sembradorSeleccionado) return marcarResultadoTiempos("error", "Selecciona un sembrador.");
 
   const calculo = actualizarCalculoTiempos();
   if (calculo.disponible <= 0) {
@@ -438,17 +415,17 @@ async function guardarTiempos() {
   }
 
   const sembradorCodigo =
-    tiempoSembradorSeleccionado.codigo ||
-    tiempoSembradorSeleccionado.docid ||
-    tiempoSembradorSeleccionado.id;
+    sembradorSeleccionado.codigo ||
+    sembradorSeleccionado.docid ||
+    sembradorSeleccionado.id;
 
   const registro = {
     id: SyncEngine.generarUUID(),
     fecha,
     sembrador: String(sembradorCodigo),
     sembradorNombre:
-      tiempoSembradorSeleccionado.nombre ||
-      tiempoSembradorSeleccionado.empleadoNombre ||
+      sembradorSeleccionado.nombre ||
+      sembradorSeleccionado.empleadoNombre ||
       String(sembradorCodigo),
     horasLaboralesMin: calculo.laborales,
     horasExtraMin: calculo.extras,
