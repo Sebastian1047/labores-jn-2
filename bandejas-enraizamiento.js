@@ -227,6 +227,7 @@ const resultStatus = document.querySelector("#resultStatus");
 const resultState = document.querySelector("#resultState");
 const registrosTablaBody = document.querySelector("#registrosTablaBody");
 const registrosDiaHint = document.querySelector("#registrosDiaHint");
+const trabajadoresRegistradosLista = document.querySelector("#trabajadoresRegistradosLista");
 
 const bandejasTabs = [...document.querySelectorAll("[data-bandejas-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
@@ -270,6 +271,22 @@ function marcarResultado(tipo, mensaje) {
 function etiquetaEmpleado(item) {
   return `${item.nombre || item.empleadoNombre || item.codigo} (${item.codigo || item.docid || item.id})`;
 }
+function codigoEmpleado(item) {
+  return String(item?.codigo || item?.docid || item?.id || "");
+}
+
+function nombreEmpleado(item) {
+  return item?.nombre || item?.empleadoNombre || codigoEmpleado(item) || "Trabajador";
+}
+
+async function seleccionarSembrador(item, { limpiar = false } = {}) {
+  sembradorSeleccionado = item;
+  sembradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
+  sembradorBuscar.value = "";
+  sembradorLista.innerHTML = "";
+  if (limpiar) limpiarLabor();
+  await renderRegistros();
+}
 
 function crearBuscador({ input, lista, items, etiqueta, seleccionar, mensajeVacio }) {
   function render() {
@@ -308,8 +325,7 @@ crearBuscador({
   etiqueta: etiquetaEmpleado,
   mensajeVacio: "No hay sembradores disponibles en el catálogo local.",
   seleccionar: (item) => {
-    sembradorSeleccionado = item;
-    sembradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
+    seleccionarSembrador(item);
   },
 });
 
@@ -462,19 +478,62 @@ function limpiarFormularioCompleto() {
 
 async function renderRegistros() {
   const fecha = fechaInput.value;
-  const registros = (await OfflineDb.getAll("bandejasEnraizamiento"))
+  const todos = (await OfflineDb.getAll("bandejasEnraizamiento"))
     .filter((r) => !fecha || r.fecha === fecha)
     .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 
-  registrosDiaHint.textContent = fecha
-    ? `Registros acumulados del ${fecha}. Cada cambio de cama, densidad o variedad aparece como un registro independiente.`
-    : "Selecciona una fecha para ver los registros.";
+  const trabajadores = new Map();
+  todos.forEach((r) => {
+    const codigo = String(r.sembrador || "");
+    if (!codigo || trabajadores.has(codigo)) return;
+    trabajadores.set(codigo, {
+      codigo,
+      nombre: r.sembradorNombre || codigo,
+    });
+  });
+
+  const codigoActual = codigoEmpleado(sembradorSeleccionado);
+  trabajadoresRegistradosLista.innerHTML = trabajadores.size
+    ? [...trabajadores.values()].map((trabajador) => `
+        <button
+          class="trabajador-registro-btn ${trabajador.codigo === codigoActual ? "active" : ""}"
+          type="button"
+          data-trabajador-codigo="${trabajador.codigo}"
+        >${trabajador.nombre}</button>
+      `).join("")
+    : '<span class="hint">Todavía no hay trabajadores con registros para esta fecha.</span>';
+
+  trabajadoresRegistradosLista.querySelectorAll("[data-trabajador-codigo]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const codigo = btn.dataset.trabajadorCodigo;
+      const resumen = trabajadores.get(codigo);
+      const empleadoCatalogo = catalogos.empleados.find((item) => codigoEmpleado(item) === codigo);
+      const trabajador = empleadoCatalogo || {
+        codigo,
+        nombre: resumen?.nombre || codigo,
+      };
+      await seleccionarSembrador(trabajador, { limpiar: true });
+      sembradorBuscar.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+
+  if (!sembradorSeleccionado) {
+    registrosDiaHint.textContent = fecha
+      ? `Selecciona un sembrador. Abajo aparecen los trabajadores que ya tienen registros del ${fecha}.`
+      : "Selecciona una fecha y un sembrador.";
+    registrosTablaBody.innerHTML =
+      '<tr><td colspan="6">Selecciona un sembrador para ver sus registros.</td></tr>';
+    return;
+  }
+
+  const registros = todos.filter((r) => String(r.sembrador || "") === codigoActual);
+  registrosDiaHint.textContent =
+    `${nombreEmpleado(sembradorSeleccionado)} · ${fecha || "sin fecha"} · ${registros.length} registro(s).`;
 
   registrosTablaBody.innerHTML = registros.length
     ? registros.map((r, index) => `
         <tr>
           <td>${index + 1}</td>
-          <td>${r.sembradorNombre || r.sembrador || "—"}</td>
           <td>${r.bloque || "—"}</td>
           <td>${r.cama || "—"}</td>
           <td>${r.densidad ?? "—"}</td>
@@ -482,7 +541,7 @@ async function renderRegistros() {
           <td>${r.variedadNombre || r.variedad || "—"}</td>
         </tr>
       `).join("")
-    : '<tr><td colspan="7">Todavía no hay registros para esta fecha.</td></tr>';
+    : '<tr><td colspan="6">Este sembrador todavía no tiene registros para esta fecha.</td></tr>';
 }
 
 async function guardarRegistro() {
@@ -579,7 +638,9 @@ limpiarBtn.addEventListener("click", () => {
   marcarResultado(null, "Complete bloque, cama, densidad, cantidad y variedad para agregar el registro.");
 });
 
-fechaInput.addEventListener("change", renderRegistros);
+fechaInput.addEventListener("change", async () => {
+  await renderRegistros();
+});
 window.addEventListener("online", cargarCatalogos);
 
 (async function iniciarBandejas() {

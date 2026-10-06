@@ -72,6 +72,25 @@
         font-size: .84rem;
         color: #5f6f67;
       }
+      .trabajadores-registrados {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .trabajador-registro-btn {
+        border: 1px solid rgba(24, 122, 77, 0.22);
+        border-radius: 999px;
+        background: #f5faf7;
+        color: #184c35;
+        font-weight: 800;
+        padding: 9px 13px;
+        cursor: pointer;
+      }
+      .trabajador-registro-btn.active {
+        background: #187a4d;
+        color: #fff;
+      }
       @media (max-width: 640px) {
         .time-summary {
           grid-template-columns: 1fr;
@@ -139,8 +158,6 @@
                     <option value="128">128</option>
                   </select>
                 </label>
-              </div>
-
                 <label>Cantidad
                   <input id="cantidad" type="number" inputmode="numeric" min="1" step="1" placeholder="Ingrese cantidad" required />
                 </label>
@@ -168,7 +185,7 @@
             <section class="result-card" aria-live="polite">
               <div class="result-status" id="resultStatus">
                 <span class="dot"></span>
-                <strong id="resultState">Complete cama, densidad, cantidad y variedad para agregar el registro.</strong>
+                <strong id="resultState">Complete bloque, cama, densidad, cantidad y variedad para agregar el registro.</strong>
               </div>
             </section>
           </article>
@@ -177,9 +194,9 @@
         <section class="scanner-panel" style="margin-top:16px;">
           <div class="panel-heading">
             <div>
-              <span class="scan-label">Registros del día por trabajador</span>
+              <span class="scan-label">Registros del sembrador actual</span>
               <p class="hint" id="registrosDiaHint" style="margin:6px 0 0;">
-                Aquí puedes ver lo que lleva registrado cada trabajador para la fecha seleccionada.
+                Selecciona un sembrador para ver únicamente sus registros.
               </p>
             </div>
           </div>
@@ -188,7 +205,6 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Trabajador</th>
                   <th>Bloque</th>
                   <th>Cama</th>
                   <th>Densidad</th>
@@ -197,9 +213,15 @@
                 </tr>
               </thead>
               <tbody id="registrosTablaBody">
-                <tr><td colspan="7">Todavía no hay registros para esta fecha.</td></tr>
+                <tr><td colspan="6">Selecciona un sembrador para ver sus registros.</td></tr>
               </tbody>
             </table>
+          </div>
+
+          <div style="margin-top:18px;">
+            <span class="scan-label">Trabajadores con registros</span>
+            <p class="hint" style="margin:6px 0 0;">Toca un nombre para cargar ese trabajador en el formulario y continuar agregando registros.</p>
+            <div id="trabajadoresRegistradosLista" class="trabajadores-registrados"></div>
           </div>
         </section>
       </section>
@@ -294,7 +316,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.42"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.43"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

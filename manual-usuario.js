@@ -85,7 +85,8 @@ const MANUALES = {
       "Si la misma densidad se reparte entre dos camas, agrega un registro independiente para cada cama.",
       "Si cambia la densidad aunque continúe en la misma cama, agrega un nuevo registro.",
       "Si cambia la variedad, agrega un nuevo registro.",
-      "La tabla inferior permite revisar lo acumulado por cada trabajador para la fecha seleccionada.",
+      "La tabla inferior muestra únicamente los registros del sembrador seleccionado.",
+      "Debajo de la tabla aparecen los nombres de los trabajadores que ya tienen registros; toca un nombre para cargarlo nuevamente en el formulario y seguir agregando registros.",
       "En Tiempos ingresa los minutos de Horas Laborales y, si aplica, Horas Extra.",
       "Registra los minutos destinados a PMadres, PAbuelas, Desplazamiento, Calistenia/Acondicionamiento/Fortalecimiento y Capacitación/Reunión.",
       "Revisa Tiempo disponible y Tiempo real dedicado a la labor y pulsa Guardar tiempos."
