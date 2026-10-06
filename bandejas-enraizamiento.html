@@ -120,9 +120,15 @@
           <article class="scanner-panel">
             <form id="bandejasForm" onsubmit="return false;">
               <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+                <label>Bloque
+                  <input id="bloque" type="text" autocomplete="off" placeholder="Ingrese el bloque" required />
+                </label>
                 <label>Cama
                   <input id="cama" type="text" autocomplete="off" placeholder="Ingrese la cama" required />
                 </label>
+              </div>
+
+              <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:16px;">
                 <label>Densidad
                   <select id="densidad" required>
                     <option value="">Seleccione una densidad</option>
@@ -135,10 +141,12 @@
                 </label>
               </div>
 
-              <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:16px;">
                 <label>Cantidad
                   <input id="cantidad" type="number" inputmode="numeric" min="1" step="1" placeholder="Ingrese cantidad" required />
                 </label>
+              </div>
+
+              <div style="margin-top:16px;">
                 <label>Variedad
                   <select id="variedad" required>
                     <option value="">Seleccione una variedad</option>
@@ -148,7 +156,7 @@
             </form>
 
             <p class="hint" style="margin:14px 0 0;">
-              Agrega un registro nuevo cada vez que cambie la cama, la densidad o la variedad.
+              Agrega un registro nuevo cada vez que cambie el bloque, la cama, la densidad o la variedad.
               Si una misma densidad queda repartida en dos camas, registra una fila por cada cama.
             </p>
 
@@ -181,6 +189,7 @@
                 <tr>
                   <th>#</th>
                   <th>Trabajador</th>
+                  <th>Bloque</th>
                   <th>Cama</th>
                   <th>Densidad</th>
                   <th>Cantidad</th>
@@ -188,7 +197,7 @@
                 </tr>
               </thead>
               <tbody id="registrosTablaBody">
-                <tr><td colspan="6">Todavía no hay registros para esta fecha.</td></tr>
+                <tr><td colspan="7">Todavía no hay registros para esta fecha.</td></tr>
               </tbody>
             </table>
           </div>
@@ -285,7 +294,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.41"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.42"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

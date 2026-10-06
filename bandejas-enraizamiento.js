@@ -4,6 +4,7 @@ if (!sesionBandejas) window.location.href = "./login.html";
 const usuarioPill = document.querySelector("#usuarioPill");
 const estadoPill = document.querySelector("#estadoPill");
 const fechaInput = document.querySelector("#fecha");
+const bloqueInput = document.querySelector("#bloque");
 const camaInput = document.querySelector("#cama");
 const densidadInput = document.querySelector("#densidad");
 const cantidadInput = document.querySelector("#cantidad");
@@ -443,6 +444,7 @@ async function guardarTiempos() {
 }
 
 function limpiarLabor() {
+  bloqueInput.value = "";
   camaInput.value = "";
   densidadInput.value = "";
   cantidadInput.value = "";
@@ -473,23 +475,26 @@ async function renderRegistros() {
         <tr>
           <td>${index + 1}</td>
           <td>${r.sembradorNombre || r.sembrador || "—"}</td>
+          <td>${r.bloque || "—"}</td>
           <td>${r.cama || "—"}</td>
           <td>${r.densidad ?? "—"}</td>
           <td>${r.cantidad ?? "—"}</td>
           <td>${r.variedadNombre || r.variedad || "—"}</td>
         </tr>
       `).join("")
-    : '<tr><td colspan="6">Todavía no hay registros para esta fecha.</td></tr>';
+    : '<tr><td colspan="7">Todavía no hay registros para esta fecha.</td></tr>';
 }
 
 async function guardarRegistro() {
   const fecha = fechaInput.value;
+  const bloque = bloqueInput.value.trim();
   const cama = camaInput.value.trim();
   const densidad = densidadInput.value.trim();
   const cantidad = cantidadInput.value.trim();
 
   if (!fecha) return marcarResultado("error", "Selecciona la fecha.");
   if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
+  if (!bloque) return marcarResultado("error", "Ingresa el bloque.");
   if (!cama) return marcarResultado("error", "Ingresa la cama.");
   if (!densidad) return marcarResultado("error", "Selecciona la densidad.");
   if (!cantidad) return marcarResultado("error", "Ingresa la cantidad.");
@@ -507,6 +512,7 @@ async function guardarRegistro() {
   const registro = {
     id: SyncEngine.generarUUID(),
     fecha,
+    bloque,
     cama,
     densidad: Number(densidad),
     cantidad: Number(cantidad),
@@ -525,10 +531,10 @@ async function guardarRegistro() {
   await OfflineDb.put("bandejasEnraizamiento", registro);
   marcarResultado(
     "ok",
-    `Registro agregado: ${registro.sembradorNombre} · Cama ${registro.cama} · Densidad ${registro.densidad} · ${registro.variedadNombre}.`
+    `Registro agregado: ${registro.sembradorNombre} · Bloque ${registro.bloque} · Cama ${registro.cama} · Densidad ${registro.densidad} · ${registro.variedadNombre}.`
   );
 
-  // Mantener trabajador, fecha, cama, densidad y variedad facilita registrar los escenarios
+  // Mantener trabajador, fecha, bloque, cama, densidad y variedad facilita registrar los escenarios
   // consecutivos; solo se limpia la cantidad para evitar repetirla por accidente.
   cantidadInput.value = "";
   cantidadInput.focus();
@@ -570,7 +576,7 @@ limpiarTiemposBtn.addEventListener("click", () => {
 
 limpiarBtn.addEventListener("click", () => {
   limpiarLabor();
-  marcarResultado(null, "Complete cama, densidad, cantidad y variedad para agregar el registro.");
+  marcarResultado(null, "Complete bloque, cama, densidad, cantidad y variedad para agregar el registro.");
 });
 
 fechaInput.addEventListener("change", renderRegistros);

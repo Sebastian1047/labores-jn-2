@@ -80,7 +80,7 @@ const MANUALES = {
     objetivo: "Registrar por trabajador cada combinación de cama, densidad y variedad, y calcular el tiempo real dedicado a la labor.",
     pasos: [
       "Verifica la Fecha y selecciona el Sembrador.",
-      "En Registro de labor ingresa la Cama, selecciona la Densidad, ingresa la Cantidad y selecciona la Variedad.",
+      "En Registro de labor ingresa el Bloque y la Cama, selecciona la Densidad, ingresa la Cantidad y selecciona la Variedad.",
       "Pulsa + Agregar registro. El registro aparecerá en la tabla Registros del día por trabajador.",
       "Si la misma densidad se reparte entre dos camas, agrega un registro independiente para cada cama.",
       "Si cambia la densidad aunque continúe en la misma cama, agrega un nuevo registro.",
@@ -91,7 +91,7 @@ const MANUALES = {
       "Revisa Tiempo disponible y Tiempo real dedicado a la labor y pulsa Guardar tiempos."
     ],
     notas: [
-      "Cada cambio de cama, densidad o variedad genera un registro independiente.",
+      "Cada cambio de bloque, cama, densidad o variedad genera un registro independiente.",
       "Después de agregar un registro se conserva el trabajador y los datos de labor, pero se limpia la Cantidad para reducir duplicados accidentales.",
       "Tiempo real = Horas Laborales + Horas Extra - Otras labores.",
       "Los campos de tiempos se diligencian en minutos."
