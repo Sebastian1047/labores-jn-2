@@ -15,6 +15,9 @@ const colaboradorEtiqueta = document.querySelector("#colaboradorEtiqueta");
 const colaboradorBuscar = document.querySelector("#colaboradorBuscar");
 const colaboradorLista = document.querySelector("#colaboradorLista");
 const colaboradorSeleccionadoEl = document.querySelector("#colaboradorSeleccionado");
+const ubicacionCortador = document.querySelector("#ubicacionCortador");
+const bloqueCortador = document.querySelector("#bloqueCortador");
+const camaCortador = document.querySelector("#camaCortador");
 const estadoModulo = document.querySelector("#estadoModulo");
 
 const roleTabs = [...document.querySelectorAll("[data-corte-rol]")];
@@ -43,6 +46,7 @@ usuarioPill.textContent = sesionCorte?.empleadoNombre || sesionCorte?.username |
 let rolActivo = "cortador";
 let vistaActiva = "registro";
 let colaboradores = [];
+let camasCatalogo = [];
 let colaboradorSeleccionado = null;
 
 function fechaLocal() {
@@ -65,6 +69,49 @@ function etiquetaEmpleado(item) {
   const nombre = item.nombre || item.empleadoNombre || item.codigo || "Sin nombre";
   const codigo = item.codigo || item.docid || item.id || "—";
   return `${nombre} (${codigo})`;
+}
+function valorCatalogo(item, minuscula, mayuscula) {
+  return String(item?.[minuscula] ?? item?.[mayuscula] ?? "").trim();
+}
+
+function cargarBloquesCortador() {
+  const bloques = [...new Set(
+    camasCatalogo.map((item) => valorCatalogo(item, "bloque", "Bloque")).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+
+  bloqueCortador.innerHTML =
+    '<option value="">Seleccione un bloque</option>' +
+    bloques.map((bloque) => `<option value="${bloque}">${bloque}</option>`).join("");
+
+  cargarCamasCortador();
+}
+
+function cargarCamasCortador() {
+  const bloque = bloqueCortador.value;
+  const camas = [...new Set(
+    camasCatalogo
+      .filter((item) => valorCatalogo(item, "bloque", "Bloque") === bloque)
+      .map((item) => valorCatalogo(item, "cama", "Cama"))
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+
+  if (!bloque) {
+    camaCortador.disabled = true;
+    camaCortador.innerHTML = '<option value="">Seleccione primero un bloque</option>';
+    return;
+  }
+
+  camaCortador.disabled = false;
+  camaCortador.innerHTML =
+    '<option value="">Seleccione una cama</option>' +
+    camas.map((cama) => `<option value="${cama}">${cama}</option>`).join("");
+}
+
+bloqueCortador.addEventListener("change", cargarCamasCortador);
+
+function limpiarUbicacionCortador() {
+  bloqueCortador.value = "";
+  cargarCamasCortador();
 }
 
 function renderListaColaboradores() {
@@ -114,6 +161,8 @@ function aplicarRol(rol) {
   corteTitulo.textContent = `${datos.icono} Corte - ${datos.nombre}`;
   colaboradorEtiqueta.textContent = datos.nombre;
   colaboradorBuscar.placeholder = `Buscar ${datos.nombre.toLowerCase()} por nombre o código…`;
+  ubicacionCortador.hidden = rolActivo !== "cortador";
+  if (rolActivo !== "cortador") limpiarUbicacionCortador();
   limpiarColaborador();
   aplicarVista("registro");
   renderRegistrosTiempos();
@@ -272,6 +321,8 @@ async function cargarColaboradores() {
     colaboradores = (local.empleados || []).filter(
       (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
     );
+    camasCatalogo = local.camas || [];
+    cargarBloquesCortador();
 
     if (navigator.onLine) {
       try {
@@ -280,6 +331,8 @@ async function cargarColaboradores() {
         colaboradores = (actualizados.empleados || []).filter(
           (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
         );
+        camasCatalogo = actualizados.camas || [];
+        cargarBloquesCortador();
         estadoPill.textContent = "Catálogos actualizados";
         estadoPill.classList.remove("warn");
         estadoPill.classList.add("ok");

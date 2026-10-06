@@ -122,6 +122,7 @@ const MANUALES = {
     pasos: [
       "Selecciona arriba Cortador, Transportador o Recogedor.",
       "Verifica la Fecha y busca el colaborador correspondiente al rol seleccionado.",
+      "Cuando trabajes como Cortador, selecciona el Bloque y luego la Cama debajo del buscador del cortador.",
       "Usa Registrar labor para ingresar la información operativa cuando los campos del rol estén habilitados.",
       "En Tiempos registra Horas Laborales y Horas Extra en minutos.",
       "Registra PMadres, PAbuelas, Desplazamiento, Calistenia/Acondicionamiento/Fortalecimiento y Capacitación/Reunión.",

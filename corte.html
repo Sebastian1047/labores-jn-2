@@ -100,6 +100,19 @@
             <p class="hint" id="colaboradorSeleccionado" style="margin: 6px 0 0;">Sin cortador seleccionado</p>
           </div>
 
+          <div id="ubicacionCortador" class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:16px;">
+            <label>Bloque
+              <select id="bloqueCortador" required>
+                <option value="">Seleccione un bloque</option>
+              </select>
+            </label>
+            <label>Cama
+              <select id="camaCortador" required disabled>
+                <option value="">Seleccione primero un bloque</option>
+              </select>
+            </label>
+          </div>
+
           <nav class="corte-subtabs" aria-label="Opciones del formulario de Corte" style="margin-top:16px;margin-bottom:0;">
             <button class="corte-subtab active" type="button" data-corte-vista="registro">Registrar labor</button>
             <button class="corte-subtab" type="button" data-corte-vista="tiempos">Tiempos</button>
@@ -210,7 +223,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./corte.js?v=1.0.34"></script>
+    <script src="./corte.js?v=1.0.46"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
