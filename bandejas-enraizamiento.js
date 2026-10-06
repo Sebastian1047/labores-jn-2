@@ -254,6 +254,22 @@ usuarioPill.textContent = sesionBandejas?.empleadoNombre || sesionBandejas?.user
 let catalogos = { empleados: [] };
 let sembradorSeleccionado = null;
 
+const SEMBRADORES_PRUEBA = [
+  { codigo: "PRUEBA001", nombre: "SEMBRADOR PRUEBA 1", activo: true, esPrueba: true },
+  { codigo: "PRUEBA002", nombre: "SEMBRADOR PRUEBA 2", activo: true, esPrueba: true },
+  { codigo: "PRUEBA003", nombre: "SEMBRADOR PRUEBA 3", activo: true, esPrueba: true },
+  { codigo: "PRUEBA004", nombre: "SEMBRADOR PRUEBA 4", activo: true, esPrueba: true },
+];
+
+function incluirSembradoresPrueba(empleados) {
+  const reales = Array.isArray(empleados) ? empleados : [];
+  const codigos = new Set(reales.map((item) => codigoEmpleado(item)));
+  return [
+    ...SEMBRADORES_PRUEBA.filter((item) => !codigos.has(item.codigo)),
+    ...reales,
+  ];
+}
+
 function fechaLocal() {
   const hoy = new Date();
   const yyyy = hoy.getFullYear();
@@ -603,13 +619,17 @@ async function guardarRegistro() {
 async function cargarCatalogos() {
   try {
     const local = await SyncEngine.obtenerCatalogosLocal();
-    catalogos.empleados = (local.empleados || []).filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
+    catalogos.empleados = incluirSembradoresPrueba(
+      (local.empleados || []).filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true)
+    );
 
     if (navigator.onLine) {
       try {
         await SyncEngine.sincronizarCatalogos();
         const actualizados = await SyncEngine.obtenerCatalogosLocal();
-        catalogos.empleados = (actualizados.empleados || []).filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
+        catalogos.empleados = incluirSembradoresPrueba(
+          (actualizados.empleados || []).filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true)
+        );
         estadoPill.textContent = "Catálogos actualizados";
         estadoPill.classList.add("ok");
       } catch {
@@ -619,7 +639,7 @@ async function cargarCatalogos() {
     }
 
     if (!catalogos.empleados.length) {
-      marcarResultado("warning", "Conéctate una vez para descargar los sembradores.");
+      marcarResultado("warning", "No hay sembradores disponibles.");
     }
   } catch {
     marcarResultado("error", "No fue posible cargar los catálogos del equipo.");
