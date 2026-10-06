@@ -100,10 +100,23 @@
       <section id="vistaRegistro" class="preparacion-view">
         <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
           <article class="scanner-panel">
-            <section class="result-card">
+            <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+              <label>Bloque
+                <select id="bloque" required>
+                  <option value="">Seleccione un bloque</option>
+                </select>
+              </label>
+              <label>Cama
+                <select id="cama" required disabled>
+                  <option value="">Seleccione primero un bloque</option>
+                </select>
+              </label>
+            </div>
+
+            <section class="result-card" style="margin-top:16px;">
               <div class="result-status">
                 <span class="dot"></span>
-                <strong id="estadoModulo">Formulario de Preparación Camas listo para agregar los campos de registro de labor.</strong>
+                <strong id="estadoModulo">Selecciona el bloque y la cama para registrar la labor.</strong>
               </div>
             </section>
           </article>
@@ -200,7 +213,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./preparacion-camas.js?v=1.0.35"></script>
+    <script src="./preparacion-camas.js?v=1.0.40"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

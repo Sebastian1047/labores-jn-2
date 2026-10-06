@@ -130,16 +130,20 @@ const MANUALES = {
   },
   preparacion: {
     titulo: "Preparación Camas",
-    objetivo: "Seleccionar al colaborador y registrar sus tiempos asociados a la preparación de camas.",
+    objetivo: "Seleccionar al colaborador, ubicar el bloque y la cama, y registrar los tiempos asociados a la preparación de camas.",
     pasos: [
       "Verifica la Fecha y selecciona el Colaborador.",
-      "Usa Registrar labor para la información operativa cuando los campos de producción estén habilitados.",
+      "En Registrar labor selecciona primero el Bloque.",
+      "Luego selecciona la Cama correspondiente al bloque elegido.",
       "En Tiempos registra Horas Laborales y Horas Extra.",
       "Registra PMadres, PAbuelas, Desplazamiento, Calistenia/Acondicionamiento/Fortalecimiento y Capacitación/Reunión.",
       "Revisa Tiempo disponible y Tiempo real dedicado a la labor.",
       "Pulsa Guardar tiempos."
     ],
-    notas: ["Todos los tiempos se ingresan en minutos."]
+    notas: [
+      "La lista de Camas se filtra según el Bloque seleccionado.",
+      "Todos los tiempos se ingresan en minutos."
+    ]
   },
   calidadSiembra: {
     titulo: "Calidad Siembra Campo",

@@ -7,6 +7,8 @@ const fechaInput = document.querySelector("#fecha");
 const colaboradorBuscar = document.querySelector("#colaboradorBuscar");
 const colaboradorLista = document.querySelector("#colaboradorLista");
 const colaboradorSeleccionadoEl = document.querySelector("#colaboradorSeleccionado");
+const bloqueSelect = document.querySelector("#bloque");
+const camaSelect = document.querySelector("#cama");
 const viewTabs = [...document.querySelectorAll("[data-preparacion-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
 const vistaTiempos = document.querySelector("#vistaTiempos");
@@ -30,6 +32,7 @@ const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 usuarioPill.textContent = sesionPreparacion?.empleadoNombre || sesionPreparacion?.username || "Usuario";
 
 let colaboradores = [];
+let camas = [];
 let colaboradorSeleccionado = null;
 
 function fechaLocal() {
@@ -45,6 +48,43 @@ function etiquetaEmpleado(item) {
   const codigo = item.codigo || item.docid || item.id || "—";
   return `${nombre} (${codigo})`;
 }
+function valorCatalogo(item, minuscula, mayuscula) {
+  return String(item?.[minuscula] ?? item?.[mayuscula] ?? "").trim();
+}
+
+function cargarBloques() {
+  const bloques = [...new Set(camas.map((item) => valorCatalogo(item, "bloque", "Bloque")).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+
+  bloqueSelect.innerHTML =
+    '<option value="">Seleccione un bloque</option>' +
+    bloques.map((bloque) => `<option value="${bloque}">${bloque}</option>`).join("");
+
+  cargarCamasDelBloque();
+}
+
+function cargarCamasDelBloque() {
+  const bloque = bloqueSelect.value;
+  const disponibles = [...new Set(
+    camas
+      .filter((item) => valorCatalogo(item, "bloque", "Bloque") === bloque)
+      .map((item) => valorCatalogo(item, "cama", "Cama"))
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+
+  if (!bloque) {
+    camaSelect.disabled = true;
+    camaSelect.innerHTML = '<option value="">Seleccione primero un bloque</option>';
+    return;
+  }
+
+  camaSelect.disabled = false;
+  camaSelect.innerHTML =
+    '<option value="">Seleccione una cama</option>' +
+    disponibles.map((cama) => `<option value="${cama}">${cama}</option>`).join("");
+}
+
+bloqueSelect.addEventListener("change", cargarCamasDelBloque);
 
 function renderListaColaboradores() {
   const texto = colaboradorBuscar.value.trim().toLowerCase();
@@ -213,6 +253,8 @@ async function cargarColaboradores() {
     colaboradores = (local.empleados || []).filter(
       (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
     );
+    camas = local.camas || [];
+    cargarBloques();
 
     if (navigator.onLine) {
       try {
@@ -221,6 +263,8 @@ async function cargarColaboradores() {
         colaboradores = (actualizados.empleados || []).filter(
           (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
         );
+        camas = actualizados.camas || [];
+        cargarBloques();
         estadoPill.textContent = "Catálogos actualizados";
         estadoPill.classList.remove("warn");
         estadoPill.classList.add("ok");
