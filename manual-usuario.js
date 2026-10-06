@@ -77,18 +77,22 @@ const MANUALES = {
   },
   bandejas: {
     titulo: "Bandejas Enraizamiento",
-    objetivo: "Registrar la producción de bandejas y descontar otros tiempos para calcular el tiempo real dedicado a la labor.",
+    objetivo: "Registrar por trabajador cada combinación de cama, densidad y variedad, y calcular el tiempo real dedicado a la labor.",
     pasos: [
       "Verifica la Fecha y selecciona el Sembrador.",
-      "En Registro de labor selecciona la Densidad, ingresa la Cantidad y selecciona la Variedad.",
-      "Pulsa Guardar registro para almacenar la labor.",
+      "En Registro de labor ingresa la Cama, selecciona la Densidad, ingresa la Cantidad y selecciona la Variedad.",
+      "Pulsa + Agregar registro. El registro aparecerá en la tabla Registros del día por trabajador.",
+      "Si la misma densidad se reparte entre dos camas, agrega un registro independiente para cada cama.",
+      "Si cambia la densidad aunque continúe en la misma cama, agrega un nuevo registro.",
+      "Si cambia la variedad, agrega un nuevo registro.",
+      "La tabla inferior permite revisar lo acumulado por cada trabajador para la fecha seleccionada.",
       "En Tiempos ingresa los minutos de Horas Laborales y, si aplica, Horas Extra.",
       "Registra los minutos destinados a PMadres, PAbuelas, Desplazamiento, Calistenia/Acondicionamiento/Fortalecimiento y Capacitación/Reunión.",
-      "Otras labores se calcula automáticamente como la suma de esos tiempos.",
-      "El sistema muestra el Tiempo disponible y el Tiempo real dedicado a la labor.",
-      "Pulsa Guardar tiempos para conservar el registro."
+      "Revisa Tiempo disponible y Tiempo real dedicado a la labor y pulsa Guardar tiempos."
     ],
     notas: [
+      "Cada cambio de cama, densidad o variedad genera un registro independiente.",
+      "Después de agregar un registro se conserva el trabajador y los datos de labor, pero se limpia la Cantidad para reducir duplicados accidentales.",
       "Tiempo real = Horas Laborales + Horas Extra - Otras labores.",
       "Los campos de tiempos se diligencian en minutos."
     ]

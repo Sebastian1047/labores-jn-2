@@ -4,6 +4,7 @@ if (!sesionBandejas) window.location.href = "./login.html";
 const usuarioPill = document.querySelector("#usuarioPill");
 const estadoPill = document.querySelector("#estadoPill");
 const fechaInput = document.querySelector("#fecha");
+const camaInput = document.querySelector("#cama");
 const densidadInput = document.querySelector("#densidad");
 const cantidadInput = document.querySelector("#cantidad");
 const sembradorBuscar = document.querySelector("#sembradorBuscar");
@@ -223,7 +224,8 @@ const guardarBtn = document.querySelector("#guardarBtn");
 const limpiarBtn = document.querySelector("#limpiarBtn");
 const resultStatus = document.querySelector("#resultStatus");
 const resultState = document.querySelector("#resultState");
-const registrosLista = document.querySelector("#registrosLista");
+const registrosTablaBody = document.querySelector("#registrosTablaBody");
+const registrosDiaHint = document.querySelector("#registrosDiaHint");
 
 const bandejasTabs = [...document.querySelectorAll("[data-bandejas-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
@@ -440,54 +442,79 @@ async function guardarTiempos() {
   await renderRegistrosTiempos();
 }
 
-function limpiarFormulario() {
-  fechaInput.value = fechaLocal();
+function limpiarLabor() {
+  camaInput.value = "";
   densidadInput.value = "";
   cantidadInput.value = "";
+  variedadSelect.value = "";
+}
+
+function limpiarFormularioCompleto() {
+  fechaInput.value = fechaLocal();
   sembradorSeleccionado = null;
   sembradorBuscar.value = "";
   sembradorLista.innerHTML = "";
   sembradorSeleccionadoEl.textContent = "Sin sembrador seleccionado";
-  variedadSelect.value = "";
+  limpiarLabor();
 }
 
 async function renderRegistros() {
+  const fecha = fechaInput.value;
   const registros = (await OfflineDb.getAll("bandejasEnraizamiento"))
-    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+    .filter((r) => !fecha || r.fecha === fecha)
+    .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 
-  registrosLista.innerHTML = registros.length
-    ? registros.slice(0, 20).map((r) => `
-        <article class="pending-item">
-          <strong>${r.fecha} · ${r.variedadNombre}</strong>
-          <span>Sembrador: ${r.sembradorNombre}</span>
-          <span>Densidad: ${r.densidad} · Cantidad: ${r.cantidad ?? "—"}</span>
-        </article>
+  registrosDiaHint.textContent = fecha
+    ? `Registros acumulados del ${fecha}. Cada cambio de cama, densidad o variedad aparece como un registro independiente.`
+    : "Selecciona una fecha para ver los registros.";
+
+  registrosTablaBody.innerHTML = registros.length
+    ? registros.map((r, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${r.sembradorNombre || r.sembrador || "—"}</td>
+          <td>${r.cama || "—"}</td>
+          <td>${r.densidad ?? "—"}</td>
+          <td>${r.cantidad ?? "—"}</td>
+          <td>${r.variedadNombre || r.variedad || "—"}</td>
+        </tr>
       `).join("")
-    : '<p class="hint" style="margin:0;">Todavía no hay registros guardados.</p>';
+    : '<tr><td colspan="6">Todavía no hay registros para esta fecha.</td></tr>';
 }
 
 async function guardarRegistro() {
   const fecha = fechaInput.value;
+  const cama = camaInput.value.trim();
   const densidad = densidadInput.value.trim();
   const cantidad = cantidadInput.value.trim();
 
   if (!fecha) return marcarResultado("error", "Selecciona la fecha.");
+  if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
+  if (!cama) return marcarResultado("error", "Ingresa la cama.");
   if (!densidad) return marcarResultado("error", "Selecciona la densidad.");
   if (!cantidad) return marcarResultado("error", "Ingresa la cantidad.");
-  if (!/^\d+$/.test(cantidad) || Number(cantidad) <= 0) return marcarResultado("error", "La cantidad debe ser un número entero mayor que cero.");
-  if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
+  if (!/^\d+$/.test(cantidad) || Number(cantidad) <= 0) {
+    return marcarResultado("error", "La cantidad debe ser un número entero mayor que cero.");
+  }
   if (!variedadSelect.value) return marcarResultado("error", "Selecciona una variedad.");
 
-  const sembradorCodigo = sembradorSeleccionado.codigo || sembradorSeleccionado.docid || sembradorSeleccionado.id;
+  const sembradorCodigo =
+    sembradorSeleccionado.codigo ||
+    sembradorSeleccionado.docid ||
+    sembradorSeleccionado.id;
   const variedadNombre = variedadSelect.value;
 
   const registro = {
     id: SyncEngine.generarUUID(),
     fecha,
+    cama,
     densidad: Number(densidad),
     cantidad: Number(cantidad),
     sembrador: String(sembradorCodigo),
-    sembradorNombre: sembradorSeleccionado.nombre || sembradorSeleccionado.empleadoNombre || String(sembradorCodigo),
+    sembradorNombre:
+      sembradorSeleccionado.nombre ||
+      sembradorSeleccionado.empleadoNombre ||
+      String(sembradorCodigo),
     variedad: variedadNombre,
     variedadNombre,
     usuario: sesionBandejas?.username || "",
@@ -496,8 +523,15 @@ async function guardarRegistro() {
   };
 
   await OfflineDb.put("bandejasEnraizamiento", registro);
-  marcarResultado("ok", `Registro guardado localmente: ${registro.sembradorNombre} · ${registro.variedadNombre}.`);
-  limpiarFormulario();
+  marcarResultado(
+    "ok",
+    `Registro agregado: ${registro.sembradorNombre} · Cama ${registro.cama} · Densidad ${registro.densidad} · ${registro.variedadNombre}.`
+  );
+
+  // Mantener trabajador, fecha, cama, densidad y variedad facilita registrar los escenarios
+  // consecutivos; solo se limpia la cantidad para evitar repetirla por accidente.
+  cantidadInput.value = "";
+  cantidadInput.focus();
   await renderRegistros();
 }
 
@@ -535,15 +569,16 @@ limpiarTiemposBtn.addEventListener("click", () => {
 });
 
 limpiarBtn.addEventListener("click", () => {
-  limpiarFormulario();
-  marcarResultado(null, "Complete los datos para guardar el registro.");
+  limpiarLabor();
+  marcarResultado(null, "Complete cama, densidad, cantidad y variedad para agregar el registro.");
 });
 
+fechaInput.addEventListener("change", renderRegistros);
 window.addEventListener("online", cargarCatalogos);
 
 (async function iniciarBandejas() {
   cargarVariedades();
-  limpiarFormulario();
+  limpiarFormularioCompleto();
   limpiarFormularioTiempos();
   aplicarVistaBandejas("registro");
   await cargarCatalogos();
