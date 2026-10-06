@@ -115,6 +115,12 @@
           <p class="hint" id="temporalesVacio" style="margin-top: 0;">Todavía no has agregado ningún item de control a esta revisión.</p>
           <div id="temporalesLista" class="pending-list" style="max-height: 260px;"></div>
 
+          <div style="margin-top:16px;">
+            <label>Observaciones generales
+              <textarea id="corteCalidadObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+            </label>
+          </div>
+
           <div class="action-row" style="margin-top: 16px;">
             <button id="guardarBtn" class="success-btn" type="button">Guardar Revisión</button>
           </div>
@@ -170,6 +176,12 @@
             <div id="auxCriteriosLista" class="calidad-criterios"></div>
           </div>
 
+          <div style="margin-top:16px;">
+            <label>Observaciones
+              <textarea id="auxObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+            </label>
+          </div>
+
           <div class="action-row" style="margin-top: 16px;">
             <button id="auxGuardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
           </div>
@@ -187,8 +199,8 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-corte-aux.js?v=1.0.22"></script>
-    <script src="./asegurar-corte.js?v=1.0.22"></script>
+    <script src="./calidad-corte-aux.js?v=1.0.47"></script>
+    <script src="./asegurar-corte.js?v=1.0.47"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

@@ -311,6 +311,8 @@ function renderCriterios() {
 
 function limpiarFormularioCalidad() {
   sembradorSeleccionado = null;
+  const observaciones = $calidad("calidadObservaciones");
+  if (observaciones) observaciones.value = "";
   siguienteRevisionCalidad = null;
   $calidad("sembradorBuscar").value = "";
   $calidad("sembradorLista").innerHTML = "";
@@ -409,7 +411,15 @@ async function guardarCalidad() {
     const colaborador = sembradorSeleccionado.codigo || sembradorSeleccionado.docid || sembradorSeleccionado.id;
     const nombreColaborador = sembradorSeleccionado.nombre || sembradorSeleccionado.empleadoNombre || String(colaborador);
     const revisionGuardada = siguienteRevisionCalidad;
-    const evaluacion = { fecha: fechaLocalCalidad(), semana: semanaActual.semana, asegurador: sesionCalidad.username || sesionCalidad.codigo || "", colaborador: String(colaborador), revision: revisionGuardada, incumplimientos };
+    const evaluacion = {
+      fecha: fechaLocalCalidad(),
+      semana: semanaActual.semana,
+      asegurador: sesionCalidad.username || sesionCalidad.codigo || "",
+      colaborador: String(colaborador),
+      revision: revisionGuardada,
+      incumplimientos,
+      observaciones: $calidad("calidadObservaciones")?.value.trim() || ""
+    };
     await SyncEngine.guardarEvaluacionCalidadLocal(evaluacion);
 
     // El registro ya existe en IndexedDB: la persona puede continuar de inmediato.

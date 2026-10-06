@@ -54,6 +54,12 @@
             <div id="criteriosLista" class="calidad-criterios"><label class="calidad-criterio"><input type="checkbox" value="14" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Conforme</span></label><label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Estado de la planta</span></label><label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Distribución</span></label><label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Densidad</span></label><label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Profundidad de la planta</span></label><label class="calidad-criterio"><input type="checkbox" value="6" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Planta inclinada</span></label><label class="calidad-criterio"><input type="checkbox" value="7" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Ubicación de mangueras</span></label><label class="calidad-criterio"><input type="checkbox" value="8" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Selección de esqueje</span></label><label class="calidad-criterio"><input type="checkbox" value="9" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Siembra con marcador</span></label><label class="calidad-criterio"><input type="checkbox" value="10" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Aseo sitio de trabajo</span></label><label class="calidad-criterio"><input type="checkbox" value="11" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Uso de EPP</span></label><label class="calidad-criterio"><input type="checkbox" value="12" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Acuerdos de oro</span></label><label class="calidad-criterio"><input type="checkbox" value="13" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Conteo de líneas</span></label></div>
           </div>
 
+          <div style="margin-top:16px;">
+            <label>Observaciones
+              <textarea id="calidadObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+            </label>
+          </div>
+
           <div class="action-row" style="margin-top: 16px;">
             <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
           </div>
@@ -81,7 +87,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra.js?v=1.0.24"></script>
+    <script src="./calidad-siembra.js?v=1.0.47"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

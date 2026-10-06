@@ -54,6 +54,12 @@
             <div id="criteriosLista" class="calidad-criterios"><label class="calidad-criterio"><input type="checkbox" value="11" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Conforme</span></label><label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Cama Conforme</span></label><label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Limpieza de Terreno</span></label><label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Distribución de Enmiendas</span></label><label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Nivelación del Suelo</span></label><label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">(Estado, Distribución y Cantidad de Durmientes)</span></label><label class="calidad-criterio"><input type="checkbox" value="6" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Profundidad de la Preparación</span></label><label class="calidad-criterio"><input type="checkbox" value="7" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Riego</span></label><label class="calidad-criterio"><input type="checkbox" value="8" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Aseo</span></label><label class="calidad-criterio"><input type="checkbox" value="9" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Instalación de la Malla</span></label><label class="calidad-criterio"><input type="checkbox" value="10" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Instalación de Mangueras de Goteo</span></label></div>
           </div>
 
+          <div style="margin-top:16px;">
+            <label>Observaciones
+              <textarea id="calidadObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+            </label>
+          </div>
+
           <div class="action-row" style="margin-top: 16px;">
             <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
           </div>
@@ -81,7 +87,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra.js?v=1.0.22"></script>
+    <script src="./calidad-siembra.js?v=1.0.47"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

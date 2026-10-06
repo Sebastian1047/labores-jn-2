@@ -50,7 +50,10 @@ const MANUALES = {
       "Ingresa la Densidad y completa Semana y Año de planeación.",
       "Pulsa Guardar. Usa + Nuevo registro para limpiar y comenzar otro."
     ],
-    notas: ["Antes de guardar revisa que bloque, cama, variedad, clon y empleado correspondan a la labor realizada."]
+    notas: [
+      "Antes de guardar revisa que bloque, cama, variedad, clon y empleado correspondan a la labor realizada.",
+      "Observaciones es opcional y sirve para registrar novedades o aclaraciones."
+    ]
   },
   siembraRevision: {
     titulo: "Revisión Siembra",
@@ -95,7 +98,8 @@ const MANUALES = {
       "Cada cambio de bloque, cama, densidad o variedad genera un registro independiente.",
       "Después de agregar un registro se conserva el trabajador y los datos de labor, pero se limpia la Cantidad para reducir duplicados accidentales.",
       "Tiempo real = Horas Laborales + Horas Extra - Otras labores.",
-      "Los campos de tiempos se diligencian en minutos."
+      "Los campos de tiempos se diligencian en minutos.",
+      "El campo Observaciones es opcional y permite dejar una nota adicional del registro o de los tiempos."
     ]
   },
   desbotonado: {
@@ -113,7 +117,8 @@ const MANUALES = {
     ],
     notas: [
       "La hora de inicio y la hora final ya no se solicitan.",
-      "Las erradicaciones no pueden superar los tallos de la cama."
+      "Las erradicaciones no pueden superar los tallos de la cama.",
+      "El campo Observaciones es opcional para registrar novedades de la labor o de los tiempos."
     ]
   },
   corte: {
@@ -131,7 +136,8 @@ const MANUALES = {
     ],
     notas: [
       "Los registros de tiempos quedan separados por Cortador, Transportador y Recogedor.",
-      "Al cambiar de rol debes seleccionar el colaborador correspondiente."
+      "Al cambiar de rol debes seleccionar el colaborador correspondiente.",
+      "El campo Observaciones es opcional para registrar novedades de la labor o de los tiempos."
     ]
   },
   preparacion: {
@@ -148,7 +154,8 @@ const MANUALES = {
     ],
     notas: [
       "La lista de Camas se filtra según el Bloque seleccionado.",
-      "Todos los tiempos se ingresan en minutos."
+      "Todos los tiempos se ingresan en minutos.",
+      "El campo Observaciones es opcional para registrar novedades."
     ]
   },
   calidadSiembra: {

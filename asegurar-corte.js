@@ -34,6 +34,7 @@ const agregarBtn = document.querySelector("#agregarBtn");
 const temporalesVacio = document.querySelector("#temporalesVacio");
 const temporalesLista = document.querySelector("#temporalesLista");
 const guardarBtn = document.querySelector("#guardarBtn");
+const corteCalidadObservaciones = document.querySelector("#corteCalidadObservaciones");
 
 const resultState = document.querySelector("#resultState");
 const resultStatus = document.querySelector("#resultStatus");
@@ -80,6 +81,7 @@ function resetearRevisionVista() {
   colaboradorBuscar.value = "";
   colaboradorLista.innerHTML = "";
   temporales = [];
+  if (corteCalidadObservaciones) corteCalidadObservaciones.value = "";
   renderTemporales();
 }
 
@@ -344,6 +346,7 @@ async function guardarRevision() {
     // número de semana con una fórmula que podría no coincidir con el calendario real.
     semana: semanaActual ? semanaActual.semana : 0,
     fecha: new Date().toISOString(),
+    observacionesGenerales: corteCalidadObservaciones?.value.trim() || "",
     observaciones: temporales.map((t) => ({ idObservacion: t.idObservacion })),
   };
 
@@ -357,6 +360,7 @@ async function guardarRevision() {
   colaboradorRevision.textContent = "—";
   guardarBtn.disabled = false;
   temporales = [];
+  if (corteCalidadObservaciones) corteCalidadObservaciones.value = "";
   renderTemporales();
 
   await actualizarPendientes();

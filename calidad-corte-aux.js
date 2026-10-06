@@ -40,6 +40,7 @@
   const codigoEl = document.querySelector("#auxColaboradorCodigo");
   const criteriosLista = document.querySelector("#auxCriteriosLista");
   const guardarBtn = document.querySelector("#auxGuardarCalidadBtn");
+  const observacionesEl = document.querySelector("#auxObservaciones");
   const resultado = document.querySelector("#auxCalidadResultado");
   const mensaje = document.querySelector("#auxCalidadMensaje");
   const apiStatus = document.querySelector("#apiStatusPill");
@@ -102,6 +103,7 @@
     codigoEl.textContent = "—";
     revisionEl.textContent = "Selecciona un colaborador";
     document.querySelectorAll("#auxCriteriosLista input").forEach((item) => { item.checked = false; });
+    if (observacionesEl) observacionesEl.value = "";
     guardarBtn.disabled = false;
   }
 
@@ -195,6 +197,7 @@
       colaborador: String(codigo),
       revision: siguienteRevision || calcularSiguienteRevision(codigo),
       incumplimientos,
+      observaciones: observacionesEl?.value.trim() || "",
       estado: "Local",
     });
     guardarRegistrosLocales(registros);
