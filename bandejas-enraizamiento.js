@@ -9,7 +9,6 @@ const cantidadInput = document.querySelector("#cantidad");
 const sembradorBuscar = document.querySelector("#sembradorBuscar");
 const sembradorLista = document.querySelector("#sembradorLista");
 const sembradorSeleccionadoEl = document.querySelector("#sembradorSeleccionado");
-const tipoFlorSelect = document.querySelector("#tipoFlor");
 const variedadSelect = document.querySelector("#variedad");
 
 const VARIEDADES_POR_TIPO = {
@@ -311,24 +310,14 @@ crearBuscador({
   },
 });
 
-function cargarVariedadesDelTipo() {
-  const tipo = tipoFlorSelect.value;
-  const variedades = VARIEDADES_POR_TIPO[tipo] || [];
+const VARIEDADES = [...new Set(Object.values(VARIEDADES_POR_TIPO).flat())]
+  .sort((a, b) => a.localeCompare(b, "es"));
 
-  variedadSelect.innerHTML = "";
-  if (!tipo) {
-    variedadSelect.disabled = true;
-    variedadSelect.innerHTML = '<option value="">Seleccione primero el tipo de flor</option>';
-    return;
-  }
-
-  variedadSelect.disabled = false;
+function cargarVariedades() {
   variedadSelect.innerHTML =
     '<option value="">Seleccione una variedad</option>' +
-    variedades.map((nombre) => `<option value="${nombre}">${nombre}</option>`).join("");
+    VARIEDADES.map((nombre) => `<option value="${nombre}">${nombre}</option>`).join("");
 }
-
-tipoFlorSelect.addEventListener("change", cargarVariedadesDelTipo);
 
 function aplicarVistaBandejas(vista) {
   const esTiempos = vista === "tiempos";
@@ -459,8 +448,7 @@ function limpiarFormulario() {
   sembradorBuscar.value = "";
   sembradorLista.innerHTML = "";
   sembradorSeleccionadoEl.textContent = "Sin sembrador seleccionado";
-  tipoFlorSelect.value = "";
-  cargarVariedadesDelTipo();
+  variedadSelect.value = "";
 }
 
 async function renderRegistros() {
@@ -471,7 +459,6 @@ async function renderRegistros() {
     ? registros.slice(0, 20).map((r) => `
         <article class="pending-item">
           <strong>${r.fecha} · ${r.variedadNombre}</strong>
-          <span>Tipo de flor: ${r.tipoFlor || "—"}</span>
           <span>Sembrador: ${r.sembradorNombre}</span>
           <span>Densidad: ${r.densidad} · Cantidad: ${r.cantidad ?? "—"}</span>
         </article>
@@ -489,11 +476,9 @@ async function guardarRegistro() {
   if (!cantidad) return marcarResultado("error", "Ingresa la cantidad.");
   if (!/^\d+$/.test(cantidad) || Number(cantidad) <= 0) return marcarResultado("error", "La cantidad debe ser un número entero mayor que cero.");
   if (!sembradorSeleccionado) return marcarResultado("error", "Selecciona un sembrador.");
-  if (!tipoFlorSelect.value) return marcarResultado("error", "Selecciona el tipo de flor.");
   if (!variedadSelect.value) return marcarResultado("error", "Selecciona una variedad.");
 
   const sembradorCodigo = sembradorSeleccionado.codigo || sembradorSeleccionado.docid || sembradorSeleccionado.id;
-  const tipoFlor = tipoFlorSelect.value;
   const variedadNombre = variedadSelect.value;
 
   const registro = {
@@ -503,7 +488,6 @@ async function guardarRegistro() {
     cantidad: Number(cantidad),
     sembrador: String(sembradorCodigo),
     sembradorNombre: sembradorSeleccionado.nombre || sembradorSeleccionado.empleadoNombre || String(sembradorCodigo),
-    tipoFlor,
     variedad: variedadNombre,
     variedadNombre,
     usuario: sesionBandejas?.username || "",
@@ -558,6 +542,7 @@ limpiarBtn.addEventListener("click", () => {
 window.addEventListener("online", cargarCatalogos);
 
 (async function iniciarBandejas() {
+  cargarVariedades();
   limpiarFormulario();
   limpiarFormularioTiempos();
   aplicarVistaBandejas("registro");
