@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manual de usuario — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .manual-shell { max-width: 860px; }
+      .manual-actions { display:flex; gap:8px; flex-wrap:wrap; }
+      .manual-card { margin-top:16px; }
+      .manual-card h2 { margin:0 0 10px; }
+      .manual-card h3 { margin:18px 0 8px; }
+      .manual-card ol, .manual-card ul { padding-left:22px; line-height:1.55; }
+      .manual-card li + li { margin-top:7px; }
+      .manual-note {
+        padding:12px 14px;
+        border-radius:12px;
+        background:#f5faf7;
+        border:1px solid rgba(24,122,77,.18);
+        margin-top:14px;
+      }
+      .manual-meta { margin:4px 0 0; }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell manual-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Labores JN / Ayuda</p>
+          <h1>📘 Manual de usuario</h1>
+          <p class="hint manual-meta" id="manualModulo">Cargando manual…</p>
+        </div>
+        <section class="status-strip manual-actions">
+          <button id="descargarManualBtn" class="pill strong" type="button">⬇ Descargar PDF</button>
+          <button id="volverManualBtn" class="pill" type="button">← Volver</button>
+        </section>
+      </header>
+
+      <section class="scanner-panel manual-card">
+        <h2 id="manualTitulo">Manual</h2>
+        <p id="manualObjetivo" class="hint"></p>
+        <div id="manualContenido"></div>
+        <div class="manual-note">
+          <strong>Recomendación general</strong>
+          <p class="hint" style="margin:6px 0 0;">
+            Antes de guardar, verifica la fecha, el colaborador y los valores digitados. Si trabajas sin conexión,
+            conserva la aplicación abierta hasta confirmar que el registro quedó almacenado localmente.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="./manual-usuario.js?v=1.0.39"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>

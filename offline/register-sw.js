@@ -5,7 +5,7 @@
 // nueva. Bug real 18/09/2026: Revisión seguía mostrando el filtro de 3 días ya corregido en el
 // servidor porque esa pestaña nunca volvió a pasar por menu.html. "version.json" nunca se cachea
 // (ver service-worker.js) -- se lee siempre fresco del servidor cuando hay señal.
-const APP_VERSION = "1.0.38";
+const APP_VERSION = "1.0.39";
 
 const appVersionEl = document.querySelector("#appVersion");
 if (appVersionEl) appVersionEl.textContent = `Labores JN · v${APP_VERSION}`;
@@ -62,3 +62,40 @@ if ("serviceWorker" in navigator) {
 
 
 
+
+
+(function agregarBotonManualUsuario() {
+  const archivo = location.pathname.split("/").pop() || "index.html";
+  const manualesPorArchivo = {
+    "index.html": "pronosticos",
+    "floracion-siembra.html": "floracion",
+    "siembra-hub.html": "siembraHub",
+    "siembra.html": "siembra",
+    "siembra-revision.html": "siembraRevision",
+    "siembra-promedios.html": "siembraPromedios",
+    "asegurar-corte.html": "asegurarCorte",
+    "bandejas-enraizamiento.html": "bandejas",
+    "desbotonado-mallas.html": "desbotonado",
+    "corte.html": "corte",
+    "preparacion-camas.html": "preparacion",
+    "calidad-siembra.html": "calidadSiembra",
+    "calidad-bandejas-enraizamiento.html": "calidadBandejas",
+    "calidad-corte.html": "calidadCorte",
+    "calidad-menu.html": "calidadDesbotonado",
+    "calidad-preparacion-camas.html": "calidadPreparacion",
+    "calidad-siembra-informe.html": "calidadInforme"
+  };
+
+  const modulo = manualesPorArchivo[archivo];
+  if (!modulo || document.querySelector("#manualUsuarioBtn")) return;
+
+  const barra = document.querySelector(".status-strip");
+  if (!barra) return;
+
+  const boton = document.createElement("a");
+  boton.id = "manualUsuarioBtn";
+  boton.className = "pill";
+  boton.href = `./manual-usuario.html?modulo=${encodeURIComponent(modulo)}`;
+  boton.textContent = "📘 Manual de usuario";
+  barra.insertBefore(boton, barra.firstChild);
+})();
