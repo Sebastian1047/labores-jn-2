@@ -140,10 +140,17 @@
             <form id="bandejasForm" onsubmit="return false;">
               <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
                 <label>Bloque
-                  <input id="bloque" type="text" autocomplete="off" placeholder="Ingrese el bloque" required />
+                  <input id="bloque" type="text" list="bloquesPruebaList" autocomplete="off" placeholder="Seleccione o escriba el bloque" required />
+                  <datalist id="bloquesPruebaList">
+                    <option value="PRUEBA-B1"></option>
+                    <option value="PRUEBA-B2"></option>
+                    <option value="PRUEBA-B3"></option>
+                    <option value="PRUEBA-B4"></option>
+                  </datalist>
                 </label>
                 <label>Cama
-                  <input id="cama" type="text" autocomplete="off" placeholder="Ingrese la cama" required />
+                  <input id="cama" type="text" list="camasPruebaList" autocomplete="off" placeholder="Seleccione o escriba la cama" required />
+                  <datalist id="camasPruebaList"></datalist>
                 </label>
               </div>
 
@@ -316,7 +323,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.43"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.45"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

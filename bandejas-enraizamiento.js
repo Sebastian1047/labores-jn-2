@@ -6,6 +6,7 @@ const estadoPill = document.querySelector("#estadoPill");
 const fechaInput = document.querySelector("#fecha");
 const bloqueInput = document.querySelector("#bloque");
 const camaInput = document.querySelector("#cama");
+const camasPruebaList = document.querySelector("#camasPruebaList");
 const densidadInput = document.querySelector("#densidad");
 const cantidadInput = document.querySelector("#cantidad");
 const sembradorBuscar = document.querySelector("#sembradorBuscar");
@@ -260,6 +261,29 @@ const SEMBRADORES_PRUEBA = [
   { codigo: "PRUEBA003", nombre: "SEMBRADOR PRUEBA 3", activo: true, esPrueba: true },
   { codigo: "PRUEBA004", nombre: "SEMBRADOR PRUEBA 4", activo: true, esPrueba: true },
 ];
+
+const BLOQUES_CAMAS_PRUEBA = {
+  "PRUEBA-B1": ["CAMA-P1", "CAMA-P2", "CAMA-P3"],
+  "PRUEBA-B2": ["CAMA-P1", "CAMA-P2", "CAMA-P3", "CAMA-P4"],
+  "PRUEBA-B3": ["CAMA-P1", "CAMA-P2"],
+  "PRUEBA-B4": ["CAMA-P1", "CAMA-P2", "CAMA-P3", "CAMA-P4", "CAMA-P5"],
+};
+
+function cargarCamasPrueba() {
+  const bloque = bloqueInput.value.trim();
+  const camas = BLOQUES_CAMAS_PRUEBA[bloque]
+    || [...new Set(Object.values(BLOQUES_CAMAS_PRUEBA).flat())];
+
+  camasPruebaList.innerHTML = camas
+    .map((cama) => `<option value="${cama}"></option>`)
+    .join("");
+}
+
+bloqueInput.addEventListener("input", () => {
+  camaInput.value = "";
+  cargarCamasPrueba();
+});
+bloqueInput.addEventListener("change", cargarCamasPrueba);
 
 function incluirSembradoresPrueba(empleados) {
   const reales = Array.isArray(empleados) ? empleados : [];
@@ -668,6 +692,7 @@ window.addEventListener("online", cargarCatalogos);
   limpiarFormularioCompleto();
   limpiarFormularioTiempos();
   aplicarVistaBandejas("registro");
+  cargarCamasPrueba();
   await cargarCatalogos();
   await renderRegistros();
   await renderRegistrosTiempos();
