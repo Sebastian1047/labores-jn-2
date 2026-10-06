@@ -123,6 +123,12 @@
       <section id="vistaRegistro" class="corte-view">
         <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
           <article class="scanner-panel">
+            <div style="margin-bottom:16px;">
+              <label>Observaciones
+                <textarea id="corteObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+              </label>
+            </div>
+
             <section class="result-card">
               <div class="result-status">
                 <span class="dot"></span>
@@ -194,6 +200,12 @@
               </section>
             </div>
 
+            <div style="margin-top:16px;">
+              <label>Observaciones
+                <textarea id="corteTiemposObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+              </label>
+            </div>
+
             <div class="action-row" style="margin-top:18px;">
               <button id="guardarTiemposBtn" class="success-btn" type="button">Guardar tiempos</button>
               <button id="limpiarTiemposBtn" class="ghost-btn" type="button">Limpiar</button>
@@ -223,7 +235,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./corte.js?v=1.0.46"></script>
+    <script src="./corte.js?v=1.0.47"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

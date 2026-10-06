@@ -9,6 +9,8 @@ const bloqueInput = document.querySelector("#bloque");
 const camaSelect = document.querySelector("#cama");
 const camaBuscar = document.querySelector("#camaBuscar");
 const camaLista = document.querySelector("#camaLista");
+const desbotonadoObservaciones = document.querySelector("#desbotonadoObservaciones");
+const desbotonadoTiemposObservaciones = document.querySelector("#desbotonadoTiemposObservaciones");
 
 const viewTabs = [...document.querySelectorAll("[data-desbotonado-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
@@ -220,7 +222,7 @@ function render() {
     : "Seleccione un colaborador";
 
   if (!registros.length) {
-    tbody.innerHTML = '<tr><td colspan="5">Todavía no hay camas registradas.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6">Todavía no hay camas registradas.</td></tr>';
     document.querySelector("#totalCamas").textContent = "0";
     document.querySelector("#totalTallos").textContent = "0";
     return;
@@ -233,6 +235,7 @@ function render() {
       <td>${r.cama}</td>
       <td>${numero(r.mediosCuadros,1)}</td>
       <td>${numero(r.tallos,2)}</td>
+      <td>${r.observaciones || "—"}</td>
     </tr>
   `).join("");
 
@@ -263,7 +266,8 @@ form.addEventListener("submit", e => {
     bloque: bloqueInput.value.trim(),
     cama: camaSelect.value,
     mediosCuadros: medios,
-    tallos
+    tallos,
+    observaciones: desbotonadoObservaciones.value.trim()
   });
 
   render();
@@ -330,6 +334,7 @@ function marcarResultadoTiempos(tipo, mensaje) {
 function limpiarTiempos() {
   [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
+  desbotonadoTiemposObservaciones.value = "";
   actualizarCalculoTiempos();
 }
 
@@ -376,6 +381,7 @@ async function guardarTiempos() {
     otrasLaboresMin: calculo.otros,
     tiempoDisponibleMin: calculo.disponible,
     tiempoRealMin: calculo.real,
+    observaciones: desbotonadoTiemposObservaciones.value.trim(),
     usuario: sesion?.username || "",
     syncStatus: "PendienteBackend",
     createdAt: new Date().toISOString()

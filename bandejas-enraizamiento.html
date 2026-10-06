@@ -177,6 +177,12 @@
                   </select>
                 </label>
               </div>
+
+              <div style="margin-top:16px;">
+                <label>Observaciones
+                  <textarea id="bandejasObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+                </label>
+              </div>
             </form>
 
             <p class="hint" style="margin:14px 0 0;">
@@ -217,10 +223,11 @@
                   <th>Densidad</th>
                   <th>Cantidad</th>
                   <th>Variedad</th>
+                  <th>Observaciones</th>
                 </tr>
               </thead>
               <tbody id="registrosTablaBody">
-                <tr><td colspan="6">Selecciona un sembrador para ver sus registros.</td></tr>
+                <tr><td colspan="7">Selecciona un sembrador para ver sus registros.</td></tr>
               </tbody>
             </table>
           </div>
@@ -294,6 +301,12 @@
               </section>
             </div>
 
+            <div style="margin-top:16px;">
+              <label>Observaciones
+                <textarea id="bandejasTiemposObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+              </label>
+            </div>
+
             <div class="action-row" style="margin-top:18px;">
               <button id="guardarTiemposBtn" class="success-btn" type="button">Guardar tiempos</button>
               <button id="limpiarTiemposBtn" class="ghost-btn" type="button">Limpiar</button>
@@ -323,7 +336,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./bandejas-enraizamiento.js?v=1.0.45"></script>
+    <script src="./bandejas-enraizamiento.js?v=1.0.47"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

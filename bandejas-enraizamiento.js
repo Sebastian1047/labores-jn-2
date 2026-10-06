@@ -13,6 +13,8 @@ const sembradorBuscar = document.querySelector("#sembradorBuscar");
 const sembradorLista = document.querySelector("#sembradorLista");
 const sembradorSeleccionadoEl = document.querySelector("#sembradorSeleccionado");
 const variedadSelect = document.querySelector("#variedad");
+const bandejasObservaciones = document.querySelector("#bandejasObservaciones");
+const bandejasTiemposObservaciones = document.querySelector("#bandejasTiemposObservaciones");
 
 const VARIEDADES_POR_TIPO = {
   "CREMON": [
@@ -433,6 +435,7 @@ function marcarResultadoTiempos(tipo, mensaje) {
 function limpiarFormularioTiempos() {
   [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
+  bandejasTiemposObservaciones.value = "";
   actualizarCalculoTiempos();
 }
 
@@ -485,6 +488,7 @@ async function guardarTiempos() {
     otrasLaboresMin: calculo.otros,
     tiempoDisponibleMin: calculo.disponible,
     tiempoRealMin: calculo.real,
+    observaciones: bandejasTiemposObservaciones.value.trim(),
     usuario: sesionBandejas?.username || "",
     syncStatus: "PendienteBackend",
     createdAt: new Date().toISOString(),
@@ -505,6 +509,7 @@ function limpiarLabor() {
   densidadInput.value = "";
   cantidadInput.value = "";
   variedadSelect.value = "";
+  bandejasObservaciones.value = "";
 }
 
 function limpiarFormularioCompleto() {
@@ -562,7 +567,7 @@ async function renderRegistros() {
       ? `Selecciona un sembrador. Abajo aparecen los trabajadores que ya tienen registros del ${fecha}.`
       : "Selecciona una fecha y un sembrador.";
     registrosTablaBody.innerHTML =
-      '<tr><td colspan="6">Selecciona un sembrador para ver sus registros.</td></tr>';
+      '<tr><td colspan="7">Selecciona un sembrador para ver sus registros.</td></tr>';
     return;
   }
 
@@ -579,9 +584,10 @@ async function renderRegistros() {
           <td>${r.densidad ?? "—"}</td>
           <td>${r.cantidad ?? "—"}</td>
           <td>${r.variedadNombre || r.variedad || "—"}</td>
+          <td>${r.observaciones || "—"}</td>
         </tr>
       `).join("")
-    : '<tr><td colspan="6">Este sembrador todavía no tiene registros para esta fecha.</td></tr>';
+    : '<tr><td colspan="7">Este sembrador todavía no tiene registros para esta fecha.</td></tr>';
 }
 
 async function guardarRegistro() {
@@ -622,6 +628,7 @@ async function guardarRegistro() {
       String(sembradorCodigo),
     variedad: variedadNombre,
     variedadNombre,
+    observaciones: bandejasObservaciones.value.trim(),
     usuario: sesionBandejas?.username || "",
     syncStatus: "PendienteBackend",
     createdAt: new Date().toISOString(),
@@ -636,6 +643,7 @@ async function guardarRegistro() {
   // Mantener trabajador, fecha, bloque, cama, densidad y variedad facilita registrar los escenarios
   // consecutivos; solo se limpia la cantidad para evitar repetirla por accidente.
   cantidadInput.value = "";
+  bandejasObservaciones.value = "";
   cantidadInput.focus();
   await renderRegistros();
 }

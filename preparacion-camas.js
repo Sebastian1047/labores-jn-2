@@ -12,6 +12,8 @@ const camaSelect = document.querySelector("#cama");
 const viewTabs = [...document.querySelectorAll("[data-preparacion-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
 const vistaTiempos = document.querySelector("#vistaTiempos");
+const preparacionObservaciones = document.querySelector("#preparacionObservaciones");
+const preparacionTiemposObservaciones = document.querySelector("#preparacionTiemposObservaciones");
 
 const horasLaboralesMin = document.querySelector("#horasLaboralesMin");
 const horasExtraMin = document.querySelector("#horasExtraMin");
@@ -175,6 +177,7 @@ function marcarResultadoTiempos(tipo, mensaje) {
 function limpiarTiempos() {
   [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
+  preparacionTiemposObservaciones.value = "";
   actualizarCalculoTiempos();
 }
 
@@ -227,6 +230,7 @@ async function guardarTiempos() {
     otrasLaboresMin: calculo.otros,
     tiempoDisponibleMin: calculo.disponible,
     tiempoRealMin: calculo.real,
+    observaciones: preparacionTiemposObservaciones.value.trim(),
     usuario: sesionPreparacion?.username || "",
     syncStatus: "PendienteBackend",
     createdAt: new Date().toISOString(),

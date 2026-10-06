@@ -21,6 +21,7 @@ const semanaInput = document.querySelector("#semanaProgramada");
 const anoInput = document.querySelector("#anoProgramado");
 const revisoWrap = document.querySelector("#revisoWrap");
 const revisoInput = document.querySelector("#reviso");
+const observacionesInput = document.querySelector("#observaciones");
 
 const guardarBtn = document.querySelector("#guardarBtn");
 const resultState = document.querySelector("#resultState");
@@ -296,6 +297,7 @@ async function cargarParaEditar(id) {
   nuevoBtn.hidden = false;
   revisoWrap.hidden = false;
   revisoInput.checked = !!registro.reviso;
+  observacionesInput.value = registro.observaciones || "";
 
   fechaInput.value = registro.fecha;
   densidadInput.value = registro.densidad;
@@ -333,6 +335,7 @@ function limpiarFormulario() {
   nuevoBtn.hidden = true;
   revisoWrap.hidden = true;
   revisoInput.checked = false;
+  observacionesInput.value = "";
   lineasInput.disabled = false;
   guardarBtn.disabled = false;
 

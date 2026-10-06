@@ -19,6 +19,8 @@ const ubicacionCortador = document.querySelector("#ubicacionCortador");
 const bloqueCortador = document.querySelector("#bloqueCortador");
 const camaCortador = document.querySelector("#camaCortador");
 const estadoModulo = document.querySelector("#estadoModulo");
+const corteObservaciones = document.querySelector("#corteObservaciones");
+const corteTiemposObservaciones = document.querySelector("#corteTiemposObservaciones");
 
 const roleTabs = [...document.querySelectorAll("[data-corte-rol]")];
 const viewTabs = [...document.querySelectorAll("[data-corte-vista]")];
@@ -151,6 +153,7 @@ function limpiarColaborador() {
   colaboradorBuscar.value = "";
   colaboradorLista.innerHTML = "";
   colaboradorSeleccionadoEl.textContent = `Sin ${nombreRolMinuscula()} seleccionado`;
+  corteObservaciones.value = "";
 }
 
 function aplicarRol(rol) {
@@ -237,6 +240,7 @@ function marcarResultadoTiempos(tipo, mensaje) {
 function limpiarTiempos() {
   [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
+  corteTiemposObservaciones.value = "";
   actualizarCalculoTiempos();
 }
 
@@ -295,6 +299,7 @@ async function guardarTiempos() {
     otrasLaboresMin: calculo.otros,
     tiempoDisponibleMin: calculo.disponible,
     tiempoRealMin: calculo.real,
+    observaciones: corteTiemposObservaciones.value.trim(),
     usuario: sesionCorte?.username || "",
     syncStatus: "PendienteBackend",
     createdAt: new Date().toISOString(),
