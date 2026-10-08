@@ -34,31 +34,49 @@ usuarioPill.textContent =
 
 moduloTitulo.textContent = `${tipoInfo.icono} ${rolNombre} - ${tipoInfo.nombre}`;
 
-const CRITERIOS_CALIDAD_EMPACADOR = [
-  { id: 1, nombre: "Caja Conforme" },
-  { id: 2, nombre: "Área de Empaque limpia y Ordenada" },
-  { id: 3, nombre: "Tipo de Caja" },
-  { id: 4, nombre: "Simetría" },
-  { id: 5, nombre: "Ubicación del logo de capuchón" },
-  { id: 6, nombre: "Código Empaque" },
-  { id: 7, nombre: "Presentación de Ramos" },
-  { id: 8, nombre: "Número de Ramos por Caja" },
-  { id: 9, nombre: "Especificaciones de PO, SO y OM" },
-  { id: 10, nombre: "Marcación / Código" },
-  { id: 11, nombre: "Daño Mecánico" },
-  { id: 12, nombre: "UPC y Capuchón Manchado, rasgado" },
-];
+const CRITERIOS_CALIDAD_POSCOSECHA = {
+  empacador: [
+    { id: 1, nombre: "Caja Conforme" },
+    { id: 2, nombre: "Área de Empaque limpia y Ordenada" },
+    { id: 3, nombre: "Tipo de Caja" },
+    { id: 4, nombre: "Simetría" },
+    { id: 5, nombre: "Ubicación del logo de capuchón" },
+    { id: 6, nombre: "Código Empaque" },
+    { id: 7, nombre: "Presentación de Ramos" },
+    { id: 8, nombre: "Número de Ramos por Caja" },
+    { id: 9, nombre: "Especificaciones de PO, SO y OM" },
+    { id: 10, nombre: "Marcación / Código" },
+    { id: 11, nombre: "Daño Mecánico" },
+    { id: 12, nombre: "UPC y Capuchón Manchado, rasgado" },
+  ],
+  surtidor: [
+    { id: 1, nombre: "Surtido Conforme" },
+    { id: 2, nombre: "Surtido" },
+    { id: 3, nombre: "Apertura" },
+    { id: 4, nombre: "Daño Mecánico" },
+    { id: 5, nombre: "Marcación" },
+  ],
+  zunchador: [
+    { id: 1, nombre: "Zuncho Conforme" },
+    { id: 2, nombre: "Zunchos" },
+    { id: 3, nombre: "Daño mecánico" },
+  ],
+  digitador: [
+    { id: 1, nombre: "Digitación conforme" },
+    { id: 2, nombre: "Mala marcación" },
+  ],
+};
 
 if (tipo === "rendimiento") {
   vistaRendimiento.hidden = false;
   vistaCalidadEmpacador.hidden = true;
   vistaPlaceholder.hidden = true;
   iniciarRendimiento();
-} else if (tipo === "calidad" && rol === "empacador") {
+} else if (tipo === "calidad" && CRITERIOS_CALIDAD_POSCOSECHA[rol]) {
   vistaRendimiento.hidden = true;
   vistaCalidadEmpacador.hidden = false;
   vistaPlaceholder.hidden = true;
-  iniciarCalidadEmpacador();
+  iniciarCalidadPoscosecha();
 } else {
   vistaRendimiento.hidden = true;
   vistaCalidadEmpacador.hidden = true;
@@ -337,12 +355,15 @@ function iniciarRendimiento() {
 }
 
 
-function iniciarCalidadEmpacador() {
+function iniciarCalidadPoscosecha() {
   const evaluadorNombre = document.querySelector("#calidadEvaluadorNombre");
   const semanaActualEl = document.querySelector("#calidadSemanaActual");
   const revisionEl = document.querySelector("#calidadRevision");
   const buscar = document.querySelector("#calidadColaboradorBuscar");
   const lista = document.querySelector("#calidadColaboradorLista");
+  const rolEtiqueta = document.querySelector("#calidadRolEtiqueta");
+  const criteriosHint = document.querySelector("#calidadCriteriosHint");
+  const registrosHint = document.querySelector("#calidadRegistrosHint");
   const nombreEl = document.querySelector("#calidadColaboradorNombre");
   const codigoEl = document.querySelector("#calidadColaboradorCodigo");
   const criteriosEl = document.querySelector("#calidadEmpacadorCriterios");
@@ -357,10 +378,18 @@ function iniciarCalidadEmpacador() {
   let semanaActual = null;
   let siguienteRevision = null;
 
+  const criteriosCalidad = CRITERIOS_CALIDAD_POSCOSECHA[rol] || [];
+
   evaluadorNombre.textContent =
     sesionPoscosecha?.empleadoNombre || sesionPoscosecha?.username || "Usuario actual";
 
-  criteriosEl.innerHTML = CRITERIOS_CALIDAD_EMPACADOR.map((item) =>
+  rolEtiqueta.textContent = rolNombre;
+  buscar.placeholder = `Buscar ${rolNombre.toLowerCase()} por nombre o código…`;
+  nombreEl.textContent = `Sin ${rolNombre.toLowerCase()} seleccionado`;
+  criteriosHint.textContent = `Marca los ítems que correspondan a la evaluación de ${rolNombre.toLowerCase()}.`;
+  registrosHint.textContent = `Registros locales de Calidad ${rolNombre}.`;
+
+  criteriosEl.innerHTML = criteriosCalidad.map((item) =>
     `<label class="calidad-criterio">
       <input type="checkbox" value="${item.id}" />
       <span class="calidad-criterio-check" aria-hidden="true"></span>
@@ -379,7 +408,7 @@ function iniciarCalidadEmpacador() {
   }
 
   function nombreEmpleado(item) {
-    return item?.nombre || item?.empleadoNombre || codigoEmpleado(item) || "Empacador";
+    return item?.nombre || item?.empleadoNombre || codigoEmpleado(item) || rolNombre;
   }
 
   function etiqueta(item) {
@@ -399,7 +428,7 @@ function iniciarCalidadEmpacador() {
     const registros = await OfflineDb.getAll("poscosechaCalidadEvaluaciones");
     const mayor = registros
       .filter((r) =>
-        r.rol === "empacador" &&
+        r.rol === rol &&
         String(r.colaborador) === String(codigo) &&
         Number(r.semana) === semana
       )
@@ -434,7 +463,7 @@ function iniciarCalidadEmpacador() {
         estado(
           siguienteRevision > 30 ? "warning" : null,
           siguienteRevision > 30
-            ? "Este empacador ya tiene 30 revisiones en la semana."
+            ? `Este ${rolNombre.toLowerCase()} ya tiene 30 revisiones en la semana.`
             : "Selecciona los ítems de la evaluación y guarda."
         );
       });
@@ -449,7 +478,7 @@ function iniciarCalidadEmpacador() {
 
   async function renderRegistros() {
     const registros = (await OfflineDb.getAll("poscosechaCalidadEvaluaciones"))
-      .filter((r) => r.rol === "empacador")
+      .filter((r) => r.rol === rol)
       .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
 
     registrosEl.innerHTML = registros.length
@@ -461,28 +490,28 @@ function iniciarCalidadEmpacador() {
             ${r.observaciones ? `<span>Observaciones: ${r.observaciones}</span>` : ""}
           </article>
         `).join("")
-      : '<p class="hint" style="margin:0;">Todavía no hay evaluaciones guardadas para Empacador.</p>';
+      : `<p class="hint" style="margin:0;">Todavía no hay evaluaciones guardadas para ${rolNombre}.</p>`;
   }
 
   async function guardarEvaluacion() {
     if (!colaboradorSeleccionado) {
-      return estado("error", "Selecciona un empacador antes de guardar.");
+      return estado("error", `Selecciona un ${rolNombre.toLowerCase()} antes de guardar.`);
     }
     if (!semanaActual) {
       return estado("error", "No hay calendario de semanas descargado. Conéctate una vez y vuelve a intentar.");
     }
     if (!siguienteRevision || siguienteRevision > 30) {
-      return estado("error", "No hay una revisión disponible para este empacador.");
+      return estado("error", `No hay una revisión disponible para este ${rolNombre.toLowerCase()}.`);
     }
 
     const items = [...criteriosEl.querySelectorAll('input:checked')].map((input) => Number(input.value));
-    const itemsNombres = items.map((id) => CRITERIOS_CALIDAD_EMPACADOR.find((item) => item.id === id)?.nombre).filter(Boolean);
+    const itemsNombres = items.map((id) => criteriosCalidad.find((item) => item.id === id)?.nombre).filter(Boolean);
     const codigo = codigoEmpleado(colaboradorSeleccionado);
     const registro = {
       id: SyncEngine.generarUUID(),
       area: "Poscosecha",
-      rol: "empacador",
-      rolNombre: "Empacador",
+      rol,
+      rolNombre,
       fecha: fechaLocal(),
       semana: semanaActual.semana,
       ano: semanaActual.ano,
@@ -504,7 +533,7 @@ function iniciarCalidadEmpacador() {
     siguienteRevision = null;
     buscar.value = "";
     lista.innerHTML = "";
-    nombreEl.textContent = "Sin empacador seleccionado";
+    nombreEl.textContent = `Sin ${rolNombre.toLowerCase()} seleccionado`;
     codigoEl.textContent = "—";
     revisionEl.textContent = "Selecciona un colaborador";
     criteriosEl.querySelectorAll("input").forEach((input) => { input.checked = false; });
@@ -544,7 +573,7 @@ function iniciarCalidadEmpacador() {
     }
   }
 
-  (async function iniciarFormularioCalidadEmpacador() {
+  (async function iniciarFormularioCalidadPoscosecha() {
     await cargarSemana();
     await cargarColaboradoresCalidad();
     await renderRegistros();

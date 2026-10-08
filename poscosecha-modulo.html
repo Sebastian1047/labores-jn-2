@@ -229,15 +229,15 @@
             </div>
 
             <div>
-              <span class="scan-label">Empacador</span>
-              <input id="calidadColaboradorBuscar" type="text" placeholder="Buscar empacador por nombre o código…" autocomplete="off" />
+              <span class="scan-label" id="calidadRolEtiqueta">Colaborador</span>
+              <input id="calidadColaboradorBuscar" type="text" placeholder="Buscar colaborador por nombre o código…" autocomplete="off" />
               <div id="calidadColaboradorLista" class="pending-list" style="max-height:180px;margin-top:8px;"></div>
             </div>
 
             <div class="exit-row" style="grid-template-columns:1fr 1fr;margin-top:16px;">
               <div>
                 <span class="scan-label">Nombre</span>
-                <p class="hint" id="calidadColaboradorNombre" style="margin:6px 0 0;">Sin empacador seleccionado</p>
+                <p class="hint" id="calidadColaboradorNombre" style="margin:6px 0 0;">Sin colaborador seleccionado</p>
               </div>
               <div>
                 <span class="scan-label">Código</span>
@@ -247,21 +247,8 @@
 
             <div>
               <span class="scan-label">Criterios de calidad</span>
-              <p class="hint" style="margin:6px 0 10px;">Marca los ítems que correspondan a la evaluación del empacador.</p>
-              <div id="calidadEmpacadorCriterios" class="calidad-criterios">
-                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Caja Conforme</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Área de Empaque limpia y Ordenada</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Tipo de Caja</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Simetría</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Ubicación del logo de capuchón</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="6" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Código Empaque</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="7" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Presentación de Ramos</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="8" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Número de Ramos por Caja</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="9" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Especificaciones de PO, SO y OM</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="10" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Marcación / Código</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="11" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Daño Mecánico</span></label>
-                <label class="calidad-criterio"><input type="checkbox" value="12" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">UPC y Capuchón Manchado, rasgado</span></label>
-              </div>
+              <p class="hint" id="calidadCriteriosHint" style="margin:6px 0 10px;">Marca los ítems que correspondan a la evaluación.</p>
+              <div id="calidadEmpacadorCriterios" class="calidad-criterios"></div>
             </div>
 
             <div style="margin-top:16px;">
@@ -277,7 +264,7 @@
             <section class="result-card" aria-live="polite">
               <div class="result-status" id="calidadEmpacadorResultado">
                 <span class="dot"></span>
-                <strong id="calidadEmpacadorMensaje">Selecciona un empacador para iniciar una evaluación.</strong>
+                <strong id="calidadEmpacadorMensaje">Selecciona un colaborador para iniciar una evaluación.</strong>
               </div>
             </section>
           </article>
@@ -308,7 +295,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./poscosecha-modulo.js?v=1.0.53"></script>
+    <script src="./poscosecha-modulo.js?v=1.0.54"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
