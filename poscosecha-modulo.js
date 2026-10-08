@@ -383,11 +383,11 @@ function iniciarCalidadPoscosecha() {
   evaluadorNombre.textContent =
     sesionPoscosecha?.empleadoNombre || sesionPoscosecha?.username || "Usuario actual";
 
-  rolEtiqueta.textContent = rolNombre;
+  if (rolEtiqueta) rolEtiqueta.textContent = rolNombre;
   buscar.placeholder = `Buscar ${rolNombre.toLowerCase()} por nombre o código…`;
   nombreEl.textContent = `Sin ${rolNombre.toLowerCase()} seleccionado`;
-  criteriosHint.textContent = `Marca los ítems que correspondan a la evaluación de ${rolNombre.toLowerCase()}.`;
-  registrosHint.textContent = `Registros locales de Calidad ${rolNombre}.`;
+  if (criteriosHint) criteriosHint.textContent = `Marca los ítems que correspondan a la evaluación de ${rolNombre.toLowerCase()}.`;
+  if (registrosHint) registrosHint.textContent = `Registros locales de Calidad ${rolNombre}.`;
 
   criteriosEl.innerHTML = criteriosCalidad.map((item) =>
     `<label class="calidad-criterio">
