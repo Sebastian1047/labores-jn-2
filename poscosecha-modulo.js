@@ -34,6 +34,21 @@ usuarioPill.textContent =
 
 moduloTitulo.textContent = `${tipoInfo.icono} ${rolNombre} - ${tipoInfo.nombre}`;
 
+const CRITERIOS_CALIDAD_EMPACADOR = [
+  { id: 1, nombre: "Caja Conforme" },
+  { id: 2, nombre: "Área de Empaque limpia y Ordenada" },
+  { id: 3, nombre: "Tipo de Caja" },
+  { id: 4, nombre: "Simetría" },
+  { id: 5, nombre: "Ubicación del logo de capuchón" },
+  { id: 6, nombre: "Código Empaque" },
+  { id: 7, nombre: "Presentación de Ramos" },
+  { id: 8, nombre: "Número de Ramos por Caja" },
+  { id: 9, nombre: "Especificaciones de PO, SO y OM" },
+  { id: 10, nombre: "Marcación / Código" },
+  { id: 11, nombre: "Daño Mecánico" },
+  { id: 12, nombre: "UPC y Capuchón Manchado, rasgado" },
+];
+
 if (tipo === "rendimiento") {
   vistaRendimiento.hidden = false;
   vistaCalidadEmpacador.hidden = true;
@@ -321,21 +336,6 @@ function iniciarRendimiento() {
   })();
 }
 
-
-const CRITERIOS_CALIDAD_EMPACADOR = [
-  { id: 1, nombre: "Caja Conforme" },
-  { id: 2, nombre: "Área de Empaque limpia y Ordenada" },
-  { id: 3, nombre: "Tipo de Caja" },
-  { id: 4, nombre: "Simetría" },
-  { id: 5, nombre: "Ubicación del logo de capuchón" },
-  { id: 6, nombre: "Código Empaque" },
-  { id: 7, nombre: "Presentación de Ramos" },
-  { id: 8, nombre: "Número de Ramos por Caja" },
-  { id: 9, nombre: "Especificaciones de PO, SO y OM" },
-  { id: 10, nombre: "Marcación / Código" },
-  { id: 11, nombre: "Daño Mecánico" },
-  { id: 12, nombre: "UPC y Capuchón Manchado, rasgado" },
-];
 
 function iniciarCalidadEmpacador() {
   const evaluadorNombre = document.querySelector("#calidadEvaluadorNombre");
