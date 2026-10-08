@@ -249,7 +249,39 @@
             <div>
               <span class="scan-label">Criterios de calidad</span>
               <p class="hint" id="calidadCriteriosHint" style="margin:6px 0 10px;">Marca los ítems que correspondan a la evaluación.</p>
-              <div id="calidadEmpacadorCriterios" class="calidad-criterios"></div>
+              <div id="calidadCriteriosEmpacador" class="calidad-criterios" data-calidad-rol="empacador" hidden>
+                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Caja Conforme</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Área de Empaque limpia y Ordenada</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Tipo de Caja</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Simetría</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Ubicación del logo de capuchón</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="6" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Código Empaque</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="7" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Presentación de Ramos</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="8" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Número de Ramos por Caja</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="9" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Especificaciones de PO, SO y OM</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="10" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Marcación / Código</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="11" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Daño Mecánico</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="12" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">UPC y Capuchón Manchado, rasgado</span></label>
+              </div>
+
+              <div id="calidadCriteriosSurtidor" class="calidad-criterios" data-calidad-rol="surtidor" hidden>
+                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Surtido Conforme</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Surtido</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Apertura</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Daño Mecánico</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Marcación</span></label>
+              </div>
+
+              <div id="calidadCriteriosZunchador" class="calidad-criterios" data-calidad-rol="zunchador" hidden>
+                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Zuncho Conforme</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Zunchos</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Daño mecánico</span></label>
+              </div>
+
+              <div id="calidadCriteriosDigitador" class="calidad-criterios" data-calidad-rol="digitador" hidden>
+                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Digitación conforme</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Mala marcación</span></label>
+              </div>
             </div>
 
             <div style="margin-top:16px;">
@@ -296,7 +328,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./poscosecha-modulo.js?v=1.0.55"></script>
+    <script src="./poscosecha-modulo.js?v=1.0.56"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

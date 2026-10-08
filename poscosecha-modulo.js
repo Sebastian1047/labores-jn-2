@@ -129,6 +129,13 @@ function iniciarRendimiento() {
   const tiemposResultState = document.querySelector("#tiemposResultState");
   const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 
+  if (!criteriosEl) {
+    vistaPlaceholder.hidden = false;
+    vistaCalidadEmpacador.hidden = true;
+    moduloEstado.textContent = "No se encontraron los criterios de calidad para este módulo.";
+    return;
+  }
+
   let colaboradores = [];
   let colaboradorSeleccionado = null;
 
@@ -366,7 +373,9 @@ function iniciarCalidadPoscosecha() {
   const registrosHint = document.querySelector("#calidadRegistrosHint");
   const nombreEl = document.querySelector("#calidadColaboradorNombre");
   const codigoEl = document.querySelector("#calidadColaboradorCodigo");
-  const criteriosEl = document.querySelector("#calidadEmpacadorCriterios");
+  const gruposCriterios = [...document.querySelectorAll("[data-calidad-rol]")];
+  gruposCriterios.forEach((grupo) => { grupo.hidden = grupo.dataset.calidadRol !== rol; });
+  const criteriosEl = document.querySelector(`[data-calidad-rol="${rol}"]`);
   const observacionesEl = document.querySelector("#calidadEmpacadorObservaciones");
   const guardarBtn = document.querySelector("#guardarCalidadEmpacadorBtn");
   const resultado = document.querySelector("#calidadEmpacadorResultado");
@@ -388,14 +397,6 @@ function iniciarCalidadPoscosecha() {
   nombreEl.textContent = `Sin ${rolNombre.toLowerCase()} seleccionado`;
   if (criteriosHint) criteriosHint.textContent = `Marca los ítems que correspondan a la evaluación de ${rolNombre.toLowerCase()}.`;
   if (registrosHint) registrosHint.textContent = `Registros locales de Calidad ${rolNombre}.`;
-
-  criteriosEl.innerHTML = criteriosCalidad.map((item) =>
-    `<label class="calidad-criterio">
-      <input type="checkbox" value="${item.id}" />
-      <span class="calidad-criterio-check" aria-hidden="true"></span>
-      <span class="calidad-criterio-text">${item.nombre}</span>
-    </label>`
-  ).join("");
 
   function estado(tipoResultado, texto) {
     resultado.classList.remove("ok", "warning", "error");
