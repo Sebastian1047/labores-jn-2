@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poscosecha — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" style="max-width:760px;">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Poscosecha</p>
+          <h1 id="moduloTitulo">💐 Poscosecha</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <a href="./menu.html" class="pill">← Menú principal</a>
+        </section>
+      </header>
+
+      <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+        <article class="scanner-panel">
+          <div class="result-status">
+            <span class="dot"></span>
+            <strong id="moduloEstado">Módulo creado y listo para configurar.</strong>
+          </div>
+          <p class="hint" id="moduloDescripcion" style="margin:14px 0 0;"></p>
+        </article>
+      </section>
+    </main>
+
+    <script src="./poscosecha-modulo.js?v=1.0.49"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>

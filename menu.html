@@ -96,6 +96,14 @@
         text-align:center;
         padding:28px 20px;
       }
+      .poscosecha-module.rendimiento {
+        background: linear-gradient(180deg, #f5fbff 0%, #ffffff 100%);
+        border-top-color: #6f9fca;
+      }
+      .poscosecha-module.calidad {
+        background: linear-gradient(180deg, #f4fbf6 0%, #ffffff 100%);
+        border-top-color: #65a678;
+      }
     </style>
     <style>
       @keyframes girar {
@@ -241,6 +249,51 @@
         </section>
       </section>
 
+      <section id="vistaPoscosecha" class="area-view" hidden>
+        <div class="area-header">
+          <div>
+            <p class="eyebrow" style="margin:0 0 4px;">Área</p>
+            <h2 style="margin:0;">💐 Poscosecha</h2>
+          </div>
+          <button id="volverAreasPoscosechaBtn" class="ghost-btn" type="button">← Áreas</button>
+        </div>
+
+        <section class="workspace" style="grid-template-columns: 1fr 1fr;">
+          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posSurtidorRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Surtidor - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Surtidor.</p>
+          </article>
+          <article class="scanner-panel module-card poscosecha-module calidad" id="posSurtidorCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Surtidor - Calidad</h2>
+            <p class="hint">Control de calidad para Surtidor.</p>
+          </article>
+
+          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posZunchadorRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Zunchador - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Zunchador.</p>
+          </article>
+          <article class="scanner-panel module-card poscosecha-module calidad" id="posZunchadorCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Zunchador - Calidad</h2>
+            <p class="hint">Control de calidad para Zunchador.</p>
+          </article>
+
+          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posDigitadorRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Digitador - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Digitador.</p>
+          </article>
+          <article class="scanner-panel module-card poscosecha-module calidad" id="posDigitadorCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Digitador - Calidad</h2>
+            <p class="hint">Control de calidad para Digitador.</p>
+          </article>
+        </section>
+      </section>
+
       <section id="vistaAreaPendiente" class="area-view" hidden>
         <div class="area-header">
           <div>
@@ -299,6 +352,7 @@
 
       const vistaAreas = document.querySelector("#vistaAreas");
       const vistaProduccion = document.querySelector("#vistaProduccion");
+      const vistaPoscosecha = document.querySelector("#vistaPoscosecha");
       const vistaAreaPendiente = document.querySelector("#vistaAreaPendiente");
       const menuTitulo = document.querySelector("#menuTitulo");
       const areaPendienteTitulo = document.querySelector("#areaPendienteTitulo");
@@ -308,6 +362,7 @@
       function mostrarAreas() {
         vistaAreas.hidden = false;
         vistaProduccion.hidden = true;
+        vistaPoscosecha.hidden = true;
         vistaAreaPendiente.hidden = true;
         menuTitulo.textContent = "🌱 Áreas";
       }
@@ -315,13 +370,23 @@
       function mostrarProduccion() {
         vistaAreas.hidden = true;
         vistaProduccion.hidden = false;
+        vistaPoscosecha.hidden = true;
         vistaAreaPendiente.hidden = true;
         menuTitulo.textContent = "🌱 Producción";
+      }
+
+      function mostrarPoscosecha() {
+        vistaAreas.hidden = true;
+        vistaProduccion.hidden = true;
+        vistaPoscosecha.hidden = false;
+        vistaAreaPendiente.hidden = true;
+        menuTitulo.textContent = "💐 Poscosecha";
       }
 
       function mostrarAreaPendiente(nombre, icono) {
         vistaAreas.hidden = true;
         vistaProduccion.hidden = true;
+        vistaPoscosecha.hidden = true;
         vistaAreaPendiente.hidden = false;
         areaPendienteTitulo.textContent = `${icono} ${nombre}`;
         areaPendienteNombre.textContent = nombre;
@@ -330,11 +395,31 @@
       }
 
       document.querySelector("#areaProduccion").addEventListener("click", mostrarProduccion);
-      document.querySelector("#areaPoscosecha").addEventListener("click", () => mostrarAreaPendiente("Poscosecha", "💐"));
+      document.querySelector("#areaPoscosecha").addEventListener("click", mostrarPoscosecha);
       document.querySelector("#areaMipe").addEventListener("click", () => mostrarAreaPendiente("MIPE", "🪲"));
       document.querySelector("#areaMirfe").addEventListener("click", () => mostrarAreaPendiente("MIRFE", "🌿"));
       document.querySelector("#volverAreasBtn").addEventListener("click", mostrarAreas);
+      document.querySelector("#volverAreasPoscosechaBtn").addEventListener("click", mostrarAreas);
       document.querySelector("#volverAreasPendienteBtn").addEventListener("click", mostrarAreas);
+
+      document.querySelector("#posSurtidorRendimiento").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=surtidor&tipo=rendimiento";
+      });
+      document.querySelector("#posSurtidorCalidad").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=surtidor&tipo=calidad";
+      });
+      document.querySelector("#posZunchadorRendimiento").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=zunchador&tipo=rendimiento";
+      });
+      document.querySelector("#posZunchadorCalidad").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=zunchador&tipo=calidad";
+      });
+      document.querySelector("#posDigitadorRendimiento").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=digitador&tipo=rendimiento";
+      });
+      document.querySelector("#posDigitadorCalidad").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=digitador&tipo=calidad";
+      });
 
       document.querySelector("#logoutBtn").addEventListener("click", () => {
         sessionStorage.removeItem("labores_usuario");
