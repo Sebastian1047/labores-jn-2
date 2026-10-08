@@ -104,6 +104,22 @@
         background: linear-gradient(180deg, #f4fbf6 0%, #ffffff 100%);
         border-top-color: #65a678;
       }
+      .poscosecha-module.pair-empacador {
+        background: linear-gradient(180deg, #fff5ed 0%, #ffffff 100%);
+        border-top-color: #d48b52;
+      }
+      .poscosecha-module.pair-surtidor {
+        background: linear-gradient(180deg, #eef8ff 0%, #ffffff 100%);
+        border-top-color: #6f9fca;
+      }
+      .poscosecha-module.pair-zunchador {
+        background: linear-gradient(180deg, #f5f2ff 0%, #ffffff 100%);
+        border-top-color: #8a78c2;
+      }
+      .poscosecha-module.pair-digitador {
+        background: linear-gradient(180deg, #f1fbf6 0%, #ffffff 100%);
+        border-top-color: #65a678;
+      }
     </style>
     <style>
       @keyframes girar {
@@ -259,49 +275,50 @@
         </div>
 
         <section class="workspace" style="grid-template-columns: 1fr 1fr;">
-          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posSurtidorRendimiento" style="cursor:pointer;">
+          <article class="scanner-panel module-card poscosecha-module pair-empacador" id="posEmpacadorRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Empacador - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Empacador.</p>
+          </article>
+          <article class="scanner-panel module-card poscosecha-module pair-empacador" id="posEmpacadorCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Empacador - Calidad</h2>
+            <p class="hint">Control de calidad para Empacador.</p>
+          </article>
+          <article class="scanner-panel module-card poscosecha-module pair-surtidor" id="posSurtidorRendimiento" style="cursor:pointer;">
             <div class="module-icon" aria-hidden="true">📊</div>
             <h2>Surtidor - Rendimiento</h2>
             <p class="hint">Registro de rendimiento para Surtidor.</p>
           </article>
-          <article class="scanner-panel module-card poscosecha-module calidad" id="posSurtidorCalidad" style="cursor:pointer;">
+          <article class="scanner-panel module-card poscosecha-module pair-surtidor" id="posSurtidorCalidad" style="cursor:pointer;">
             <div class="module-icon" aria-hidden="true">✅</div>
             <h2>Surtidor - Calidad</h2>
             <p class="hint">Control de calidad para Surtidor.</p>
           </article>
 
-          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posZunchadorRendimiento" style="cursor:pointer;">
+          <article class="scanner-panel module-card poscosecha-module pair-zunchador" id="posZunchadorRendimiento" style="cursor:pointer;">
             <div class="module-icon" aria-hidden="true">📊</div>
             <h2>Zunchador - Rendimiento</h2>
             <p class="hint">Registro de rendimiento para Zunchador.</p>
           </article>
-          <article class="scanner-panel module-card poscosecha-module calidad" id="posZunchadorCalidad" style="cursor:pointer;">
+          <article class="scanner-panel module-card poscosecha-module pair-zunchador" id="posZunchadorCalidad" style="cursor:pointer;">
             <div class="module-icon" aria-hidden="true">✅</div>
             <h2>Zunchador - Calidad</h2>
             <p class="hint">Control de calidad para Zunchador.</p>
           </article>
 
-          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posDigitadorRendimiento" style="cursor:pointer;">
+          <article class="scanner-panel module-card poscosecha-module pair-digitador" id="posDigitadorRendimiento" style="cursor:pointer;">
             <div class="module-icon" aria-hidden="true">📊</div>
             <h2>Digitador - Rendimiento</h2>
             <p class="hint">Registro de rendimiento para Digitador.</p>
           </article>
-          <article class="scanner-panel module-card poscosecha-module calidad" id="posDigitadorCalidad" style="cursor:pointer;">
+          <article class="scanner-panel module-card poscosecha-module pair-digitador" id="posDigitadorCalidad" style="cursor:pointer;">
             <div class="module-icon" aria-hidden="true">✅</div>
             <h2>Digitador - Calidad</h2>
             <p class="hint">Control de calidad para Digitador.</p>
           </article>
 
-          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posEmpacadorRendimiento" style="cursor:pointer;">
-            <div class="module-icon" aria-hidden="true">📊</div>
-            <h2>Empacador - Rendimiento</h2>
-            <p class="hint">Registro de rendimiento para Empacador.</p>
-          </article>
-          <article class="scanner-panel module-card poscosecha-module calidad" id="posEmpacadorCalidad" style="cursor:pointer;">
-            <div class="module-icon" aria-hidden="true">✅</div>
-            <h2>Empacador - Calidad</h2>
-            <p class="hint">Control de calidad para Empacador.</p>
-          </article>
+
         </section>
       </section>
 

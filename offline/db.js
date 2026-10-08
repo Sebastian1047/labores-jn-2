@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 19;
+const DB_VERSION = 20;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -165,12 +165,19 @@ function abrirDb() {
         desbotonadoTiempos.createIndex("fecha", "fecha");
         desbotonadoTiempos.createIndex("syncStatus", "syncStatus");
       }
-      // Poscosecha — tiempos de rendimiento por Surtidor, Zunchador y Digitador.
+      // Poscosecha — tiempos de rendimiento por Surtidor, Zunchador, Digitador y Empacador.
       if (!db.objectStoreNames.contains("poscosechaRendimientoTiempos")) {
         const poscosechaRendimiento = db.createObjectStore("poscosechaRendimientoTiempos", { keyPath: "id" });
         poscosechaRendimiento.createIndex("fecha", "fecha");
         poscosechaRendimiento.createIndex("rol", "rol");
         poscosechaRendimiento.createIndex("syncStatus", "syncStatus");
+      }
+      // Poscosecha — evaluaciones de calidad locales por rol.
+      if (!db.objectStoreNames.contains("poscosechaCalidadEvaluaciones")) {
+        const poscosechaCalidad = db.createObjectStore("poscosechaCalidadEvaluaciones", { keyPath: "id" });
+        poscosechaCalidad.createIndex("fecha", "fecha");
+        poscosechaCalidad.createIndex("rol", "rol");
+        poscosechaCalidad.createIndex("syncStatus", "syncStatus");
       }
     };
 

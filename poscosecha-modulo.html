@@ -209,6 +209,78 @@
         </section>
       </section>
 
+      <section id="vistaCalidadEmpacador" hidden>
+        <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+          <article class="scanner-panel">
+            <div>
+              <span class="scan-label">Evaluador</span>
+              <p class="hint" id="calidadEvaluadorNombre" style="margin:6px 0 0;">Usuario actual</p>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns:1fr 1fr;">
+              <div>
+                <span class="scan-label">Semana</span>
+                <p class="hint" id="calidadSemanaActual" style="margin:6px 0 0;">Cargando calendario…</p>
+              </div>
+              <div>
+                <span class="scan-label">Revisión</span>
+                <p class="hint" id="calidadRevision" style="margin:6px 0 0;">Selecciona un colaborador</p>
+              </div>
+            </div>
+
+            <div>
+              <span class="scan-label">Empacador</span>
+              <input id="calidadColaboradorBuscar" type="text" placeholder="Buscar empacador por nombre o código…" autocomplete="off" />
+              <div id="calidadColaboradorLista" class="pending-list" style="max-height:180px;margin-top:8px;"></div>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns:1fr 1fr;margin-top:16px;">
+              <div>
+                <span class="scan-label">Nombre</span>
+                <p class="hint" id="calidadColaboradorNombre" style="margin:6px 0 0;">Sin empacador seleccionado</p>
+              </div>
+              <div>
+                <span class="scan-label">Código</span>
+                <p class="hint" id="calidadColaboradorCodigo" style="margin:6px 0 0;">—</p>
+              </div>
+            </div>
+
+            <div>
+              <span class="scan-label">Criterios de calidad</span>
+              <p class="hint" style="margin:6px 0 10px;">Marca los ítems que correspondan a la evaluación del empacador.</p>
+              <div id="calidadEmpacadorCriterios" class="calidad-criterios"></div>
+            </div>
+
+            <div style="margin-top:16px;">
+              <label>Observaciones
+                <textarea id="calidadEmpacadorObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+              </label>
+            </div>
+
+            <div class="action-row" style="margin-top:16px;">
+              <button id="guardarCalidadEmpacadorBtn" class="success-btn" type="button">Guardar evaluación</button>
+            </div>
+
+            <section class="result-card" aria-live="polite">
+              <div class="result-status" id="calidadEmpacadorResultado">
+                <span class="dot"></span>
+                <strong id="calidadEmpacadorMensaje">Selecciona un empacador para iniciar una evaluación.</strong>
+              </div>
+            </section>
+          </article>
+        </section>
+
+        <section class="scanner-panel" style="margin-top:16px;">
+          <div class="panel-heading">
+            <div>
+              <span class="scan-label">Evaluaciones guardadas en este equipo</span>
+              <p class="hint" style="margin:6px 0 0;">Registros locales de Calidad Empacador.</p>
+            </div>
+          </div>
+          <div id="calidadEmpacadorRegistros" class="pending-list"></div>
+        </section>
+      </section>
+
       <section id="vistaPlaceholder" class="workspace" style="grid-template-columns:minmax(0,1fr);" hidden>
         <article class="scanner-panel">
           <div class="result-status">
@@ -223,7 +295,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./poscosecha-modulo.js?v=1.0.50"></script>
+    <script src="./poscosecha-modulo.js?v=1.0.52"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

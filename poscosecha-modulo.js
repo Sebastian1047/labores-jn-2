@@ -24,6 +24,7 @@ const usuarioPill = document.querySelector("#usuarioPill");
 const estadoPill = document.querySelector("#estadoPill");
 const moduloTitulo = document.querySelector("#moduloTitulo");
 const vistaRendimiento = document.querySelector("#vistaRendimiento");
+const vistaCalidadEmpacador = document.querySelector("#vistaCalidadEmpacador");
 const vistaPlaceholder = document.querySelector("#vistaPlaceholder");
 const moduloEstado = document.querySelector("#moduloEstado");
 const moduloDescripcion = document.querySelector("#moduloDescripcion");
@@ -33,16 +34,23 @@ usuarioPill.textContent =
 
 moduloTitulo.textContent = `${tipoInfo.icono} ${rolNombre} - ${tipoInfo.nombre}`;
 
-if (tipo !== "rendimiento") {
+if (tipo === "rendimiento") {
+  vistaRendimiento.hidden = false;
+  vistaCalidadEmpacador.hidden = true;
+  vistaPlaceholder.hidden = true;
+  iniciarRendimiento();
+} else if (tipo === "calidad" && rol === "empacador") {
   vistaRendimiento.hidden = true;
+  vistaCalidadEmpacador.hidden = false;
+  vistaPlaceholder.hidden = true;
+  iniciarCalidadEmpacador();
+} else {
+  vistaRendimiento.hidden = true;
+  vistaCalidadEmpacador.hidden = true;
   vistaPlaceholder.hidden = false;
   moduloEstado.textContent = `Módulo de ${tipoInfo.nombre} de ${rolNombre} creado.`;
   moduloDescripcion.textContent =
     "La estructura ya está disponible dentro de Poscosecha. Los campos específicos se agregarán según el flujo definido para este módulo.";
-} else {
-  vistaRendimiento.hidden = false;
-  vistaPlaceholder.hidden = true;
-  iniciarRendimiento();
 }
 
 function fechaLocal() {
@@ -310,5 +318,235 @@ function iniciarRendimiento() {
     aplicarVista("registro");
     await cargarColaboradores();
     await renderRegistrosTiempos();
+  })();
+}
+
+
+const CRITERIOS_CALIDAD_EMPACADOR = [
+  { id: 1, nombre: "Caja Conforme" },
+  { id: 2, nombre: "Área de Empaque limpia y Ordenada" },
+  { id: 3, nombre: "Tipo de Caja" },
+  { id: 4, nombre: "Simetría" },
+  { id: 5, nombre: "Ubicación del logo de capuchón" },
+  { id: 6, nombre: "Código Empaque" },
+  { id: 7, nombre: "Presentación de Ramos" },
+  { id: 8, nombre: "Número de Ramos por Caja" },
+  { id: 9, nombre: "Especificaciones de PO, SO y OM" },
+  { id: 10, nombre: "Marcación / Código" },
+  { id: 11, nombre: "Daño Mecánico" },
+  { id: 12, nombre: "UPC y Capuchón Manchado, rasgado" },
+];
+
+function iniciarCalidadEmpacador() {
+  const evaluadorNombre = document.querySelector("#calidadEvaluadorNombre");
+  const semanaActualEl = document.querySelector("#calidadSemanaActual");
+  const revisionEl = document.querySelector("#calidadRevision");
+  const buscar = document.querySelector("#calidadColaboradorBuscar");
+  const lista = document.querySelector("#calidadColaboradorLista");
+  const nombreEl = document.querySelector("#calidadColaboradorNombre");
+  const codigoEl = document.querySelector("#calidadColaboradorCodigo");
+  const criteriosEl = document.querySelector("#calidadEmpacadorCriterios");
+  const observacionesEl = document.querySelector("#calidadEmpacadorObservaciones");
+  const guardarBtn = document.querySelector("#guardarCalidadEmpacadorBtn");
+  const resultado = document.querySelector("#calidadEmpacadorResultado");
+  const mensaje = document.querySelector("#calidadEmpacadorMensaje");
+  const registrosEl = document.querySelector("#calidadEmpacadorRegistros");
+
+  let colaboradores = [];
+  let colaboradorSeleccionado = null;
+  let semanaActual = null;
+  let siguienteRevision = null;
+
+  evaluadorNombre.textContent =
+    sesionPoscosecha?.empleadoNombre || sesionPoscosecha?.username || "Usuario actual";
+
+  criteriosEl.innerHTML = CRITERIOS_CALIDAD_EMPACADOR.map((item) =>
+    `<label class="calidad-criterio">
+      <input type="checkbox" value="${item.id}" />
+      <span class="calidad-criterio-check" aria-hidden="true"></span>
+      <span class="calidad-criterio-text">${item.nombre}</span>
+    </label>`
+  ).join("");
+
+  function estado(tipoResultado, texto) {
+    resultado.classList.remove("ok", "warning", "error");
+    if (tipoResultado) resultado.classList.add(tipoResultado);
+    mensaje.textContent = texto;
+  }
+
+  function codigoEmpleado(item) {
+    return String(item?.codigo || item?.docid || item?.id || "");
+  }
+
+  function nombreEmpleado(item) {
+    return item?.nombre || item?.empleadoNombre || codigoEmpleado(item) || "Empacador";
+  }
+
+  function etiqueta(item) {
+    return `${nombreEmpleado(item)} (${codigoEmpleado(item)})`;
+  }
+
+  async function cargarSemana() {
+    const semanas = await OfflineDb.getAll("semanas");
+    semanaActual = SyncEngine.semanaQueContiene(semanas, new Date());
+    semanaActualEl.textContent = semanaActual
+      ? `Semana ${semanaActual.semana} de ${semanaActual.ano}`
+      : "Sin calendario descargado";
+  }
+
+  async function calcularSiguienteRevision(codigo) {
+    const semana = Number(semanaActual?.semana || 0);
+    const registros = await OfflineDb.getAll("poscosechaCalidadEvaluaciones");
+    const mayor = registros
+      .filter((r) =>
+        r.rol === "empacador" &&
+        String(r.colaborador) === String(codigo) &&
+        Number(r.semana) === semana
+      )
+      .reduce((acc, r) => Math.max(acc, Number(r.revision) || 0), 0);
+    return mayor + 1;
+  }
+
+  function renderLista(filtro = "") {
+    const texto = filtro.trim().toLowerCase();
+    const visibles = colaboradores
+      .filter((item) => !texto || etiqueta(item).toLowerCase().includes(texto))
+      .slice(0, 50);
+
+    lista.innerHTML = visibles.length
+      ? visibles.map((item, idx) =>
+          `<div class="pending-item" data-index="${idx}" style="cursor:pointer;padding:8px 10px"><span>${etiqueta(item)}</span></div>`
+        ).join("")
+      : '<p class="hint" style="margin:0;">No hay colaboradores disponibles en el catálogo local.</p>';
+
+    lista.querySelectorAll("[data-index]").forEach((el) => {
+      el.addEventListener("mousedown", async (event) => {
+        event.preventDefault();
+        const item = visibles[Number(el.dataset.index)];
+        colaboradorSeleccionado = item;
+        buscar.value = "";
+        lista.innerHTML = "";
+        nombreEl.textContent = nombreEmpleado(item);
+        codigoEl.textContent = codigoEmpleado(item) || "—";
+        siguienteRevision = await calcularSiguienteRevision(codigoEmpleado(item));
+        revisionEl.textContent = siguienteRevision > 30 ? "Completa (30/30)" : String(siguienteRevision);
+        guardarBtn.disabled = siguienteRevision > 30;
+        estado(
+          siguienteRevision > 30 ? "warning" : null,
+          siguienteRevision > 30
+            ? "Este empacador ya tiene 30 revisiones en la semana."
+            : "Selecciona los ítems de la evaluación y guarda."
+        );
+      });
+    });
+  }
+
+  buscar.addEventListener("focus", () => renderLista(buscar.value));
+  buscar.addEventListener("input", () => renderLista(buscar.value));
+  document.addEventListener("click", (event) => {
+    if (event.target !== buscar && !lista.contains(event.target)) lista.innerHTML = "";
+  });
+
+  async function renderRegistros() {
+    const registros = (await OfflineDb.getAll("poscosechaCalidadEvaluaciones"))
+      .filter((r) => r.rol === "empacador")
+      .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+
+    registrosEl.innerHTML = registros.length
+      ? registros.slice(0,20).map((r) => `
+          <article class="pending-item">
+            <strong>${r.colaboradorNombre} · Revisión ${r.revision}</strong>
+            <span>Semana ${r.semana || "—"} · ${r.fecha}</span>
+            <span>Ítems: ${r.itemsNombres?.length ? r.itemsNombres.join(", ") : "Sin ítems seleccionados"}</span>
+            ${r.observaciones ? `<span>Observaciones: ${r.observaciones}</span>` : ""}
+          </article>
+        `).join("")
+      : '<p class="hint" style="margin:0;">Todavía no hay evaluaciones guardadas para Empacador.</p>';
+  }
+
+  async function guardarEvaluacion() {
+    if (!colaboradorSeleccionado) {
+      return estado("error", "Selecciona un empacador antes de guardar.");
+    }
+    if (!semanaActual) {
+      return estado("error", "No hay calendario de semanas descargado. Conéctate una vez y vuelve a intentar.");
+    }
+    if (!siguienteRevision || siguienteRevision > 30) {
+      return estado("error", "No hay una revisión disponible para este empacador.");
+    }
+
+    const items = [...criteriosEl.querySelectorAll('input:checked')].map((input) => Number(input.value));
+    const itemsNombres = items.map((id) => CRITERIOS_CALIDAD_EMPACADOR.find((item) => item.id === id)?.nombre).filter(Boolean);
+    const codigo = codigoEmpleado(colaboradorSeleccionado);
+    const registro = {
+      id: SyncEngine.generarUUID(),
+      area: "Poscosecha",
+      rol: "empacador",
+      rolNombre: "Empacador",
+      fecha: fechaLocal(),
+      semana: semanaActual.semana,
+      ano: semanaActual.ano,
+      evaluador: sesionPoscosecha?.username || "",
+      colaborador: codigo,
+      colaboradorNombre: nombreEmpleado(colaboradorSeleccionado),
+      revision: siguienteRevision,
+      items,
+      itemsNombres,
+      observaciones: observacionesEl.value.trim(),
+      syncStatus: "PendienteBackend",
+      createdAt: new Date().toISOString(),
+    };
+
+    await OfflineDb.put("poscosechaCalidadEvaluaciones", registro);
+    estado("ok", `Revisión #${registro.revision} de ${registro.colaboradorNombre} guardada localmente.`);
+
+    colaboradorSeleccionado = null;
+    siguienteRevision = null;
+    buscar.value = "";
+    lista.innerHTML = "";
+    nombreEl.textContent = "Sin empacador seleccionado";
+    codigoEl.textContent = "—";
+    revisionEl.textContent = "Selecciona un colaborador";
+    criteriosEl.querySelectorAll("input").forEach((input) => { input.checked = false; });
+    observacionesEl.value = "";
+    guardarBtn.disabled = false;
+    await renderRegistros();
+  }
+
+  guardarBtn.addEventListener("click", guardarEvaluacion);
+
+  async function cargarColaboradoresCalidad() {
+    try {
+      const local = await SyncEngine.obtenerCatalogosLocal();
+      colaboradores = (local.empleados || []).filter(
+        (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+      );
+
+      if (navigator.onLine) {
+        try {
+          await SyncEngine.sincronizarCatalogos();
+          const actualizados = await SyncEngine.obtenerCatalogosLocal();
+          colaboradores = (actualizados.empleados || []).filter(
+            (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+          );
+          estadoPill.textContent = "Catálogos actualizados";
+          estadoPill.classList.remove("warn");
+          estadoPill.classList.add("ok");
+        } catch {
+          estadoPill.textContent = "Datos locales";
+          estadoPill.classList.add("warn");
+        }
+      }
+    } catch {
+      colaboradores = [];
+      estadoPill.textContent = "Sin catálogo";
+      estadoPill.classList.add("warn");
+    }
+  }
+
+  (async function iniciarFormularioCalidadEmpacador() {
+    await cargarSemana();
+    await cargarColaboradoresCalidad();
+    await renderRegistros();
   })();
 }
