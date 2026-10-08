@@ -291,6 +291,17 @@
             <h2>Digitador - Calidad</h2>
             <p class="hint">Control de calidad para Digitador.</p>
           </article>
+
+          <article class="scanner-panel module-card poscosecha-module rendimiento" id="posEmpacadorRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Empacador - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Empacador.</p>
+          </article>
+          <article class="scanner-panel module-card poscosecha-module calidad" id="posEmpacadorCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Empacador - Calidad</h2>
+            <p class="hint">Control de calidad para Empacador.</p>
+          </article>
         </section>
       </section>
 
@@ -419,6 +430,12 @@
       });
       document.querySelector("#posDigitadorCalidad").addEventListener("click", () => {
         window.location.href = "./poscosecha-modulo.html?rol=digitador&tipo=calidad";
+      });
+      document.querySelector("#posEmpacadorRendimiento").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=empacador&tipo=rendimiento";
+      });
+      document.querySelector("#posEmpacadorCalidad").addEventListener("click", () => {
+        window.location.href = "./poscosecha-modulo.html?rol=empacador&tipo=calidad";
       });
 
       document.querySelector("#logoutBtn").addEventListener("click", () => {

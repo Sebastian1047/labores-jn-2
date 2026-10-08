@@ -9,6 +9,7 @@ const ROLES = {
   surtidor: "Surtidor",
   zunchador: "Zunchador",
   digitador: "Digitador",
+  empacador: "Empacador",
 };
 
 const TIPOS = {
