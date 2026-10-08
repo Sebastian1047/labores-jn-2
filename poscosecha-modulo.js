@@ -374,7 +374,11 @@ function iniciarCalidadPoscosecha() {
   const nombreEl = document.querySelector("#calidadColaboradorNombre");
   const codigoEl = document.querySelector("#calidadColaboradorCodigo");
   const gruposCriterios = [...document.querySelectorAll("[data-calidad-rol]")];
-  gruposCriterios.forEach((grupo) => { grupo.hidden = grupo.dataset.calidadRol !== rol; });
+  gruposCriterios.forEach((grupo) => {
+    const esRolActual = grupo.dataset.calidadRol === rol;
+    grupo.hidden = !esRolActual;
+    grupo.style.display = esRolActual ? "grid" : "none";
+  });
   const criteriosEl = document.querySelector(`[data-calidad-rol="${rol}"]`);
   const observacionesEl = document.querySelector("#calidadEmpacadorObservaciones");
   const guardarBtn = document.querySelector("#guardarCalidadEmpacadorBtn");
