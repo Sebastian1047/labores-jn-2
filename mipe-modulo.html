@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MIPE — Labores JN</title>
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#187a4d" />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .mipe-subtabs{display:flex;gap:10px;margin:16px 0 0;overflow-x:auto;padding-bottom:2px}
+      .mipe-subtab{flex:1 0 150px;min-height:48px;border:1px solid rgba(24,122,77,.22);border-radius:12px;background:#f5faf7;color:#184c35;font-weight:800;cursor:pointer}
+      .mipe-subtab.active{background:#187a4d;color:#fff;box-shadow:0 6px 16px rgba(24,122,77,.18)}
+      .mipe-view[hidden],#vistaRendimiento[hidden],#vistaCalidad[hidden],[data-mipe-calidad-rol][hidden]{display:none!important}
+      .time-card{border:1px solid rgba(20,34,28,.12);border-radius:14px;padding:14px;background:#fff}
+      .time-card label{display:block;font-weight:800}.time-card input{margin-top:8px}
+      .time-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      @media(max-width:640px){.time-summary{grid-template-columns:1fr}}
+    </style>
+  </head>
+  <body>
+    <main class="app-shell" style="max-width:760px;">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">MIPE</p>
+          <h1 id="moduloTitulo">🪲 MIPE</h1>
+        </div>
+        <section class="status-strip">
+          <span class="pill" id="estadoPill">Registro local</span>
+          <span class="pill strong" id="usuarioPill">Usuario</span>
+          <a href="./menu.html" class="pill">← Menú principal</a>
+        </section>
+      </header>
+
+      <section id="vistaRendimiento" hidden>
+        <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+          <article class="scanner-panel">
+            <div class="exit-row" style="grid-template-columns:1fr;">
+              <label>Fecha
+                <input id="fecha" type="date" required />
+              </label>
+            </div>
+
+            <div>
+              <span class="scan-label" id="colaboradorEtiqueta">Colaborador</span>
+              <input id="colaboradorBuscar" type="text" placeholder="Buscar colaborador por nombre o código…" autocomplete="off" />
+              <div id="colaboradorLista" class="pending-list" style="max-height:180px;margin-top:8px;"></div>
+              <p class="hint" id="colaboradorSeleccionado" style="margin:6px 0 0;">Sin colaborador seleccionado</p>
+            </div>
+
+            <nav class="mipe-subtabs" aria-label="Opciones de rendimiento MIPE">
+              <button class="mipe-subtab active" type="button" data-mipe-vista="registro">Registrar labor</button>
+              <button class="mipe-subtab" type="button" data-mipe-vista="tiempos">Tiempos</button>
+            </nav>
+          </article>
+        </section>
+
+        <section id="vistaRegistro" class="mipe-view">
+          <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+            <article class="scanner-panel">
+              <div class="exit-row" style="grid-template-columns:1fr 1fr;">
+                <label>Bloque
+                  <select id="bloque">
+                    <option value="">Seleccione un bloque</option>
+                  </select>
+                </label>
+                <label>Cama
+                  <select id="cama" disabled>
+                    <option value="">Seleccione primero un bloque</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style="margin-top:16px;">
+                <label>Observaciones
+                  <textarea id="rendimientoObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+                </label>
+              </div>
+
+              <section class="result-card" style="margin-top:16px;">
+                <div class="result-status">
+                  <span class="dot"></span>
+                  <strong>Selecciona el bloque y la cama para registrar la labor.</strong>
+                </div>
+              </section>
+            </article>
+          </section>
+        </section>
+
+        <section id="vistaTiempos" class="mipe-view" hidden>
+          <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+            <article class="scanner-panel">
+              <div class="exit-row" style="grid-template-columns:1fr 1fr;">
+                <div class="time-card"><label>Horas Laborales<input id="horasLaboralesMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>Horas Extra<input id="horasExtraMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>PMadres<input id="pMadresMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>PAbuelas<input id="pAbuelasMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>Desplazamiento<input id="desplazamientoMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>Calistenia, Acondicionamiento, Fortalecimiento<input id="calisteniaMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>Capacitación, Reunión<input id="capacitacionMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" /></label></div>
+                <div class="time-card"><label>Otras labores (automático)<input id="otrasLaboresMin" type="number" value="0" readonly /></label></div>
+              </div>
+
+              <div class="time-summary" style="margin-top:16px;">
+                <section class="result-card"><div><span class="scan-label">Tiempo disponible</span><strong id="tiempoDisponibleTexto" style="display:block;margin-top:6px;">0 min</strong></div></section>
+                <section class="result-card"><div><span class="scan-label">Tiempo real dedicado a la labor</span><strong id="tiempoRealTexto" style="display:block;margin-top:6px;">0 min</strong></div></section>
+              </div>
+
+              <div style="margin-top:16px;">
+                <label>Observaciones
+                  <textarea id="tiemposObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+                </label>
+              </div>
+
+              <div class="action-row" style="margin-top:18px;">
+                <button id="guardarTiemposBtn" class="success-btn" type="button">Guardar tiempos</button>
+                <button id="limpiarTiemposBtn" class="ghost-btn" type="button">Limpiar</button>
+              </div>
+
+              <section class="result-card" aria-live="polite">
+                <div class="result-status" id="tiemposResultado"><span class="dot"></span><strong id="tiemposMensaje">Ingresa los tiempos en minutos para calcular el tiempo real de labor.</strong></div>
+              </section>
+            </article>
+          </section>
+
+          <section class="scanner-panel" style="margin-top:16px;">
+            <span class="scan-label">Registros de tiempo guardados en este equipo</span>
+            <div id="tiemposRegistrosLista" class="pending-list" style="margin-top:10px;"></div>
+          </section>
+        </section>
+      </section>
+
+      <section id="vistaCalidad" hidden>
+        <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
+          <article class="scanner-panel">
+            <div>
+              <span class="scan-label">Evaluador</span>
+              <p class="hint" id="calidadEvaluadorNombre" style="margin:6px 0 0;">Usuario actual</p>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns:1fr 1fr;">
+              <div><span class="scan-label">Semana</span><p class="hint" id="calidadSemanaActual" style="margin:6px 0 0;">Cargando calendario…</p></div>
+              <div><span class="scan-label">Revisión</span><p class="hint" id="calidadRevision" style="margin:6px 0 0;">Selecciona un colaborador</p></div>
+            </div>
+
+            <div>
+              <span class="scan-label" id="calidadRolEtiqueta">Colaborador</span>
+              <input id="calidadColaboradorBuscar" type="text" placeholder="Buscar colaborador por nombre o código…" autocomplete="off" />
+              <div id="calidadColaboradorLista" class="pending-list" style="max-height:180px;margin-top:8px;"></div>
+            </div>
+
+            <div class="exit-row" style="grid-template-columns:1fr 1fr;margin-top:16px;">
+              <div><span class="scan-label">Nombre</span><p class="hint" id="calidadColaboradorNombre" style="margin:6px 0 0;">Sin colaborador seleccionado</p></div>
+              <div><span class="scan-label">Código</span><p class="hint" id="calidadColaboradorCodigo" style="margin:6px 0 0;">—</p></div>
+            </div>
+
+            <div>
+              <span class="scan-label">Criterios de calidad</span>
+              <p class="hint" id="calidadCriteriosHint" style="margin:6px 0 10px;">Marca únicamente los criterios que no cumplen.</p>
+
+              <div class="calidad-criterios" data-mipe-calidad-rol="aspersion" hidden>
+                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Asperjador Conforme</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Conocimiento del Programa de Aplicación</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Uso Correcto de EPP´S</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Herramientas de Aspersión</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Desagüe antes de la Aplicación</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="6" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Dirección de las Boquillas</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="7" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Cobertura</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="8" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Rendimiento de la Labor</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="9" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Paso Sincronizado</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="10" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Orden y Aseo</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="11" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Horarios de la Labor</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="12" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Acuerdos de Oro</span></label>
+              </div>
+
+              <div class="calidad-criterios" data-mipe-calidad-rol="tanquista" hidden>
+                <label class="calidad-criterio"><input type="checkbox" value="1" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Tanquista Conforme</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="2" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Conocimiento del Programa de Aplicación</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="3" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Uso Correcto de EPP´S</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="4" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Premezcla</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="5" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Preparación de la mezcla</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="6" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Equipos</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="7" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Avisos Informativos</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="8" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Orden y Aseo</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="9" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Horarios de la Labor</span></label>
+                <label class="calidad-criterio"><input type="checkbox" value="10" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">Acuerdos de Oro</span></label>
+              </div>
+            </div>
+
+            <div style="margin-top:16px;">
+              <label>Observaciones
+                <textarea id="calidadObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+              </label>
+            </div>
+
+            <div class="action-row" style="margin-top:16px;">
+              <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
+            </div>
+
+            <section class="result-card" aria-live="polite">
+              <div class="result-status" id="calidadResultado"><span class="dot"></span><strong id="calidadMensaje">Selecciona un colaborador para iniciar una evaluación.</strong></div>
+            </section>
+          </article>
+        </section>
+
+        <section class="scanner-panel" style="margin-top:16px;">
+          <span class="scan-label">Evaluaciones guardadas en este equipo</span>
+          <div id="calidadRegistrosLista" class="pending-list" style="margin-top:10px;"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./offline/api-base.js"></script>
+    <script src="./offline/db.js"></script>
+    <script src="./offline/sync-engine.js"></script>
+    <script src="./mipe-modulo.js?v=1.0.58"></script>
+    <script src="./offline/register-sw.js"></script>
+  </body>
+</html>

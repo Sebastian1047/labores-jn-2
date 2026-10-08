@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 20;
+const DB_VERSION = 21;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -178,6 +178,20 @@ function abrirDb() {
         poscosechaCalidad.createIndex("fecha", "fecha");
         poscosechaCalidad.createIndex("rol", "rol");
         poscosechaCalidad.createIndex("syncStatus", "syncStatus");
+      }
+      // MIPE — tiempos de rendimiento por Aspersión y Tanquista.
+      if (!db.objectStoreNames.contains("mipeRendimientoTiempos")) {
+        const mipeRendimiento = db.createObjectStore("mipeRendimientoTiempos", { keyPath: "id" });
+        mipeRendimiento.createIndex("fecha", "fecha");
+        mipeRendimiento.createIndex("rol", "rol");
+        mipeRendimiento.createIndex("syncStatus", "syncStatus");
+      }
+      // MIPE — evaluaciones de calidad locales por Aspersión y Tanquista.
+      if (!db.objectStoreNames.contains("mipeCalidadEvaluaciones")) {
+        const mipeCalidad = db.createObjectStore("mipeCalidadEvaluaciones", { keyPath: "id" });
+        mipeCalidad.createIndex("fecha", "fecha");
+        mipeCalidad.createIndex("rol", "rol");
+        mipeCalidad.createIndex("syncStatus", "syncStatus");
       }
     };
 

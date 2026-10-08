@@ -120,6 +120,14 @@
         background: linear-gradient(180deg, #f1fbf6 0%, #ffffff 100%);
         border-top-color: #65a678;
       }
+      .mipe-module.pair-aspersion {
+        background: linear-gradient(180deg, #f3f0ff 0%, #ffffff 100%);
+        border-top-color: #7f76bf;
+      }
+      .mipe-module.pair-tanquista {
+        background: linear-gradient(180deg, #eef8ff 0%, #ffffff 100%);
+        border-top-color: #5e91bd;
+      }
     </style>
     <style>
       @keyframes girar {
@@ -322,6 +330,40 @@
         </section>
       </section>
 
+      <section id="vistaMipe" class="area-view" hidden>
+        <div class="area-header">
+          <div>
+            <p class="eyebrow" style="margin:0 0 4px;">Área</p>
+            <h2 style="margin:0;">🪲 MIPE</h2>
+          </div>
+          <button id="volverAreasMipeBtn" class="ghost-btn" type="button">← Áreas</button>
+        </div>
+
+        <section class="workspace" style="grid-template-columns:1fr 1fr;">
+          <article class="scanner-panel module-card mipe-module pair-aspersion" id="mipeAspersionRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Aspersión - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Aspersión.</p>
+          </article>
+          <article class="scanner-panel module-card mipe-module pair-aspersion" id="mipeAspersionCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Aspersión - Calidad</h2>
+            <p class="hint">Control de calidad para Aspersión.</p>
+          </article>
+
+          <article class="scanner-panel module-card mipe-module pair-tanquista" id="mipeTanquistaRendimiento" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">📊</div>
+            <h2>Tanquista - Rendimiento</h2>
+            <p class="hint">Registro de rendimiento para Tanquista.</p>
+          </article>
+          <article class="scanner-panel module-card mipe-module pair-tanquista" id="mipeTanquistaCalidad" style="cursor:pointer;">
+            <div class="module-icon" aria-hidden="true">✅</div>
+            <h2>Tanquista - Calidad</h2>
+            <p class="hint">Control de calidad para Tanquista.</p>
+          </article>
+        </section>
+      </section>
+
       <section id="vistaAreaPendiente" class="area-view" hidden>
         <div class="area-header">
           <div>
@@ -381,6 +423,7 @@
       const vistaAreas = document.querySelector("#vistaAreas");
       const vistaProduccion = document.querySelector("#vistaProduccion");
       const vistaPoscosecha = document.querySelector("#vistaPoscosecha");
+      const vistaMipe = document.querySelector("#vistaMipe");
       const vistaAreaPendiente = document.querySelector("#vistaAreaPendiente");
       const menuTitulo = document.querySelector("#menuTitulo");
       const areaPendienteTitulo = document.querySelector("#areaPendienteTitulo");
@@ -391,6 +434,7 @@
         vistaAreas.hidden = false;
         vistaProduccion.hidden = true;
         vistaPoscosecha.hidden = true;
+        vistaMipe.hidden = true;
         vistaAreaPendiente.hidden = true;
         menuTitulo.textContent = "🌱 Áreas";
       }
@@ -407,14 +451,25 @@
         vistaAreas.hidden = true;
         vistaProduccion.hidden = true;
         vistaPoscosecha.hidden = false;
+        vistaMipe.hidden = true;
         vistaAreaPendiente.hidden = true;
         menuTitulo.textContent = "💐 Poscosecha";
+      }
+
+      function mostrarMipe() {
+        vistaAreas.hidden = true;
+        vistaProduccion.hidden = true;
+        vistaPoscosecha.hidden = true;
+        vistaMipe.hidden = false;
+        vistaAreaPendiente.hidden = true;
+        menuTitulo.textContent = "🪲 MIPE";
       }
 
       function mostrarAreaPendiente(nombre, icono) {
         vistaAreas.hidden = true;
         vistaProduccion.hidden = true;
         vistaPoscosecha.hidden = true;
+        vistaMipe.hidden = true;
         vistaAreaPendiente.hidden = false;
         areaPendienteTitulo.textContent = `${icono} ${nombre}`;
         areaPendienteNombre.textContent = nombre;
@@ -424,10 +479,11 @@
 
       document.querySelector("#areaProduccion").addEventListener("click", mostrarProduccion);
       document.querySelector("#areaPoscosecha").addEventListener("click", mostrarPoscosecha);
-      document.querySelector("#areaMipe").addEventListener("click", () => mostrarAreaPendiente("MIPE", "🪲"));
+      document.querySelector("#areaMipe").addEventListener("click", mostrarMipe);
       document.querySelector("#areaMirfe").addEventListener("click", () => mostrarAreaPendiente("MIRFE", "🌿"));
       document.querySelector("#volverAreasBtn").addEventListener("click", mostrarAreas);
       document.querySelector("#volverAreasPoscosechaBtn").addEventListener("click", mostrarAreas);
+      document.querySelector("#volverAreasMipeBtn").addEventListener("click", mostrarAreas);
       document.querySelector("#volverAreasPendienteBtn").addEventListener("click", mostrarAreas);
 
       document.querySelector("#posSurtidorRendimiento").addEventListener("click", () => {
@@ -453,6 +509,19 @@
       });
       document.querySelector("#posEmpacadorCalidad").addEventListener("click", () => {
         window.location.href = "./poscosecha-modulo.html?rol=empacador&tipo=calidad";
+      });
+
+      document.querySelector("#mipeAspersionRendimiento").addEventListener("click", () => {
+        window.location.href = "./mipe-modulo.html?rol=aspersion&tipo=rendimiento";
+      });
+      document.querySelector("#mipeAspersionCalidad").addEventListener("click", () => {
+        window.location.href = "./mipe-modulo.html?rol=aspersion&tipo=calidad";
+      });
+      document.querySelector("#mipeTanquistaRendimiento").addEventListener("click", () => {
+        window.location.href = "./mipe-modulo.html?rol=tanquista&tipo=rendimiento";
+      });
+      document.querySelector("#mipeTanquistaCalidad").addEventListener("click", () => {
+        window.location.href = "./mipe-modulo.html?rol=tanquista&tipo=calidad";
       });
 
       document.querySelector("#logoutBtn").addEventListener("click", () => {
