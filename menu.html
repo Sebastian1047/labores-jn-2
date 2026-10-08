@@ -62,6 +62,40 @@
         background: linear-gradient(180deg, #f7f7fb 0%, #ffffff 100%);
         border-top-color: #9a9eb3;
       }
+      .area-card {
+        min-height: 170px;
+        cursor: pointer;
+      }
+      .area-card.produccion {
+        background: linear-gradient(180deg, #eef9f1 0%, #ffffff 100%);
+        border-top-color: #4f9b64;
+      }
+      .area-card.poscosecha {
+        background: linear-gradient(180deg, #fff5f7 0%, #ffffff 100%);
+        border-top-color: #c96f8a;
+      }
+      .area-card.mipe {
+        background: linear-gradient(180deg, #f5f4ff 0%, #ffffff 100%);
+        border-top-color: #7f76bf;
+      }
+      .area-card.mirfe {
+        background: linear-gradient(180deg, #f2f9ff 0%, #ffffff 100%);
+        border-top-color: #6595c5;
+      }
+      .area-view[hidden] {
+        display: none !important;
+      }
+      .area-header {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:16px;
+      }
+      .area-placeholder {
+        text-align:center;
+        padding:28px 20px;
+      }
     </style>
     <style>
       @keyframes girar {
@@ -107,8 +141,8 @@
     <main class="app-shell" style="max-width: 640px;">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Producción / Labores</p>
-          <h1>🌱 Panel de opciones</h1>
+          <p class="eyebrow">Labores JN</p>
+          <h1 id="menuTitulo">🌱 Áreas</h1>
         </div>
         <section class="status-strip">
           <span class="pill strong" id="usuarioPill">Usuario</span>
@@ -116,7 +150,39 @@
         </section>
       </header>
 
-      <section class="workspace" style="grid-template-columns: 1fr 1fr;">
+      <section id="vistaAreas" class="workspace area-view" style="grid-template-columns: 1fr 1fr;">
+        <article class="scanner-panel module-card area-card produccion" id="areaProduccion">
+          <div class="module-icon" aria-hidden="true">🌱</div>
+          <h2>Producción</h2>
+          <p class="hint">Ingresar a todos los módulos actuales de producción y calidad.</p>
+        </article>
+        <article class="scanner-panel module-card area-card poscosecha" id="areaPoscosecha">
+          <div class="module-icon" aria-hidden="true">💐</div>
+          <h2>Poscosecha</h2>
+          <p class="hint">Área de Poscosecha.</p>
+        </article>
+        <article class="scanner-panel module-card area-card mipe" id="areaMipe">
+          <div class="module-icon" aria-hidden="true">🪲</div>
+          <h2>MIPE</h2>
+          <p class="hint">Área de MIPE.</p>
+        </article>
+        <article class="scanner-panel module-card area-card mirfe" id="areaMirfe">
+          <div class="module-icon" aria-hidden="true">🌿</div>
+          <h2>MIRFE</h2>
+          <p class="hint">Área de MIRFE.</p>
+        </article>
+      </section>
+
+      <section id="vistaProduccion" class="area-view" hidden>
+        <div class="area-header">
+          <div>
+            <p class="eyebrow" style="margin:0 0 4px;">Área</p>
+            <h2 style="margin:0;">🌱 Producción</h2>
+          </div>
+          <button id="volverAreasBtn" class="ghost-btn" type="button">← Áreas</button>
+        </div>
+
+        <section class="workspace" style="grid-template-columns: 1fr 1fr;">
         <article class="scanner-panel module-card pronosticos-card" style="text-align: center; cursor: pointer; grid-column: 1 / 3; grid-row: 1; justify-self: center; width: calc(50% - 8px);" id="cardPronosticos">
           <div class="module-icon" aria-hidden="true">📈</div>
           <h2>Pronósticos</h2>
@@ -172,6 +238,22 @@
           <h2>Preparación Camas</h2>
           <p class="hint">Módulo de Preparación Camas.</p>
         </article>
+        </section>
+      </section>
+
+      <section id="vistaAreaPendiente" class="area-view" hidden>
+        <div class="area-header">
+          <div>
+            <p class="eyebrow" style="margin:0 0 4px;">Área</p>
+            <h2 id="areaPendienteTitulo" style="margin:0;">Área</h2>
+          </div>
+          <button id="volverAreasPendienteBtn" class="ghost-btn" type="button">← Áreas</button>
+        </div>
+        <article class="scanner-panel area-placeholder">
+          <div class="module-icon" id="areaPendienteIcono" aria-hidden="true">📋</div>
+          <h2 id="areaPendienteNombre">Área</h2>
+          <p class="hint">Esta área está creada y lista para agregar sus formularios y opciones.</p>
+        </article>
       </section>
 
       <footer style="text-align: center; opacity: 0.55; font-size: 0.75rem; margin-top: 16px;" id="appVersion"></footer>
@@ -214,6 +296,45 @@
           });
         }
       }
+
+      const vistaAreas = document.querySelector("#vistaAreas");
+      const vistaProduccion = document.querySelector("#vistaProduccion");
+      const vistaAreaPendiente = document.querySelector("#vistaAreaPendiente");
+      const menuTitulo = document.querySelector("#menuTitulo");
+      const areaPendienteTitulo = document.querySelector("#areaPendienteTitulo");
+      const areaPendienteNombre = document.querySelector("#areaPendienteNombre");
+      const areaPendienteIcono = document.querySelector("#areaPendienteIcono");
+
+      function mostrarAreas() {
+        vistaAreas.hidden = false;
+        vistaProduccion.hidden = true;
+        vistaAreaPendiente.hidden = true;
+        menuTitulo.textContent = "🌱 Áreas";
+      }
+
+      function mostrarProduccion() {
+        vistaAreas.hidden = true;
+        vistaProduccion.hidden = false;
+        vistaAreaPendiente.hidden = true;
+        menuTitulo.textContent = "🌱 Producción";
+      }
+
+      function mostrarAreaPendiente(nombre, icono) {
+        vistaAreas.hidden = true;
+        vistaProduccion.hidden = true;
+        vistaAreaPendiente.hidden = false;
+        areaPendienteTitulo.textContent = `${icono} ${nombre}`;
+        areaPendienteNombre.textContent = nombre;
+        areaPendienteIcono.textContent = icono;
+        menuTitulo.textContent = `${icono} ${nombre}`;
+      }
+
+      document.querySelector("#areaProduccion").addEventListener("click", mostrarProduccion);
+      document.querySelector("#areaPoscosecha").addEventListener("click", () => mostrarAreaPendiente("Poscosecha", "💐"));
+      document.querySelector("#areaMipe").addEventListener("click", () => mostrarAreaPendiente("MIPE", "🪲"));
+      document.querySelector("#areaMirfe").addEventListener("click", () => mostrarAreaPendiente("MIRFE", "🌿"));
+      document.querySelector("#volverAreasBtn").addEventListener("click", mostrarAreas);
+      document.querySelector("#volverAreasPendienteBtn").addEventListener("click", mostrarAreas);
 
       document.querySelector("#logoutBtn").addEventListener("click", () => {
         sessionStorage.removeItem("labores_usuario");
@@ -326,6 +447,7 @@
           setTimeout(() => { cargaOverlay.hidden = true; }, 1800);
         }
       }
+      mostrarAreas();
       precargarTodo();
     </script>
   </body>
