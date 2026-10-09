@@ -61,7 +61,15 @@ const criteriosCalidadGenericos = [
   { id: 13, nombre: "Conteo de líneas" },
 ];
 
-const criteriosMallas = [];
+const criteriosMallas = [
+  { id: 1, nombre: "Malla Conforme" },
+  { id: 2, nombre: "Estado de la Malla" },
+  { id: 3, nombre: "Posición de la Malla" },
+  { id: 4, nombre: "Daño Mecánico" },
+  { id: 5, nombre: "Enmallado Oportuno" },
+  { id: 6, nombre: "Uso de las Herramientas" },
+  { id: 7, nombre: "Estado de la Flor" },
+];
 
 const SUBITEMS_CALIDAD_PRODUCCION = {
   siembraCampo: {
@@ -128,6 +136,20 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
       "Hundimiento de sustrato",
     ],
   },
+  mallas: {
+    "posicion de la malla": [
+      "Altura distinta de 2 cm sobre flor",
+      "Malla afecta pétalos",
+    ],
+    "uso de las herramientas": [
+      "Sin barra de medida",
+      "Sin guantes",
+    ],
+    "estado de la flor": [
+      "Flor con tierra",
+      "Flor mojada",
+    ],
+  },
 };
 
 function claveTextoCalidad(valor) {
@@ -144,7 +166,9 @@ function subitemsDelCriterioCalidad(item) {
     ? SUBITEMS_CALIDAD_PRODUCCION.siembraCampo
     : esFormularioBandejasEnraizamiento
       ? SUBITEMS_CALIDAD_PRODUCCION.bandejas
-      : null;
+      : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas"
+        ? SUBITEMS_CALIDAD_PRODUCCION.mallas
+        : null;
   return grupo?.[claveTextoCalidad(item.nombre)] || [];
 }
 
@@ -465,7 +489,10 @@ function limpiarFormularioCalidad() {
   $calidad("sembradorNombre").textContent = "Sin colaborador seleccionado";
   $calidad("sembradorCodigo").textContent = "—";
   $calidad("sembradorRevision").textContent = "Selecciona un colaborador";
-  $calidad("guardarCalidadBtn").disabled = esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas";
+  $calidad("guardarCalidadBtn").disabled =
+    esFormularioDesbotonMallasUnificado &&
+    vistaCalidadDesbotonMallas === "mallas" &&
+    criteriosCalidad.length === 0;
   document.querySelectorAll("#criteriosLista .calidad-fallos-input").forEach((item) => { item.value = "0"; });
 }
 
@@ -493,12 +520,13 @@ function aplicarVistaDesbotonMallas(vista) {
   limpiarFormularioCalidad();
   renderCriterios();
 
-  if (vistaCalidadDesbotonMallas === "mallas") {
-    $calidad("guardarCalidadBtn").disabled = true;
-    estadoCalidad(null, "Vista de Mallas lista. Los criterios de calidad están pendientes de configurar.");
-  } else {
-    estadoCalidad(null, "Selecciona un colaborador para iniciar una evaluación.");
-  }
+  $calidad("guardarCalidadBtn").disabled = false;
+  estadoCalidad(
+    null,
+    vistaCalidadDesbotonMallas === "mallas"
+      ? "Selecciona un colaborador y registra la cantidad de fallos encontrados en Mallas."
+      : "Selecciona un colaborador para iniciar una evaluación."
+  );
 }
 
 if (esFormularioDesbotonMallasUnificado) {

@@ -217,12 +217,15 @@ const MANUALES = {
       "Selecciona Spider/Cremon, Pompón o Mallas.",
       "Verifica el Evaluador y la Semana.",
       "Busca y selecciona el Colaborador.",
-      "Revisa los Criterios de calidad de la opción seleccionada.",
-      "Marca Conforme cuando no haya incumplimientos o selecciona los criterios aplicables.",
-      "Pulsa Guardar evaluación y confirma la información.",
-      "Usa Revisar ítems antes de guardar cuando necesites comprobar la selección."
+      "En Mallas registra la cantidad de fallos en Malla Conforme, Estado de la Malla, Posición de la Malla, Daño Mecánico, Enmallado Oportuno, Uso de las Herramientas y Estado de la Flor.",
+      "Cuando un criterio tenga varios subítems, registra el número de fallos en cada subítem.",
+      "Si todos los valores quedan en 0, la evaluación se considera conforme.",
+      "Pulsa Guardar evaluación y confirma la información."
     ],
-    notas: ["La opción Mallas puede mostrar criterios diferentes de Spider/Cremon y Pompón."]
+    notas: [
+      "Mallas usa 7 ítems de control porque son los que están definidos en la tabla de la guía.",
+      "Los subítems con una sola opción no se muestran por separado; se registra el fallo directamente en el ítem."
+    ]
   },
   calidadPreparacion: {
     titulo: "Calidad Preparación Camas",
