@@ -178,7 +178,7 @@ const MANUALES = {
       "Verifica el Evaluador y la Semana.",
       "Selecciona el Colaborador.",
       "Revisa cada criterio de calidad disponible.",
-      "Si no existen incumplimientos, usa la opción Conforme.",
+      "Si no existen fallos, deja todos los valores en 0.",
       "Pulsa Guardar evaluación y confirma cuando el sistema lo solicite.",
       "Usa Revisar ítems para validar la selección antes de guardar."
     ],
