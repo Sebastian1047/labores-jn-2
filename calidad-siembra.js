@@ -73,16 +73,8 @@ const criteriosMallas = [
 const SUBITEMS_CALIDAD_PRODUCCION = {
   siembraCampo: {
     "estado de la planta": [
-      "Menos de 2 hojas verdaderas",
-      "Raíz no blanca",
-      "Mala formación del plug",
       "Botrytis severa",
-      "Postura de minador",
-      "Larva de trips",
-      "Daño de trips",
-      "Ácaros",
       "Daño mecánico",
-      "Plantas elongadas",
     ],
     "densidad": [
       "Faltan plantas para 13/línea",
