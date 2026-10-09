@@ -793,3 +793,60 @@ th {
     width: 100%;
   }
 }
+
+
+/* Calidad producción: ítems/subítems con conteo numérico de fallos. */
+.calidad-criterios.calidad-criterios-numericos {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.calidad-item-fallos {
+  border: 1px solid #d9e3dd;
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+}
+.calidad-item-fallos-titulo {
+  font-weight: 900;
+  color: #173126;
+  margin-bottom: 10px;
+}
+.calidad-subitems-fallos {
+  display: grid;
+  gap: 8px;
+}
+.calidad-fallo-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 12px;
+  align-items: center;
+  min-height: 46px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fbf9;
+}
+.calidad-item-fallos-simple .calidad-fallo-row {
+  background: transparent;
+  padding: 2px 0;
+}
+.calidad-fallo-label {
+  font-weight: 750;
+  color: #173126;
+  line-height: 1.25;
+}
+.calidad-fallos-input {
+  width: 92px !important;
+  min-width: 92px;
+  margin: 0 !important;
+  text-align: center;
+  font-weight: 850;
+}
+@media (max-width: 560px) {
+  .calidad-fallo-row {
+    grid-template-columns: minmax(0, 1fr) 78px;
+  }
+  .calidad-fallos-input {
+    width: 78px !important;
+    min-width: 78px;
+  }
+}

@@ -95,8 +95,8 @@
 
           <div>
             <span class="scan-label">Criterios de calidad</span>
-            <p class="hint" style="margin: 6px 0 10px;">Marca únicamente los criterios que no cumplen. Si no marcas ninguno, la evaluación se guarda con todos los criterios cumplidos.</p>
-            <div id="criteriosLista" class="calidad-criterios"></div>
+            <p class="hint" style="margin: 6px 0 10px;">Registra la cantidad de fallos encontrados. Si todos quedan en 0, la evaluación se considera conforme.</p>
+            <div id="criteriosLista" class="calidad-criterios calidad-criterios-numericos"></div>
           </div>
 
           <div style="margin-top:16px;">
@@ -139,7 +139,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra.js?v=1.0.47"></script>
+    <script src="./calidad-siembra.js?v=1.0.59"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

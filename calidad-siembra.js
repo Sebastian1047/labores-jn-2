@@ -63,6 +63,137 @@ const criteriosCalidadGenericos = [
 
 const criteriosMallas = [];
 
+const SUBITEMS_CALIDAD_PRODUCCION = {
+  siembraCampo: {
+    "estado de la planta": [
+      "Menos de 2 hojas verdaderas",
+      "Raíz no blanca",
+      "Mala formación del plug",
+      "Botrytis severa",
+      "Postura de minador",
+      "Larva de trips",
+      "Daño de trips",
+      "Ácaros",
+      "Daño mecánico",
+      "Plantas elongadas",
+    ],
+    "densidad": [
+      "Faltan plantas para 13/línea",
+      "Plantas de más vs. 13/línea",
+    ],
+    "profundidad de la planta": [
+      "Plug sin enterrar",
+      "Tallo enterrado",
+      "Primer par de hojas enterrado",
+    ],
+    "aseo sitio de trabajo": [
+      "Material vegetal en cama/camino",
+      "Bandejas dejadas en el sitio",
+      "Otros residuos en cama/camino",
+    ],
+    "uso de epp": [
+      "EPP faltante",
+      "EPP en mal estado",
+      "EPP usado incorrectamente",
+    ],
+    "acuerdos de oro": [
+      "Falta de respeto",
+      "Incumplimiento de disciplina",
+      "Falta de responsabilidad",
+      "Falta de trabajo en equipo",
+      "Mal trato a compañeros",
+      "Falta de compromiso",
+    ],
+  },
+  bandejas: {
+    "estado de esqueje": [
+      "Botrytis",
+      "Postura de minador",
+      "Larva de trips",
+      "Daño de trips",
+      "Ácaros",
+    ],
+    "espacios vacios": [
+      "Vacío por sustrato duro",
+      "Vacío por alveolo dañado",
+      "Vacío sin justificación",
+    ],
+    "dano mecanico": [
+      "Cogollos dañados/partidos",
+      "Tallos partidos",
+      "Esquejes incompletos",
+    ],
+    "hundimiento del sustrato al momento de la siembra": [
+      "Sustrato presionado",
+      "Hundimiento de sustrato",
+    ],
+  },
+};
+
+function claveTextoCalidad(valor) {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function subitemsDelCriterioCalidad(item) {
+  const grupo = esFormularioSiembraCampo
+    ? SUBITEMS_CALIDAD_PRODUCCION.siembraCampo
+    : esFormularioBandejasEnraizamiento
+      ? SUBITEMS_CALIDAD_PRODUCCION.bandejas
+      : null;
+  return grupo?.[claveTextoCalidad(item.nombre)] || [];
+}
+
+function escaparHtmlCalidad(valor) {
+  return String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function campoFallosCalidad(item, subitem = "", indice = 0) {
+  const idItem = String(item.id);
+  const nombre = escaparHtmlCalidad(item.nombre);
+  const sub = escaparHtmlCalidad(subitem);
+  const etiqueta = subitem || item.nombre;
+  return `<label class="calidad-fallo-row">
+    <span class="calidad-fallo-label">${escaparHtmlCalidad(etiqueta)}</span>
+    <input
+      class="calidad-fallos-input"
+      type="number"
+      min="0"
+      step="1"
+      inputmode="numeric"
+      value="0"
+      aria-label="Fallos: ${escaparHtmlCalidad(etiqueta)}"
+      data-item-id="${escaparHtmlCalidad(idItem)}"
+      data-item-nombre="${nombre}"
+      data-subitem="${sub}"
+      data-subitem-indice="${indice}"
+    />
+  </label>`;
+}
+
+function obtenerFallosDetalleCalidad() {
+  return [...document.querySelectorAll("#criteriosLista .calidad-fallos-input")]
+    .map((input) => {
+      const cantidad = Math.max(0, Math.floor(Number(input.value) || 0));
+      const idNumerico = Number(input.dataset.itemId);
+      return {
+        idItem: Number.isFinite(idNumerico) ? idNumerico : null,
+        item: input.dataset.itemNombre || "",
+        subitem: input.dataset.subitem || "",
+        cantidad,
+      };
+    })
+    .filter((detalle) => detalle.cantidad > 0);
+}
+
 const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
 const esFormularioPreparacionCamas = window.location.pathname.endsWith("/calidad-preparacion-camas.html");
 const esFormularioDesbotonPompon = window.location.pathname.endsWith("/calidad-desboton-pompon.html");
@@ -295,18 +426,33 @@ function mostrarRevisionCalidad() {
     estadoCalidad("error", `${$calidad("sembradorNombre").textContent} ya tiene las 30 revisiones de la semana. Selecciona otro colaborador.`);
     return;
   }
-  estadoCalidad(null, "Selecciona los criterios que no cumplen y guarda la evaluación.");
+  estadoCalidad(null, "Registra la cantidad de fallos encontrados y guarda la evaluación.");
 }
 
 function renderCriterios() {
   const lista = $calidad("criteriosLista");
   if (esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas" && criteriosCalidad.length === 0) {
+    lista.classList.add("calidad-criterios-numericos");
     lista.innerHTML = '<p class="hint" style="margin:0;">Los criterios de calidad de Mallas están pendientes de configurar.</p>';
     return;
   }
-  lista.innerHTML = criteriosCalidad
-    .map((item) => `<label class="calidad-criterio"><input type="checkbox" value="${item.id}" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">${item.nombre}</span></label>`)
-    .join("");
+
+  lista.classList.add("calidad-criterios-numericos");
+  lista.innerHTML = criteriosCalidad.map((item) => {
+    const subitems = subitemsDelCriterioCalidad(item);
+    if (subitems.length > 1) {
+      return `<section class="calidad-item-fallos">
+        <div class="calidad-item-fallos-titulo">${escaparHtmlCalidad(item.nombre)}</div>
+        <div class="calidad-subitems-fallos">
+          ${subitems.map((subitem, indice) => campoFallosCalidad(item, subitem, indice)).join("")}
+        </div>
+      </section>`;
+    }
+
+    return `<section class="calidad-item-fallos calidad-item-fallos-simple">
+      ${campoFallosCalidad(item)}
+    </section>`;
+  }).join("");
 }
 
 function limpiarFormularioCalidad() {
@@ -320,7 +466,7 @@ function limpiarFormularioCalidad() {
   $calidad("sembradorCodigo").textContent = "—";
   $calidad("sembradorRevision").textContent = "Selecciona un colaborador";
   $calidad("guardarCalidadBtn").disabled = esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas";
-  document.querySelectorAll("#criteriosLista input").forEach((item) => { item.checked = false; });
+  document.querySelectorAll("#criteriosLista .calidad-fallos-input").forEach((item) => { item.value = "0"; });
 }
 
 function aplicarVistaDesbotonMallas(vista) {
@@ -403,8 +549,13 @@ async function guardarCalidad() {
   guardandoCalidad = true;
   $calidad("guardarCalidadBtn").disabled = true;
   try {
-    const incumplimientos = [...document.querySelectorAll('#criteriosLista input:checked')].map((x) => Number(x.value));
-    if (incumplimientos.length === 0) {
+    const fallosDetalle = obtenerFallosDetalleCalidad();
+    const incumplimientos = [...new Set(
+      fallosDetalle
+        .map((detalle) => detalle.idItem)
+        .filter((idItem) => Number.isFinite(idItem))
+    )];
+    if (fallosDetalle.length === 0) {
       const confirmar = await confirmarEvaluacionConforme();
       if (!confirmar) return;
     }
@@ -418,6 +569,7 @@ async function guardarCalidad() {
       colaborador: String(colaborador),
       revision: revisionGuardada,
       incumplimientos,
+      fallosDetalle,
       observaciones: $calidad("calidadObservaciones")?.value.trim() || ""
     };
     await SyncEngine.guardarEvaluacionCalidadLocal(evaluacion);

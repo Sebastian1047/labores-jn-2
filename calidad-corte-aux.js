@@ -29,6 +29,52 @@
     ],
   };
 
+
+  const SUBITEMS_TRANSPORTADOR = {
+    2: ["Daño al recoger", "Daño durante transporte", "Daño al descargar"],
+    3: ["Balde sin solución inicial", "Tallos sin contacto con solución"],
+    4: [
+      "6/7 tallos: cantidad ≠ 20",
+      "8 tallos platino: cantidad ≠ 15",
+      "10 tallos: cantidad ≠ 15",
+      "5 tallos: cantidad ≠ 25",
+      "6/7 tallos sin capuchón: cantidad ≠ 15",
+      "Flor muy gruesa: cantidad ≠ 12",
+    ],
+    5: ["Daño mecánico leve en pompón", "Capuchón muy sucio", "Descabezamiento severo"],
+    6: ["Daño al recoger", "Daño durante transporte", "Daño al descargar", "Descarga en zona incorrecta", "Contacto con flor al desplazar"],
+    7: ["Sin guantes de baqueta", "Sin casco", "Sin calzado de seguridad", "Sin tapa oídos cuando aplique"],
+  };
+
+  function escaparAux(valor) {
+    return String(valor ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function campoFallosAux(item, subitem = "") {
+    const etiqueta = subitem || item.nombre;
+    return `<label class="calidad-fallo-row">
+      <span class="calidad-fallo-label">${escaparAux(etiqueta)}</span>
+      <input class="calidad-fallos-input" type="number" min="0" step="1" inputmode="numeric" value="0"
+        data-item-id="${item.id}" data-item-nombre="${escaparAux(item.nombre)}" data-subitem="${escaparAux(subitem)}"
+        aria-label="Fallos: ${escaparAux(etiqueta)}" />
+    </label>`;
+  }
+
+  function obtenerFallosDetalleAux() {
+    return [...document.querySelectorAll("#auxCriteriosLista .calidad-fallos-input")]
+      .map((input) => ({
+        idItem: Number(input.dataset.itemId),
+        item: input.dataset.itemNombre || "",
+        subitem: input.dataset.subitem || "",
+        cantidad: Math.max(0, Math.floor(Number(input.value) || 0)),
+      }))
+      .filter((detalle) => detalle.cantidad > 0);
+  }
+
   const STORAGE_KEY = "calidadCorteAuxEvaluacionesLocal";
 
   const evaluadorNombre = document.querySelector("#auxEvaluadorNombre");
@@ -69,9 +115,17 @@
 
   function renderCriterios() {
     const criterios = CRITERIOS_POR_ROL[rolActivo] || [];
-    criteriosLista.innerHTML = criterios
-      .map((item) => `<label class="calidad-criterio"><input type="checkbox" value="${item.id}" /><span class="calidad-criterio-check" aria-hidden="true"></span><span class="calidad-criterio-text">${item.nombre}</span></label>`)
-      .join("");
+    criteriosLista.classList.add("calidad-criterios-numericos");
+    criteriosLista.innerHTML = criterios.map((item) => {
+      const subitems = rolActivo === "garruchero" ? (SUBITEMS_TRANSPORTADOR[item.id] || []) : [];
+      if (subitems.length > 1) {
+        return `<section class="calidad-item-fallos">
+          <div class="calidad-item-fallos-titulo">${escaparAux(item.nombre)}</div>
+          <div class="calidad-subitems-fallos">${subitems.map((subitem) => campoFallosAux(item, subitem)).join("")}</div>
+        </section>`;
+      }
+      return `<section class="calidad-item-fallos calidad-item-fallos-simple">${campoFallosAux(item)}</section>`;
+    }).join("");
   }
 
   function registrosLocales() {
@@ -102,7 +156,7 @@
     nombreEl.textContent = "Sin colaborador seleccionado";
     codigoEl.textContent = "—";
     revisionEl.textContent = "Selecciona un colaborador";
-    document.querySelectorAll("#auxCriteriosLista input").forEach((item) => { item.checked = false; });
+    document.querySelectorAll("#auxCriteriosLista .calidad-fallos-input").forEach((item) => { item.value = "0"; });
     if (observacionesEl) observacionesEl.value = "";
     guardarBtn.disabled = false;
   }
@@ -131,7 +185,7 @@
         codigoEl.textContent = codigo;
         siguienteRevision = calcularSiguienteRevision(codigo);
         revisionEl.textContent = String(siguienteRevision);
-        estado(null, "Selecciona los criterios que no cumplen y guarda la evaluación.");
+        estado(null, "Registra la cantidad de fallos encontrados y guarda la evaluación.");
       });
     });
   }
@@ -184,7 +238,8 @@
     }
 
     const codigo = colaboradorSeleccionado.codigo || colaboradorSeleccionado.docid || colaboradorSeleccionado.id;
-    const incumplimientos = [...document.querySelectorAll("#auxCriteriosLista input:checked")].map((x) => Number(x.value));
+    const fallosDetalle = obtenerFallosDetalleAux();
+    const incumplimientos = [...new Set(fallosDetalle.map((detalle) => detalle.idItem))];
 
     const registros = registrosLocales();
     registros.push({
@@ -197,6 +252,7 @@
       colaborador: String(codigo),
       revision: siguienteRevision || calcularSiguienteRevision(codigo),
       incumplimientos,
+      fallosDetalle,
       observaciones: observacionesEl?.value.trim() || "",
       estado: "Local",
     });
