@@ -34,6 +34,7 @@ const criteriosDesbotonSpiderCremon = [
 ];
 
 const criteriosBandejasEnraizamiento = [
+  { id: 1, nombre: "Siembra Conforme" },
   { id: 2, nombre: "Estado de Esqueje" },
   { id: 3, nombre: "Ubicación del Esqueje" },
   { id: 4, nombre: "Esqueje Inclinado" },
