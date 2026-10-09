@@ -99,21 +99,27 @@
             <div></div>
           </div>
 
-          <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
-            <label>Item de calidad
-              <select id="item"></select>
-            </label>
-            <label>Observación
-              <select id="observacion"></select>
-            </label>
+          <div>
+            <span class="scan-label">Criterios de calidad</span>
+            <p class="hint" style="margin:6px 0 10px;">Registra la cantidad de fallos encontrados en cada ítem o subítem. Los subítems con una sola opción se muestran únicamente como ítem.</p>
+            <div id="corteCriteriosNumericos" class="calidad-criterios calidad-criterios-numericos"></div>
           </div>
 
-          <div class="action-row">
-            <button id="agregarBtn" class="primary-btn" type="button">+ Agregar</button>
+          <div hidden aria-hidden="true">
+            <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
+              <label>Item de calidad
+                <select id="item"></select>
+              </label>
+              <label>Observación
+                <select id="observacion"></select>
+              </label>
+            </div>
+            <div class="action-row">
+              <button id="agregarBtn" class="primary-btn" type="button">+ Agregar</button>
+            </div>
+            <p class="hint" id="temporalesVacio" style="margin-top:0;">Sin selección temporal.</p>
+            <div id="temporalesLista" class="pending-list"></div>
           </div>
-
-          <p class="hint" id="temporalesVacio" style="margin-top: 0;">Todavía no has agregado ningún item de control a esta revisión.</p>
-          <div id="temporalesLista" class="pending-list" style="max-height: 260px;"></div>
 
           <div style="margin-top:16px;">
             <label>Observaciones generales
@@ -200,7 +206,7 @@
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./calidad-corte-aux.js?v=1.0.59"></script>
-    <script src="./asegurar-corte.js?v=1.0.47"></script>
+    <script src="./asegurar-corte.js?v=1.0.60"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

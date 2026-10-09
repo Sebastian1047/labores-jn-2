@@ -27,6 +27,7 @@ const colaboradorCodigo = document.querySelector("#colaboradorCodigo");
 const colaboradorRevision = document.querySelector("#colaboradorRevision");
 
 const modalidadSelect = document.querySelector("#modalidad");
+const corteCriteriosNumericos = document.querySelector("#corteCriteriosNumericos");
 const itemSelect = document.querySelector("#item");
 const observacionSelect = document.querySelector("#observacion");
 const agregarBtn = document.querySelector("#agregarBtn");
@@ -47,6 +48,177 @@ const ROLES_CALIDAD_CORTE = {
   garruchero: "Transportador",
   recogedor: "Recogedor",
 };
+
+const CRITERIOS_CORTE_DOCUMENTO = {
+  "1": [
+    { id: 1, nombre: "Ramo conforme", subitems: [] },
+    { id: 2, nombre: "Deshoje", subitems: ["Deshoje por debajo de altura", "Deshoje sobre tolerancia"] },
+    { id: 3, nombre: "Daño mecánico", subitems: [
+      "Flores quebradas/maltratadas",
+      "Hojas quebradas/maltratadas",
+      "Tallos quebrados/maltratados",
+      "Lateral partido (leve)",
+      "2 hojas quebradas (leve)",
+      "≥2 puntos florales partidos",
+      "≥2 laterales partidos",
+      "Cama no conforme tras corte",
+    ] },
+    { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: ["Peso fuera de especificación", "Menos tallos mínimos para el peso", "Tallos ≠ orden de producción"] },
+    { id: 5, nombre: "Número de puntos florales por tallo", subitems: ["Menos de 4 puntos florales", "3 puntos no permitidos", "4.º punto fuera de condición"] },
+    { id: 6, nombre: "Cauchos", subitems: ["Posición incorrecta", "Desalineados", "Color incorrecto", "Cantidad incorrecta", "Vueltas ≠ 3"] },
+    { id: 7, nombre: "Longitud del ramo", subitems: [] },
+    { id: 8, nombre: "Base del ramo", subitems: ["Corte de base disparejo", "Tallos rasgados en la base"] },
+    { id: 9, nombre: "Alineación de la flor", subitems: [] },
+    { id: 10, nombre: "Follaje", subitems: ["Follaje amarillento", "Follaje quemado", "Follaje deshidratado", "Follaje necrótico"] },
+    { id: 11, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
+    { id: 12, nombre: "Presentación del ramo", subitems: ["Capuchón sucio", "Arrugado no reutilizado", "Capuchón rasgado", "Ubicación incorrecta", "Capuchón ≠ orden"] },
+    { id: 13, nombre: "Hidratación", subitems: [] },
+    { id: 14, nombre: "Apertura abierta/cerrada/mezclas", subitems: ["Apertura sobre estándar", "Apertura bajo estándar", "Mezcla de aperturas"] },
+    { id: 15, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
+    { id: 16, nombre: "Acuerdos de oro", subitems: ["Falta de respeto", "Indisciplina", "Falta de responsabilidad", "Falta de trabajo en equipo", "Mal trato a compañeros", "Falta de compromiso"] },
+  ],
+  "2": [
+    { id: 1, nombre: "Ramo conforme", subitems: [] },
+    { id: 2, nombre: "Deshoje", subitems: ["Deshoje sobre rango", "Deshoje bajo rango", "Follaje sobre el capuchón"] },
+    { id: 3, nombre: "Daño mecánico", subitems: ["Cabezas quebradas", "Cabezas maltratadas", "Hojas quebradas", "Hojas maltratadas", "Tallos quebrados", "Tallos maltratados", "Novedad en entrega de cama"] },
+    { id: 4, nombre: "Número de tallos", subitems: [] },
+    { id: 5, nombre: "Cauchos", subitems: ["Posición incorrecta", "Desalineados", "Color incorrecto", "Cantidad incorrecta", "Vueltas ≠ 3"] },
+    { id: 6, nombre: "Longitud del ramo", subitems: ["Longitud sobre estándar", "Longitud bajo estándar"] },
+    { id: 7, nombre: "Base del ramo", subitems: ["Corte de base disparejo", "Tallos muy rasgados"] },
+    { id: 8, nombre: "Alineación de la flor", subitems: ["Cabezas desalineadas", "Segundo nivel fuera de 2 cm"] },
+    { id: 9, nombre: "Follaje", subitems: ["Follaje amarillento", "Follaje quemado", "Follaje deshidratado", "Follaje necrótico"] },
+    { id: 10, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
+    { id: 11, nombre: "Presentación del ramo", subitems: ["Capuchón sucio", "Arrugado no reutilizado", "Capuchón rasgado", "Ubicación incorrecta", "Capuchón ≠ orden"] },
+    { id: 12, nombre: "Ramos en malla", subitems: [] },
+    { id: 13, nombre: "Apertura abierta", subitems: [] },
+    { id: 14, nombre: "Apertura cerrada", subitems: [] },
+    { id: 15, nombre: "Mezclas", subitems: ["Diámetros de apertura diferentes", "Diámetro fuera del estándar"] },
+    { id: 16, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
+  ],
+};
+
+function normalizarCorte(valor) {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function escaparCorte(valor) {
+  return String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function itemCatalogoParaCriterio(criterio) {
+  if (!catalogo.items.length) return null;
+  const objetivo = normalizarCorte(criterio.nombre);
+  return catalogo.items.find((item) => {
+    const actual = normalizarCorte(item.nombre);
+    return actual === objetivo ||
+      (actual.length > 5 && objetivo.includes(actual)) ||
+      (objetivo.length > 5 && actual.includes(objetivo));
+  }) || null;
+}
+
+function criteriosCorteVisibles() {
+  const base = CRITERIOS_CORTE_DOCUMENTO[String(modalidadSelect.value)] || [];
+  if (!catalogo.items.length) return base.map((criterio) => ({ ...criterio, idCatalogo: criterio.id }));
+
+  const coincidentes = base
+    .map((criterio) => {
+      const itemCatalogo = itemCatalogoParaCriterio(criterio);
+      return itemCatalogo ? { ...criterio, idCatalogo: Number(itemCatalogo.id) } : null;
+    })
+    .filter(Boolean);
+
+  // Si el catálogo antiguo usa nombres muy distintos, se conserva la tabla correspondiente
+  // a la modalidad en vez de dejar el formulario vacío.
+  return coincidentes.length >= 3
+    ? coincidentes
+    : base.map((criterio) => ({ ...criterio, idCatalogo: criterio.id }));
+}
+
+function campoFallosCorte(criterio, subitem = "") {
+  const etiqueta = subitem || criterio.nombre;
+  return `<label class="calidad-fallo-row">
+    <span class="calidad-fallo-label">${escaparCorte(etiqueta)}</span>
+    <input class="calidad-fallos-input corte-fallos-input" type="number" min="0" step="1" inputmode="numeric" value="0"
+      data-doc-item-id="${criterio.id}"
+      data-catalogo-item-id="${criterio.idCatalogo ?? criterio.id}"
+      data-item-nombre="${escaparCorte(criterio.nombre)}"
+      data-subitem="${escaparCorte(subitem)}"
+      aria-label="Fallos: ${escaparCorte(etiqueta)}" />
+  </label>`;
+}
+
+function renderCriteriosNumericosCorte() {
+  if (!corteCriteriosNumericos || rolActivo !== "cortador") return;
+  const criterios = criteriosCorteVisibles();
+  corteCriteriosNumericos.innerHTML = criterios.map((criterio) => {
+    if ((criterio.subitems || []).length > 1) {
+      return `<section class="calidad-item-fallos">
+        <div class="calidad-item-fallos-titulo">${escaparCorte(criterio.nombre)}</div>
+        <div class="calidad-subitems-fallos">
+          ${criterio.subitems.map((subitem) => campoFallosCorte(criterio, subitem)).join("")}
+        </div>
+      </section>`;
+    }
+    return `<section class="calidad-item-fallos calidad-item-fallos-simple">${campoFallosCorte(criterio)}</section>`;
+  }).join("");
+}
+
+function obtenerFallosDetalleCorte() {
+  return [...document.querySelectorAll("#corteCriteriosNumericos .corte-fallos-input")]
+    .map((input) => ({
+      idItemDocumento: Number(input.dataset.docItemId),
+      idItemCatalogo: Number(input.dataset.catalogoItemId),
+      item: input.dataset.itemNombre || "",
+      subitem: input.dataset.subitem || "",
+      cantidad: Math.max(0, Math.floor(Number(input.value) || 0)),
+    }))
+    .filter((detalle) => detalle.cantidad > 0);
+}
+
+function encontrarObservacionCatalogo(detalle) {
+  const hijos = SyncEngine.observacionesDelItem(catalogo.observaciones, detalle.idItemCatalogo);
+  if (!hijos.length) return null;
+  if (!detalle.subitem) return hijos[0];
+
+  const objetivo = normalizarCorte(detalle.subitem);
+  return hijos.find((obs) => normalizarCorte(obs.nombre) === objetivo)
+    || hijos.find((obs) => {
+      const actual = normalizarCorte(obs.nombre);
+      return actual.includes(objetivo) || objetivo.includes(actual);
+    })
+    || hijos[0];
+}
+
+function observacionesBackendDesdeFallos(fallosDetalle) {
+  const ids = fallosDetalle
+    .map((detalle) => encontrarObservacionCatalogo(detalle)?.id)
+    .filter((id) => Number.isFinite(Number(id)))
+    .map(Number);
+
+  if (!ids.length && fallosDetalle.length === 0) {
+    const conforme = criteriosCorteVisibles().find((criterio) => criterio.id === 1);
+    if (conforme) {
+      const hijos = SyncEngine.observacionesDelItem(catalogo.observaciones, conforme.idCatalogo ?? conforme.id);
+      if (hijos[0]) ids.push(Number(hijos[0].id));
+    }
+  }
+  return [...new Set(ids)];
+}
+
+function limpiarFallosCorte() {
+  document.querySelectorAll("#corteCriteriosNumericos .corte-fallos-input")
+    .forEach((input) => { input.value = "0"; });
+}
+
 let rolActivo = "cortador";
 let colaboradorSeleccionado = null;
 // El asegurador es "el mismo usuario" logueado (pedido explicito, sin selector) -- pero
@@ -82,6 +254,7 @@ function resetearRevisionVista() {
   colaboradorLista.innerHTML = "";
   temporales = [];
   if (corteCalidadObservaciones) corteCalidadObservaciones.value = "";
+  limpiarFallosCorte();
   renderTemporales();
 }
 
@@ -102,8 +275,9 @@ function aplicarVistaRol(nuevoRol) {
     rolEtiqueta.textContent = "Cortador";
     colaboradorBuscar.placeholder = "Buscar cortador por nombre o código…";
     renderItems();
+    renderCriteriosNumericosCorte();
     actualizarPendientes();
-    marcarResultado(null, "Selecciona un cortador para iniciar una revisión.");
+    marcarResultado(null, "Selecciona un cortador y registra la cantidad de fallos.");
     return;
   }
 
@@ -201,7 +375,7 @@ async function seleccionarColaborador(c) {
   } else {
     colaboradorRevision.textContent = String(siguienteRevision);
     guardarBtn.disabled = false;
-    marcarResultado(null, "Agrega los items de control de esta revisión.");
+    marcarResultado(null, "Registra la cantidad de fallos encontrados y guarda la revisión.");
   }
 
   temporales = [];
@@ -243,6 +417,10 @@ function renderObservaciones() {
 }
 
 itemSelect.addEventListener("change", renderObservaciones);
+modalidadSelect.addEventListener("change", () => {
+  renderCriteriosNumericosCorte();
+  limpiarFallosCorte();
+});
 
 // ---------------------------------------------------------------------------
 // Agregar / quitar items de control de la revisión en curso -- mismas reglas de negocio que
@@ -328,10 +506,8 @@ async function guardarRevision() {
     marcarResultado("error", `Selecciona un ${nombreRolMinuscula()}.`);
     return;
   }
-  if (temporales.length === 0) {
-    marcarResultado("error", "No tienes ningún item de control agregado. Agrega al menos uno.");
-    return;
-  }
+  const fallosDetalle = obtenerFallosDetalleCorte();
+  const observacionesIds = observacionesBackendDesdeFallos(fallosDetalle);
 
   const semanas = await OfflineDb.getAll("semanas");
   const semanaActual = SyncEngine.semanaQueContiene(semanas, new Date());
@@ -347,11 +523,12 @@ async function guardarRevision() {
     semana: semanaActual ? semanaActual.semana : 0,
     fecha: new Date().toISOString(),
     observacionesGenerales: corteCalidadObservaciones?.value.trim() || "",
-    observaciones: temporales.map((t) => ({ idObservacion: t.idObservacion })),
+    fallosDetalle,
+    observaciones: observacionesIds.map((idObservacion) => ({ idObservacion })),
   };
 
   const guardada = await SyncEngine.guardarRevisionCorteLocal(revision);
-  marcarResultado("ok", `Revisión #${guardada.nrevision} de ${colaboradorSeleccionado.nombre} guardada localmente (pendiente de sincronizar).`);
+  marcarResultado("ok", `Revisión #${guardada.nrevision} de ${colaboradorSeleccionado.nombre} guardada localmente con ${fallosDetalle.reduce((suma, x) => suma + x.cantidad, 0)} fallo(s) registrado(s).`);
 
   colaboradorSeleccionado = null;
   siguienteRevision = null;
@@ -361,6 +538,7 @@ async function guardarRevision() {
   guardarBtn.disabled = false;
   temporales = [];
   if (corteCalidadObservaciones) corteCalidadObservaciones.value = "";
+  limpiarFallosCorte();
   renderTemporales();
 
   await actualizarPendientes();
@@ -381,6 +559,7 @@ async function actualizarPendientes() {
 async function cargarCatalogoLocal() {
   catalogo = await SyncEngine.obtenerCatalogoCorteLocal();
   renderItems();
+  renderCriteriosNumericosCorte();
 }
 
 async function checkApi() {
