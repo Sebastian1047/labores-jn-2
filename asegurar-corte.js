@@ -160,13 +160,37 @@ function campoFallosCorte(criterio, subitem = "") {
   </label>`;
 }
 
+function configurarConformeCorte() {
+  if (!corteCriteriosNumericos) return;
+  const conforme = corteCriteriosNumericos.querySelector(".calidad-conforme-input");
+  if (!conforme) return;
+
+  const aplicar = () => {
+    const activo = conforme.checked;
+    corteCriteriosNumericos.querySelectorAll(".corte-fallos-input").forEach((input) => {
+      if (activo) input.value = "0";
+      input.disabled = activo;
+    });
+    corteCriteriosNumericos.querySelectorAll(".calidad-item-fallos:not(.calidad-item-conforme)").forEach((item) => {
+      item.classList.toggle("calidad-item-deshabilitado", activo);
+    });
+  };
+
+  conforme.addEventListener("change", aplicar);
+  aplicar();
+}
+
 function renderCriteriosNumericosCorte() {
   if (!corteCriteriosNumericos || rolActivo !== "cortador") return;
   const criterios = criteriosCorteVisibles();
   corteCriteriosNumericos.innerHTML = criterios.map((criterio) => {
     if (esCriterioConformeCorte(criterio)) {
       return `<section class="calidad-item-fallos calidad-item-conforme">
-        <div class="calidad-item-fallos-titulo">${escaparCorte(criterio.nombre)}</div>
+        <label class="calidad-conforme-selector">
+          <input class="calidad-conforme-input" type="checkbox" aria-label="${escaparCorte(criterio.nombre)}" />
+          <span class="calidad-conforme-circulo" aria-hidden="true"></span>
+          <span class="calidad-conforme-texto">${escaparCorte(criterio.nombre)}</span>
+        </label>
       </section>`;
     }
 
@@ -180,6 +204,7 @@ function renderCriteriosNumericosCorte() {
     }
     return `<section class="calidad-item-fallos calidad-item-fallos-simple">${campoFallosCorte(criterio)}</section>`;
   }).join("");
+  configurarConformeCorte();
 }
 
 function obtenerFallosDetalleCorte() {
@@ -225,8 +250,15 @@ function observacionesBackendDesdeFallos(fallosDetalle) {
 }
 
 function limpiarFallosCorte() {
+  const conforme = document.querySelector("#corteCriteriosNumericos .calidad-conforme-input");
+  if (conforme) conforme.checked = false;
   document.querySelectorAll("#corteCriteriosNumericos .corte-fallos-input")
-    .forEach((input) => { input.value = "0"; });
+    .forEach((input) => {
+      input.value = "0";
+      input.disabled = false;
+    });
+  document.querySelectorAll("#corteCriteriosNumericos .calidad-item-fallos")
+    .forEach((item) => item.classList.remove("calidad-item-deshabilitado"));
 }
 
 let rolActivo = "cortador";
@@ -516,6 +548,7 @@ async function guardarRevision() {
     marcarResultado("error", `Selecciona un ${nombreRolMinuscula()}.`);
     return;
   }
+  const conformeSeleccionado = Boolean(document.querySelector("#corteCriteriosNumericos .calidad-conforme-input:checked"));
   const fallosDetalle = obtenerFallosDetalleCorte();
   const observacionesIds = observacionesBackendDesdeFallos(fallosDetalle);
 
@@ -534,6 +567,7 @@ async function guardarRevision() {
     fecha: new Date().toISOString(),
     observacionesGenerales: corteCalidadObservaciones?.value.trim() || "",
     fallosDetalle,
+    conformeSeleccionado,
     observaciones: observacionesIds.map((idObservacion) => ({ idObservacion })),
   };
 

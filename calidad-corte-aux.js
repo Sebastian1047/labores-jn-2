@@ -121,13 +121,36 @@
     return `${nombre} (${codigo})`;
   }
 
+  function configurarConformeAux() {
+    const conforme = criteriosLista.querySelector(".calidad-conforme-input");
+    if (!conforme) return;
+
+    const aplicar = () => {
+      const activo = conforme.checked;
+      criteriosLista.querySelectorAll(".calidad-fallos-input").forEach((input) => {
+        if (activo) input.value = "0";
+        input.disabled = activo;
+      });
+      criteriosLista.querySelectorAll(".calidad-item-fallos:not(.calidad-item-conforme)").forEach((item) => {
+        item.classList.toggle("calidad-item-deshabilitado", activo);
+      });
+    };
+
+    conforme.addEventListener("change", aplicar);
+    aplicar();
+  }
+
   function renderCriterios() {
     const criterios = CRITERIOS_POR_ROL[rolActivo] || [];
     criteriosLista.classList.add("calidad-criterios-numericos");
     criteriosLista.innerHTML = criterios.map((item) => {
       if (esItemConformeAux(item)) {
         return `<section class="calidad-item-fallos calidad-item-conforme">
-          <div class="calidad-item-fallos-titulo">${escaparAux(item.nombre)}</div>
+          <label class="calidad-conforme-selector">
+            <input class="calidad-conforme-input" type="checkbox" aria-label="${escaparAux(item.nombre)}" />
+            <span class="calidad-conforme-circulo" aria-hidden="true"></span>
+            <span class="calidad-conforme-texto">${escaparAux(item.nombre)}</span>
+          </label>
         </section>`;
       }
 
@@ -140,6 +163,7 @@
       }
       return `<section class="calidad-item-fallos calidad-item-fallos-simple">${campoFallosAux(item)}</section>`;
     }).join("");
+    configurarConformeAux();
   }
 
   function registrosLocales() {
@@ -170,7 +194,15 @@
     nombreEl.textContent = "Sin colaborador seleccionado";
     codigoEl.textContent = "—";
     revisionEl.textContent = "Selecciona un colaborador";
-    document.querySelectorAll("#auxCriteriosLista .calidad-fallos-input").forEach((item) => { item.value = "0"; });
+    const conforme = criteriosLista.querySelector(".calidad-conforme-input");
+    if (conforme) conforme.checked = false;
+    criteriosLista.querySelectorAll(".calidad-fallos-input").forEach((item) => {
+      item.value = "0";
+      item.disabled = false;
+    });
+    criteriosLista.querySelectorAll(".calidad-item-fallos").forEach((item) => {
+      item.classList.remove("calidad-item-deshabilitado");
+    });
     if (observacionesEl) observacionesEl.value = "";
     guardarBtn.disabled = false;
   }
@@ -252,6 +284,7 @@
     }
 
     const codigo = colaboradorSeleccionado.codigo || colaboradorSeleccionado.docid || colaboradorSeleccionado.id;
+    const conformeSeleccionado = Boolean(criteriosLista.querySelector(".calidad-conforme-input:checked"));
     const fallosDetalle = obtenerFallosDetalleAux();
     const incumplimientos = [...new Set(fallosDetalle.map((detalle) => detalle.idItem))];
 
@@ -267,6 +300,7 @@
       revision: siguienteRevision || calcularSiguienteRevision(codigo),
       incumplimientos,
       fallosDetalle,
+      conformeSeleccionado,
       observaciones: observacionesEl?.value.trim() || "",
       estado: "Local",
     });

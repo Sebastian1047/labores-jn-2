@@ -448,6 +448,25 @@ function mostrarRevisionCalidad() {
   estadoCalidad(null, "Registra la cantidad de fallos encontrados y guarda la evaluación.");
 }
 
+function configurarConformeCalidad() {
+  const conforme = document.querySelector("#criteriosLista .calidad-conforme-input");
+  if (!conforme) return;
+
+  const aplicar = () => {
+    const activo = conforme.checked;
+    document.querySelectorAll("#criteriosLista .calidad-fallos-input").forEach((input) => {
+      if (activo) input.value = "0";
+      input.disabled = activo;
+    });
+    document.querySelectorAll("#criteriosLista .calidad-item-fallos:not(.calidad-item-conforme)").forEach((item) => {
+      item.classList.toggle("calidad-item-deshabilitado", activo);
+    });
+  };
+
+  conforme.addEventListener("change", aplicar);
+  aplicar();
+}
+
 function renderCriterios() {
   const lista = $calidad("criteriosLista");
   if (esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas" && criteriosCalidad.length === 0) {
@@ -460,7 +479,11 @@ function renderCriterios() {
   lista.innerHTML = criteriosCalidad.map((item) => {
     if (esItemConformeCalidad(item)) {
       return `<section class="calidad-item-fallos calidad-item-conforme">
-        <div class="calidad-item-fallos-titulo">${escaparHtmlCalidad(item.nombre)}</div>
+        <label class="calidad-conforme-selector">
+          <input class="calidad-conforme-input" type="checkbox" aria-label="${escaparHtmlCalidad(item.nombre)}" />
+          <span class="calidad-conforme-circulo" aria-hidden="true"></span>
+          <span class="calidad-conforme-texto">${escaparHtmlCalidad(item.nombre)}</span>
+        </label>
       </section>`;
     }
 
@@ -478,6 +501,7 @@ function renderCriterios() {
       ${campoFallosCalidad(item)}
     </section>`;
   }).join("");
+  configurarConformeCalidad();
 }
 
 function limpiarFormularioCalidad() {
@@ -494,7 +518,15 @@ function limpiarFormularioCalidad() {
     esFormularioDesbotonMallasUnificado &&
     vistaCalidadDesbotonMallas === "mallas" &&
     criteriosCalidad.length === 0;
-  document.querySelectorAll("#criteriosLista .calidad-fallos-input").forEach((item) => { item.value = "0"; });
+  const conforme = document.querySelector("#criteriosLista .calidad-conforme-input");
+  if (conforme) conforme.checked = false;
+  document.querySelectorAll("#criteriosLista .calidad-fallos-input").forEach((item) => {
+    item.value = "0";
+    item.disabled = false;
+  });
+  document.querySelectorAll("#criteriosLista .calidad-item-fallos").forEach((item) => {
+    item.classList.remove("calidad-item-deshabilitado");
+  });
 }
 
 function aplicarVistaDesbotonMallas(vista) {
@@ -578,13 +610,14 @@ async function guardarCalidad() {
   guardandoCalidad = true;
   $calidad("guardarCalidadBtn").disabled = true;
   try {
+    const conformeSeleccionado = Boolean(document.querySelector("#criteriosLista .calidad-conforme-input:checked"));
     const fallosDetalle = obtenerFallosDetalleCalidad();
     const incumplimientos = [...new Set(
       fallosDetalle
         .map((detalle) => detalle.idItem)
         .filter((idItem) => Number.isFinite(idItem))
     )];
-    if (fallosDetalle.length === 0) {
+    if (!conformeSeleccionado && fallosDetalle.length === 0) {
       const confirmar = await confirmarEvaluacionConforme();
       if (!confirmar) return;
     }
@@ -599,6 +632,7 @@ async function guardarCalidad() {
       revision: revisionGuardada,
       incumplimientos,
       fallosDetalle,
+      conformeSeleccionado,
       observaciones: $calidad("calidadObservaciones")?.value.trim() || ""
     };
     await SyncEngine.guardarEvaluacionCalidadLocal(evaluacion);
