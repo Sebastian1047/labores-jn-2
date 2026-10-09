@@ -850,3 +850,11 @@ th {
     min-width: 78px;
   }
 }
+
+.calidad-item-conforme {
+  background: #f2faf5;
+  border-color: #cfe5d6;
+}
+.calidad-item-conforme .calidad-item-fallos-titulo {
+  margin-bottom: 0;
+}

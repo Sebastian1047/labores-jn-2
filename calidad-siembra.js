@@ -172,6 +172,10 @@ function subitemsDelCriterioCalidad(item) {
   return grupo?.[claveTextoCalidad(item.nombre)] || [];
 }
 
+function esItemConformeCalidad(item) {
+  return claveTextoCalidad(item?.nombre).includes("conforme");
+}
+
 function escaparHtmlCalidad(valor) {
   return String(valor ?? "")
     .replace(/&/g, "&amp;")
@@ -463,6 +467,12 @@ function renderCriterios() {
 
   lista.classList.add("calidad-criterios-numericos");
   lista.innerHTML = criteriosCalidad.map((item) => {
+    if (esItemConformeCalidad(item)) {
+      return `<section class="calidad-item-fallos calidad-item-conforme">
+        <div class="calidad-item-fallos-titulo">${escaparHtmlCalidad(item.nombre)}</div>
+      </section>`;
+    }
+
     const subitems = subitemsDelCriterioCalidad(item);
     if (subitems.length > 1) {
       return `<section class="calidad-item-fallos">

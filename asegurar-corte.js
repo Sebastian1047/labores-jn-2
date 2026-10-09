@@ -143,6 +143,10 @@ function criteriosCorteVisibles() {
     : base.map((criterio) => ({ ...criterio, idCatalogo: criterio.id }));
 }
 
+function esCriterioConformeCorte(criterio) {
+  return normalizarCorte(criterio?.nombre).includes("conforme");
+}
+
 function campoFallosCorte(criterio, subitem = "") {
   const etiqueta = subitem || criterio.nombre;
   return `<label class="calidad-fallo-row">
@@ -160,6 +164,12 @@ function renderCriteriosNumericosCorte() {
   if (!corteCriteriosNumericos || rolActivo !== "cortador") return;
   const criterios = criteriosCorteVisibles();
   corteCriteriosNumericos.innerHTML = criterios.map((criterio) => {
+    if (esCriterioConformeCorte(criterio)) {
+      return `<section class="calidad-item-fallos calidad-item-conforme">
+        <div class="calidad-item-fallos-titulo">${escaparCorte(criterio.nombre)}</div>
+      </section>`;
+    }
+
     if ((criterio.subitems || []).length > 1) {
       return `<section class="calidad-item-fallos">
         <div class="calidad-item-fallos-titulo">${escaparCorte(criterio.nombre)}</div>

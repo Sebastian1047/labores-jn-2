@@ -46,6 +46,14 @@
     7: ["Sin guantes de baqueta", "Sin casco", "Sin calzado de seguridad", "Sin tapa oídos cuando aplique"],
   };
 
+  function esItemConformeAux(item) {
+    return String(item?.nombre || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .includes("conforme");
+  }
+
   function escaparAux(valor) {
     return String(valor ?? "")
       .replace(/&/g, "&amp;")
@@ -117,6 +125,12 @@
     const criterios = CRITERIOS_POR_ROL[rolActivo] || [];
     criteriosLista.classList.add("calidad-criterios-numericos");
     criteriosLista.innerHTML = criterios.map((item) => {
+      if (esItemConformeAux(item)) {
+        return `<section class="calidad-item-fallos calidad-item-conforme">
+          <div class="calidad-item-fallos-titulo">${escaparAux(item.nombre)}</div>
+        </section>`;
+      }
+
       const subitems = rolActivo === "garruchero" ? (SUBITEMS_TRANSPORTADOR[item.id] || []) : [];
       if (subitems.length > 1) {
         return `<section class="calidad-item-fallos">
