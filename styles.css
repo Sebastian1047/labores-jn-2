@@ -798,18 +798,24 @@ th {
 /* Calidad producción: ítems/subítems con conteo numérico de fallos. */
 .calidad-criterios.calidad-criterios-numericos {
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 18px;
 }
 .calidad-item-fallos {
-  border: 1px solid #d9e3dd;
+  border: 1px solid #c8dacf;
+  border-left: 5px solid #187a4d;
   border-radius: 14px;
   background: #fff;
   padding: 14px;
+  box-shadow: 0 5px 14px rgba(20, 74, 49, 0.13);
 }
 .calidad-item-fallos-titulo {
   font-weight: 900;
-  color: #173126;
-  margin-bottom: 10px;
+  color: #123e2b;
+  margin: -14px -14px 12px -14px;
+  padding: 11px 14px;
+  background: #eaf5ef;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1px solid #cfe1d5;
 }
 .calidad-subitems-fallos {
   display: grid;
@@ -825,9 +831,18 @@ th {
   border-radius: 10px;
   background: #f8fbf9;
 }
+.calidad-item-fallos-simple {
+  padding: 0;
+  overflow: hidden;
+}
 .calidad-item-fallos-simple .calidad-fallo-row {
-  background: transparent;
-  padding: 2px 0;
+  background: #f4faf6;
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+.calidad-item-fallos-simple .calidad-fallo-label {
+  font-weight: 900;
+  color: #123e2b;
 }
 .calidad-fallo-label {
   font-weight: 750;
@@ -857,4 +872,5 @@ th {
 }
 .calidad-item-conforme .calidad-item-fallos-titulo {
   margin-bottom: 0;
+  background: #e4f5e9;
 }
