@@ -8,7 +8,6 @@
   const CRITERIOS_POR_ROL = {
     // Transportador conserva temporalmente la réplica de Pompón.
     garruchero: [
-      { id: 1, nombre: "Conforme" },
       { id: 2, nombre: "Cuidado de Ramos Campo" },
       { id: 3, nombre: "Hidratación en Balde" },
       { id: 4, nombre: "Cantidad de Ramos en Balde" },
@@ -31,20 +30,10 @@
 
 
   const SUBITEMS_TRANSPORTADOR = {
-    2: ["Daño al recoger", "Daño durante transporte", "Daño al descargar"],
     3: ["Balde sin solución inicial", "Tallos sin contacto con solución"],
-    4: [
-      "6/7 tallos: cantidad ≠ 20",
-      "8 tallos platino: cantidad ≠ 15",
-      "10 tallos: cantidad ≠ 15",
-      "5 tallos: cantidad ≠ 25",
-      "6/7 tallos sin capuchón: cantidad ≠ 15",
-      "Flor muy gruesa: cantidad ≠ 12",
-    ],
-    5: ["Daño mecánico leve en pompón", "Capuchón muy sucio", "Descabezamiento severo"],
-    6: ["Daño al recoger", "Daño durante transporte", "Daño al descargar", "Descarga en zona incorrecta", "Contacto con flor al desplazar"],
-    7: ["Sin guantes de baqueta", "Sin casco", "Sin calzado de seguridad", "Sin tapa oídos cuando aplique"],
   };
+
+  const ITEMS_NUMERICOS_TRANSPORTADOR = new Set([2, 6]);
 
   function esItemConformeAux(item) {
     return String(item?.nombre || "")
@@ -62,6 +51,17 @@
       .replace(/"/g, "&quot;");
   }
 
+  function campoSeleccionXAux(item, subitem = "") {
+    const etiqueta = subitem || item.nombre;
+    return `<label class="calidad-item-x-row">
+      <span class="calidad-item-x-label">${escaparAux(etiqueta)}</span>
+      <input class="calidad-item-x-input aux-item-x-input" type="checkbox"
+        data-item-id="${item.id}" data-item-nombre="${escaparAux(item.nombre)}" data-subitem="${escaparAux(subitem)}"
+        aria-label="Marcar incumplimiento: ${escaparAux(etiqueta)}" />
+      <span class="calidad-item-x-box" aria-hidden="true">×</span>
+    </label>`;
+  }
+
   function campoFallosAux(item, subitem = "") {
     const etiqueta = subitem || item.nombre;
     return `<label class="calidad-fallo-row">
@@ -73,7 +73,7 @@
   }
 
   function obtenerFallosDetalleAux() {
-    return [...document.querySelectorAll("#auxCriteriosLista .calidad-fallos-input")]
+    const numericos = [...document.querySelectorAll("#auxCriteriosLista .calidad-fallos-input")]
       .map((input) => ({
         idItem: Number(input.dataset.itemId),
         item: input.dataset.itemNombre || "",
@@ -81,6 +81,17 @@
         cantidad: Math.max(0, Math.floor(Number(input.value) || 0)),
       }))
       .filter((detalle) => detalle.cantidad > 0);
+
+    const marcados = [...document.querySelectorAll("#auxCriteriosLista .aux-item-x-input:checked")]
+      .map((input) => ({
+        idItem: Number(input.dataset.itemId),
+        item: input.dataset.itemNombre || "",
+        subitem: input.dataset.subitem || "",
+        cantidad: 1,
+        marcadoX: true,
+      }));
+
+    return [...numericos, ...marcados];
   }
 
   const STORAGE_KEY = "calidadCorteAuxEvaluacionesLocal";
@@ -131,6 +142,10 @@
         if (activo) input.value = "0";
         input.disabled = activo;
       });
+      criteriosLista.querySelectorAll(".aux-item-x-input").forEach((input) => {
+        if (activo) input.checked = false;
+        input.disabled = activo;
+      });
       criteriosLista.querySelectorAll(".calidad-item-fallos:not(.calidad-item-conforme)").forEach((item) => {
         item.classList.toggle("calidad-item-deshabilitado", activo);
       });
@@ -154,13 +169,20 @@
         </section>`;
       }
 
-      const subitems = rolActivo === "garruchero" ? (SUBITEMS_TRANSPORTADOR[item.id] || []) : [];
-      if (subitems.length > 1) {
-        return `<section class="calidad-item-fallos">
-          <div class="calidad-item-fallos-titulo">${escaparAux(item.nombre)}</div>
-          <div class="calidad-subitems-fallos">${subitems.map((subitem) => campoFallosAux(item, subitem)).join("")}</div>
-        </section>`;
+      if (rolActivo === "garruchero") {
+        const subitems = SUBITEMS_TRANSPORTADOR[item.id] || [];
+        if (subitems.length) {
+          return `<section class="calidad-item-fallos">
+            <div class="calidad-item-fallos-titulo">${escaparAux(item.nombre)}</div>
+            <div class="calidad-subitems-fallos">${subitems.map((subitem) => campoSeleccionXAux(item, subitem)).join("")}</div>
+          </section>`;
+        }
+        if (ITEMS_NUMERICOS_TRANSPORTADOR.has(item.id)) {
+          return `<section class="calidad-item-fallos calidad-item-fallos-simple">${campoFallosAux(item)}</section>`;
+        }
+        return `<section class="calidad-item-fallos calidad-item-x">${campoSeleccionXAux(item)}</section>`;
       }
+
       return `<section class="calidad-item-fallos calidad-item-fallos-simple">${campoFallosAux(item)}</section>`;
     }).join("");
     configurarConformeAux();
@@ -198,6 +220,10 @@
     if (conforme) conforme.checked = false;
     criteriosLista.querySelectorAll(".calidad-fallos-input").forEach((item) => {
       item.value = "0";
+      item.disabled = false;
+    });
+    criteriosLista.querySelectorAll(".aux-item-x-input").forEach((item) => {
+      item.checked = false;
       item.disabled = false;
     });
     criteriosLista.querySelectorAll(".calidad-item-fallos").forEach((item) => {
