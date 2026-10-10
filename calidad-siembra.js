@@ -15,7 +15,6 @@ const criteriosPreparacionCamas = [
 ];
 
 const criteriosDesbotonPompon = [
-  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Tallos con Botón Principal" },
   { id: 2, nombre: "Tallos con Tacón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
@@ -113,6 +112,13 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
       "Esqueje sin cogollo",
     ],
   },
+  pompon: {
+    "dano mecanico": [
+      "Tallos partidos",
+      "Exceso de desbotonado",
+      "Tallos heridos en tocón",
+    ],
+  },
   mallas: {
     "estado de la malla": [
       "Sucia",
@@ -140,9 +146,11 @@ function subitemsDelCriterioCalidad(item) {
     ? SUBITEMS_CALIDAD_PRODUCCION.siembraCampo
     : esFormularioBandejasEnraizamiento
       ? SUBITEMS_CALIDAD_PRODUCCION.bandejas
-      : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas"
-        ? SUBITEMS_CALIDAD_PRODUCCION.mallas
-        : null;
+      : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "pompon"
+        ? SUBITEMS_CALIDAD_PRODUCCION.pompon
+        : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas"
+          ? SUBITEMS_CALIDAD_PRODUCCION.mallas
+          : null;
   return grupo?.[claveTextoCalidad(item.nombre)] || [];
 }
 
