@@ -920,3 +920,52 @@ th {
 .calidad-item-deshabilitado .calidad-fallos-input {
   cursor: not-allowed;
 }
+
+/* Ítems de Siembra Campo que se registran con selección X, sin cantidad numérica. */
+.calidad-item-x {
+  padding: 0;
+  overflow: hidden;
+}
+.calidad-item-x-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 11px 14px;
+  background: #f4faf6;
+  cursor: pointer;
+}
+.calidad-item-x-label {
+  font-weight: 900;
+  color: #123e2b;
+  line-height: 1.25;
+}
+.calidad-item-x-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.calidad-item-x-box {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #187a4d;
+  border-radius: 8px;
+  background: #fff;
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 900;
+  transition: .15s ease;
+}
+.calidad-item-x-input:checked + .calidad-item-x-box {
+  background: #187a4d;
+  color: #fff;
+}
+.calidad-item-x-input:disabled + .calidad-item-x-box {
+  opacity: .45;
+  cursor: not-allowed;
+}

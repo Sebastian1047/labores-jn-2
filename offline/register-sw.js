@@ -5,7 +5,7 @@
 // nueva. Bug real 18/09/2026: Revisión seguía mostrando el filtro de 3 días ya corregido en el
 // servidor porque esa pestaña nunca volvió a pasar por menu.html. "version.json" nunca se cachea
 // (ver service-worker.js) -- se lee siempre fresco del servidor cuando hay señal.
-const APP_VERSION = "1.0.70";
+const APP_VERSION = "1.0.71";
 
 const appVersionEl = document.querySelector("#appVersion");
 if (appVersionEl) appVersionEl.textContent = `Labores JN · v${APP_VERSION}`;

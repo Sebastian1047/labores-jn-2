@@ -69,29 +69,20 @@ const criteriosMallas = [
   { id: 7, nombre: "Estado de la Flor" },
 ];
 
+const ITEMS_SELECCION_X_SIEMBRA = new Set([
+  "ubicacion de mangueras",
+  "siembra con marcador",
+  "aseo sitio de trabajo",
+  "uso de epp",
+  "acuerdos de oro",
+  "conteo de lineas",
+]);
+
 const SUBITEMS_CALIDAD_PRODUCCION = {
   siembraCampo: {
     "estado de la planta": [
       "Botrytis severa",
       "Daño mecánico",
-    ],
-    "aseo sitio de trabajo": [
-      "Material vegetal en cama/camino",
-      "Bandejas dejadas en el sitio",
-      "Otros residuos en cama/camino",
-    ],
-    "uso de epp": [
-      "EPP faltante",
-      "EPP en mal estado",
-      "EPP usado incorrectamente",
-    ],
-    "acuerdos de oro": [
-      "Falta de respeto",
-      "Incumplimiento de disciplina",
-      "Falta de responsabilidad",
-      "Falta de trabajo en equipo",
-      "Mal trato a compañeros",
-      "Falta de compromiso",
     ],
   },
   bandejas: {
@@ -157,12 +148,30 @@ function esItemConformeCalidad(item) {
   return claveTextoCalidad(item?.nombre).includes("conforme");
 }
 
+function usaSeleccionXSoloItem(item) {
+  return esFormularioSiembraCampo && ITEMS_SELECCION_X_SIEMBRA.has(claveTextoCalidad(item?.nombre));
+}
+
 function escaparHtmlCalidad(valor) {
   return String(valor ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function campoSeleccionXCalidad(item) {
+  return `<label class="calidad-item-x-row">
+    <span class="calidad-item-x-label">${escaparHtmlCalidad(item.nombre)}</span>
+    <input
+      class="calidad-item-x-input"
+      type="checkbox"
+      data-item-id="${escaparHtmlCalidad(String(item.id))}"
+      data-item-nombre="${escaparHtmlCalidad(item.nombre)}"
+      aria-label="Marcar incumplimiento: ${escaparHtmlCalidad(item.nombre)}"
+    />
+    <span class="calidad-item-x-box" aria-hidden="true">×</span>
+  </label>`;
 }
 
 function campoFallosCalidad(item, subitem = "", indice = 0) {
@@ -189,7 +198,7 @@ function campoFallosCalidad(item, subitem = "", indice = 0) {
 }
 
 function obtenerFallosDetalleCalidad() {
-  return [...document.querySelectorAll("#criteriosLista .calidad-fallos-input")]
+  const numericos = [...document.querySelectorAll("#criteriosLista .calidad-fallos-input")]
     .map((input) => {
       const cantidad = Math.max(0, Math.floor(Number(input.value) || 0));
       const idNumerico = Number(input.dataset.itemId);
@@ -201,6 +210,20 @@ function obtenerFallosDetalleCalidad() {
       };
     })
     .filter((detalle) => detalle.cantidad > 0);
+
+  const marcados = [...document.querySelectorAll("#criteriosLista .calidad-item-x-input:checked")]
+    .map((input) => {
+      const idNumerico = Number(input.dataset.itemId);
+      return {
+        idItem: Number.isFinite(idNumerico) ? idNumerico : null,
+        item: input.dataset.itemNombre || "",
+        subitem: "",
+        cantidad: 1,
+        marcadoX: true,
+      };
+    });
+
+  return [...numericos, ...marcados];
 }
 
 const esFormularioSiembraCampo = window.location.pathname.endsWith("/calidad-siembra.html");
@@ -448,6 +471,10 @@ function configurarConformeCalidad() {
       if (activo) input.value = "0";
       input.disabled = activo;
     });
+    document.querySelectorAll("#criteriosLista .calidad-item-x-input").forEach((input) => {
+      if (activo) input.checked = false;
+      input.disabled = activo;
+    });
     document.querySelectorAll("#criteriosLista .calidad-item-fallos:not(.calidad-item-conforme)").forEach((item) => {
       item.classList.toggle("calidad-item-deshabilitado", activo);
     });
@@ -474,6 +501,12 @@ function renderCriterios() {
           <span class="calidad-conforme-circulo" aria-hidden="true"></span>
           <span class="calidad-conforme-texto">${escaparHtmlCalidad(item.nombre)}</span>
         </label>
+      </section>`;
+    }
+
+    if (usaSeleccionXSoloItem(item)) {
+      return `<section class="calidad-item-fallos calidad-item-x">
+        ${campoSeleccionXCalidad(item)}
       </section>`;
     }
 
@@ -512,6 +545,10 @@ function limpiarFormularioCalidad() {
   if (conforme) conforme.checked = false;
   document.querySelectorAll("#criteriosLista .calidad-fallos-input").forEach((item) => {
     item.value = "0";
+    item.disabled = false;
+  });
+  document.querySelectorAll("#criteriosLista .calidad-item-x-input").forEach((item) => {
+    item.checked = false;
     item.disabled = false;
   });
   document.querySelectorAll("#criteriosLista .calidad-item-fallos").forEach((item) => {
