@@ -59,7 +59,6 @@ const criteriosCalidadGenericos = [
 ];
 
 const criteriosMallas = [
-  { id: 1, nombre: "Malla Conforme" },
   { id: 2, nombre: "Estado de la Malla" },
   { id: 3, nombre: "Posición de la Malla" },
   { id: 4, nombre: "Daño Mecánico" },
@@ -84,6 +83,13 @@ const ITEMS_SELECCION_X_BANDEJAS = new Set([
   "marcacion",
 ]);
 
+const ITEMS_SELECCION_X_MALLAS = new Set([
+  "dano mecanico",
+  "enmallado oportuno",
+  "uso de las herramientas",
+  "estado de la flor",
+]);
+
 const SUBITEMS_CALIDAD_PRODUCCION = {
   siembraCampo: {
     "estado de la planta": [
@@ -98,17 +104,14 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
     ],
   },
   mallas: {
+    "estado de la malla": [
+      "Sucia",
+      "Rota",
+      "Mojada",
+    ],
     "posicion de la malla": [
-      "Altura distinta de 2 cm sobre flor",
-      "Malla afecta pétalos",
-    ],
-    "uso de las herramientas": [
-      "Sin barra de medida",
-      "Sin guantes",
-    ],
-    "estado de la flor": [
-      "Flor con tierra",
-      "Flor mojada",
+      "Muy arriba",
+      "Muy abajo",
     ],
   },
 };
@@ -140,7 +143,10 @@ function esItemConformeCalidad(item) {
 function usaSeleccionXSoloItem(item) {
   const clave = claveTextoCalidad(item?.nombre);
   return (esFormularioSiembraCampo && ITEMS_SELECCION_X_SIEMBRA.has(clave))
-    || (esFormularioBandejasEnraizamiento && ITEMS_SELECCION_X_BANDEJAS.has(clave));
+    || (esFormularioBandejasEnraizamiento && ITEMS_SELECCION_X_BANDEJAS.has(clave))
+    || (esFormularioDesbotonMallasUnificado
+      && vistaCalidadDesbotonMallas === "mallas"
+      && ITEMS_SELECCION_X_MALLAS.has(clave));
 }
 
 function escaparHtmlCalidad(valor) {
