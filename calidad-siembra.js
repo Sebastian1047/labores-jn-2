@@ -34,7 +34,6 @@ const criteriosDesbotonSpiderCremon = [
 ];
 
 const criteriosBandejasEnraizamiento = [
-  { id: 1, nombre: "Siembra Conforme" },
   { id: 2, nombre: "Estado de Esqueje" },
   { id: 3, nombre: "Ubicación del Esqueje" },
   { id: 4, nombre: "Esqueje Inclinado" },
@@ -76,6 +75,13 @@ const ITEMS_SELECCION_X_SIEMBRA = new Set([
   "uso de epp",
   "acuerdos de oro",
   "conteo de lineas",
+]);
+
+const ITEMS_SELECCION_X_BANDEJAS = new Set([
+  "estado de esqueje",
+  "espacios vacios",
+  "hundimiento del sustrato al momento de la siembra",
+  "marcacion",
 ]);
 
 const SUBITEMS_CALIDAD_PRODUCCION = {
@@ -132,7 +138,9 @@ function esItemConformeCalidad(item) {
 }
 
 function usaSeleccionXSoloItem(item) {
-  return esFormularioSiembraCampo && ITEMS_SELECCION_X_SIEMBRA.has(claveTextoCalidad(item?.nombre));
+  const clave = claveTextoCalidad(item?.nombre);
+  return (esFormularioSiembraCampo && ITEMS_SELECCION_X_SIEMBRA.has(clave))
+    || (esFormularioBandejasEnraizamiento && ITEMS_SELECCION_X_BANDEJAS.has(clave));
 }
 
 function escaparHtmlCalidad(valor) {
