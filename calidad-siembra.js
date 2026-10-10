@@ -3,8 +3,6 @@ const sesionCalidad = JSON.parse(sessionStorage.getItem("labores_usuario") || "n
 if (!sesionCalidad) window.location.href = "./login.html";
 
 const criteriosPreparacionCamas = [
-  { id: -Infinity, nombre: "Conforme" },
-  { id: 1, nombre: "Cama Conforme" },
   { id: 2, nombre: "Limpieza de Terreno" },
   { id: 3, nombre: "Distribución de Enmiendas" },
   { id: 4, nombre: "Nivelación del Suelo" },
@@ -90,6 +88,18 @@ const ITEMS_SELECCION_X_MALLAS = new Set([
   "estado de la flor",
 ]);
 
+const ITEMS_SELECCION_X_PREPARACION = new Set([
+  "limpieza de terreno",
+  "distribucion de enmiendas",
+  "nivelacion del suelo",
+  "estado distribucion y cantidad de durmientes",
+  "profundidad de la preparacion",
+  "riego",
+  "aseo",
+  "instalacion de la malla",
+  "instalacion de mangueras de goteo",
+]);
+
 const SUBITEMS_CALIDAD_PRODUCCION = {
   siembraCampo: {
     "estado de la planta": [
@@ -144,6 +154,7 @@ function usaSeleccionXSoloItem(item) {
   const clave = claveTextoCalidad(item?.nombre);
   return (esFormularioSiembraCampo && ITEMS_SELECCION_X_SIEMBRA.has(clave))
     || (esFormularioBandejasEnraizamiento && ITEMS_SELECCION_X_BANDEJAS.has(clave))
+    || (esFormularioPreparacionCamas && ITEMS_SELECCION_X_PREPARACION.has(clave))
     || (esFormularioDesbotonMallasUnificado
       && vistaCalidadDesbotonMallas === "mallas"
       && ITEMS_SELECCION_X_MALLAS.has(clave));
