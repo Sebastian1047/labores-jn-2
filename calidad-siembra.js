@@ -75,11 +75,6 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
       "Botrytis severa",
       "Daño mecánico",
     ],
-    "profundidad de la planta": [
-      "Plug sin enterrar",
-      "Tallo enterrado",
-      "Primer par de hojas enterrado",
-    ],
     "aseo sitio de trabajo": [
       "Material vegetal en cama/camino",
       "Bandejas dejadas en el sitio",
