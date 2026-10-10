@@ -22,7 +22,6 @@ const criteriosDesbotonPompon = [
 ];
 
 const criteriosDesbotonSpiderCremon = [
-  { id: -Infinity, nombre: "Conforme" },
   { id: 1, nombre: "Plantas con Botón o Tocón" },
   { id: 2, nombre: "Plantas con Tocón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
