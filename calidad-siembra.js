@@ -126,7 +126,7 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
   spider: {
     "dano mecanico": [
       "Tallos partidos",
-      "Desbotonado incompleto",
+      "Desbotón de tallo principal",
       "Tallos heridos en tocón",
     ],
   },
