@@ -75,10 +75,6 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
       "Botrytis severa",
       "Daño mecánico",
     ],
-    "densidad": [
-      "Faltan plantas para 13/línea",
-      "Plantas de más vs. 13/línea",
-    ],
     "profundidad de la planta": [
       "Plug sin enterrar",
       "Tallo enterrado",
