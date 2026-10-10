@@ -16,15 +16,15 @@ const criteriosPreparacionCamas = [
 
 const criteriosDesbotonPompon = [
   { id: 1, nombre: "Tallos con Botón Principal" },
-  { id: 2, nombre: "Tallos con Tacón Largo" },
+  { id: 2, nombre: "Tallos con Tocón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
   { id: 4, nombre: "Aseo de Labor" },
 ];
 
 const criteriosDesbotonSpiderCremon = [
   { id: -Infinity, nombre: "Conforme" },
-  { id: 1, nombre: "Plantas con Botón o Tacón" },
-  { id: 2, nombre: "Plantas con Tacón Largo" },
+  { id: 1, nombre: "Plantas con Botón o Tocón" },
+  { id: 2, nombre: "Plantas con Tocón Largo" },
   { id: 3, nombre: "Daño Mecánico" },
   { id: 4, nombre: "Desbotón a 15 cm de la Base" },
   { id: 5, nombre: "Aseo Caminos" },
