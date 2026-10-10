@@ -87,6 +87,10 @@ const ITEMS_SELECCION_X_MALLAS = new Set([
   "estado de la flor",
 ]);
 
+const ITEMS_SELECCION_X_POMPON = new Set([
+  "aseo de labor",
+]);
+
 const ITEMS_SELECCION_X_PREPARACION = new Set([
   "limpieza de terreno",
   "distribucion de enmiendas",
@@ -163,6 +167,9 @@ function usaSeleccionXSoloItem(item) {
   return (esFormularioSiembraCampo && ITEMS_SELECCION_X_SIEMBRA.has(clave))
     || (esFormularioBandejasEnraizamiento && ITEMS_SELECCION_X_BANDEJAS.has(clave))
     || (esFormularioPreparacionCamas && ITEMS_SELECCION_X_PREPARACION.has(clave))
+    || (esFormularioDesbotonMallasUnificado
+      && vistaCalidadDesbotonMallas === "pompon"
+      && ITEMS_SELECCION_X_POMPON.has(clave))
     || (esFormularioDesbotonMallasUnificado
       && vistaCalidadDesbotonMallas === "mallas"
       && ITEMS_SELECCION_X_MALLAS.has(clave));
