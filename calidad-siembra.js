@@ -86,25 +86,9 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
     ],
   },
   bandejas: {
-    "estado de esqueje": [
-      "Botrytis",
-      "Postura de minador",
-      "Larva de trips",
-      "Daño de trips",
-      "Ácaros",
-    ],
-    "espacios vacios": [
-      "Vacío por sustrato duro",
-      "Vacío por alveolo dañado",
-      "Vacío sin justificación",
-    ],
     "dano mecanico": [
       "Esqueje partido",
       "Esqueje sin cogollo",
-    ],
-    "hundimiento del sustrato al momento de la siembra": [
-      "Sustrato presionado",
-      "Hundimiento de sustrato",
     ],
   },
   mallas: {
