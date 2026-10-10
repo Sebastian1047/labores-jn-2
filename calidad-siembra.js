@@ -123,6 +123,13 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
       "Tallos heridos en tocón",
     ],
   },
+  spider: {
+    "dano mecanico": [
+      "Tallos partidos",
+      "Desbotonado incompleto",
+      "Tallos heridos en tocón",
+    ],
+  },
   mallas: {
     "estado de la malla": [
       "Sucia",
@@ -150,11 +157,13 @@ function subitemsDelCriterioCalidad(item) {
     ? SUBITEMS_CALIDAD_PRODUCCION.siembraCampo
     : esFormularioBandejasEnraizamiento
       ? SUBITEMS_CALIDAD_PRODUCCION.bandejas
-      : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "pompon"
-        ? SUBITEMS_CALIDAD_PRODUCCION.pompon
-        : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas"
-          ? SUBITEMS_CALIDAD_PRODUCCION.mallas
-          : null;
+      : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "spider"
+        ? SUBITEMS_CALIDAD_PRODUCCION.spider
+        : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "pompon"
+          ? SUBITEMS_CALIDAD_PRODUCCION.pompon
+          : esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas"
+            ? SUBITEMS_CALIDAD_PRODUCCION.mallas
+            : null;
   return grupo?.[claveTextoCalidad(item.nombre)] || [];
 }
 
