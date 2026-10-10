@@ -99,9 +99,8 @@ const SUBITEMS_CALIDAD_PRODUCCION = {
       "Vacío sin justificación",
     ],
     "dano mecanico": [
-      "Cogollos dañados/partidos",
-      "Tallos partidos",
-      "Esquejes incompletos",
+      "Esqueje partido",
+      "Esqueje sin cogollo",
     ],
     "hundimiento del sustrato al momento de la siembra": [
       "Sustrato presionado",
