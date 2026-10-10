@@ -174,7 +174,7 @@
         if (subitems.length) {
           return `<section class="calidad-item-fallos">
             <div class="calidad-item-fallos-titulo">${escaparAux(item.nombre)}</div>
-            <div class="calidad-subitems-fallos">${subitems.map((subitem) => campoSeleccionXAux(item, subitem)).join("")}</div>
+            <div class="calidad-subitems-fallos">${subitems.map((subitem) => campoFallosAux(item, subitem)).join("")}</div>
           </section>`;
         }
         if (ITEMS_NUMERICOS_TRANSPORTADOR.has(item.id)) {
