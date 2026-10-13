@@ -17,7 +17,7 @@ const criteriosPreparacionCamas = [
 const criteriosDesbotonPompon = [
   { id: 1, nombre: "Tallos con Botón Principal", nota: "tolerancia: 3 plantas con boton" },
   { id: 2, nombre: "Tallos con Tocón Largo", nota: "tocon 1 cm max" },
-  { id: 3, nombre: "Daño Mecánico", nota: "2 hojas parte superior" },
+  { id: 3, nombre: "Daño Mecánico", nota: "tolerancia: tres tallos por sitio" },
   { id: 4, nombre: "Aseo de Labor" },
 ];
 
