@@ -63,8 +63,8 @@ const CRITERIOS_CORTE_DOCUMENTO = {
       "≥2 laterales partidos",
       "Cama no conforme tras corte",
     ] },
-    { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: ["Peso fuera de especificación", "Menos tallos mínimos para el peso", "Tallos ≠ orden de producción"] },
-    { id: 5, nombre: "Número de puntos florales por tallo", subitems: ["Menos de 4 puntos florales", "3 puntos no permitidos", "4.º punto fuera de condición"] },
+    { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: [] },
+    { id: 5, nombre: "Número de puntos florales por tallo", subitems: [] },
     { id: 6, nombre: "Cauchos", subitems: ["Alimenacion", "Numero de vueltas", "Ubicacion"] },
     { id: 7, nombre: "Longitud del ramo", subitems: ["Corto", "Largo"] },
     { id: 8, nombre: "Base del ramo", subitems: ["Corte parejo", "Tallos rasgados", "Pata leñosa"] },
@@ -210,7 +210,10 @@ function renderCriteriosNumericosCorte() {
 
     if (
       normalizarCorte(criterio.nombre) === "acuerdos de oro" ||
-      (modalidadSelect.value === "1" && normalizarCorte(criterio.nombre) === "alineacion de la flor")
+      (modalidadSelect.value === "1" && (
+        criterio.id === 4 || criterio.id === 5 ||
+        normalizarCorte(criterio.nombre) === "alineacion de la flor"
+      ))
     ) {
       return `<section class="calidad-item-fallos calidad-item-x">${campoSeleccionXCorte(criterio)}</section>`;
     }
