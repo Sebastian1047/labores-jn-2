@@ -75,7 +75,7 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     { id: 13, nombre: "Hidratación", subitems: [] },
     { id: 14, nombre: "Apertura abierta/cerrada/mezclas", subitems: ["Apertura sobre estándar", "Apertura bajo estándar", "Mezcla de aperturas"] },
     { id: 15, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
-    { id: 16, nombre: "Acuerdos de oro", subitems: ["Falta de respeto", "Indisciplina", "Falta de responsabilidad", "Falta de trabajo en equipo", "Mal trato a compañeros", "Falta de compromiso"] },
+    { id: 16, nombre: "Acuerdos de oro", subitems: [] },
   ],
   "2": [
     { id: 1, nombre: "Ramo conforme", subitems: [] },
@@ -160,6 +160,17 @@ function campoFallosCorte(criterio, subitem = "") {
   </label>`;
 }
 
+function campoSeleccionXCorte(criterio) {
+  return `<label class="calidad-item-x-row">
+    <span class="calidad-item-x-label">${escaparCorte(criterio.nombre)}</span>
+    <input class="calidad-item-x-input corte-item-x-input" type="checkbox"
+      data-doc-item-id="${criterio.id}"
+      data-catalogo-item-id="${criterio.idCatalogo ?? criterio.id}"
+      data-item-nombre="${escaparCorte(criterio.nombre)}"
+      aria-label="Marcar incumplimiento: ${escaparCorte(criterio.nombre)}" />
+    <span class="calidad-item-x-box" aria-hidden="true">×</span>
+  </label>`;
+}
 function configurarConformeCorte() {
   if (!corteCriteriosNumericos) return;
   const conforme = corteCriteriosNumericos.querySelector(".calidad-conforme-input");
@@ -169,6 +180,10 @@ function configurarConformeCorte() {
     const activo = conforme.checked;
     corteCriteriosNumericos.querySelectorAll(".corte-fallos-input").forEach((input) => {
       if (activo) input.value = "0";
+      input.disabled = activo;
+    });
+    corteCriteriosNumericos.querySelectorAll(".corte-item-x-input").forEach((input) => {
+      if (activo) input.checked = false;
       input.disabled = activo;
     });
     corteCriteriosNumericos.querySelectorAll(".calidad-item-fallos:not(.calidad-item-conforme)").forEach((item) => {
@@ -194,6 +209,10 @@ function renderCriteriosNumericosCorte() {
       </section>`;
     }
 
+    if (normalizarCorte(criterio.nombre) === "acuerdos de oro") {
+      return `<section class="calidad-item-fallos calidad-item-x">${campoSeleccionXCorte(criterio)}</section>`;
+    }
+
     if ((criterio.subitems || []).length > 1) {
       return `<section class="calidad-item-fallos">
         <div class="calidad-item-fallos-titulo">${escaparCorte(criterio.nombre)}</div>
@@ -208,7 +227,7 @@ function renderCriteriosNumericosCorte() {
 }
 
 function obtenerFallosDetalleCorte() {
-  return [...document.querySelectorAll("#corteCriteriosNumericos .corte-fallos-input")]
+  const numericos = [...document.querySelectorAll("#corteCriteriosNumericos .corte-fallos-input")]
     .map((input) => ({
       idItemDocumento: Number(input.dataset.docItemId),
       idItemCatalogo: Number(input.dataset.catalogoItemId),
@@ -217,6 +236,18 @@ function obtenerFallosDetalleCorte() {
       cantidad: Math.max(0, Math.floor(Number(input.value) || 0)),
     }))
     .filter((detalle) => detalle.cantidad > 0);
+
+  const marcadosX = [...document.querySelectorAll("#corteCriteriosNumericos .corte-item-x-input:checked")]
+    .map((input) => ({
+      idItemDocumento: Number(input.dataset.docItemId),
+      idItemCatalogo: Number(input.dataset.catalogoItemId),
+      item: input.dataset.itemNombre || "",
+      subitem: "",
+      cantidad: 1,
+      marcadoX: true,
+    }));
+
+  return [...numericos, ...marcadosX];
 }
 
 function encontrarObservacionCatalogo(detalle) {
@@ -255,6 +286,11 @@ function limpiarFallosCorte() {
   document.querySelectorAll("#corteCriteriosNumericos .corte-fallos-input")
     .forEach((input) => {
       input.value = "0";
+      input.disabled = false;
+    });
+  document.querySelectorAll("#corteCriteriosNumericos .corte-item-x-input")
+    .forEach((input) => {
+      input.checked = false;
       input.disabled = false;
     });
   document.querySelectorAll("#corteCriteriosNumericos .calidad-item-fallos")
