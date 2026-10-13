@@ -73,7 +73,7 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     { id: 11, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
     { id: 12, nombre: "Presentación del ramo", subitems: ["Capuchón sucio", "Arrugado no reutilizado", "Capuchón rasgado", "Ubicación incorrecta", "Capuchón ≠ orden"] },
     { id: 13, nombre: "Hidratación", subitems: [] },
-    { id: 14, nombre: "Apertura abierta/cerrada/mezclas", subitems: ["Apertura sobre estándar", "Apertura bajo estándar", "Mezcla de aperturas"] },
+    { id: 14, nombre: "Aperturas", catalogoNombre: "Apertura abierta/cerrada/mezclas", subitems: ["Abierto", "Cerrado", "Mezclas"] },
     { id: 15, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
     { id: 16, nombre: "Acuerdos de oro", subitems: [] },
   ],
@@ -116,7 +116,7 @@ function escaparCorte(valor) {
 
 function itemCatalogoParaCriterio(criterio) {
   if (!catalogo.items.length) return null;
-  const objetivo = normalizarCorte(criterio.nombre);
+  const objetivo = normalizarCorte(criterio.catalogoNombre || criterio.nombre);
   return catalogo.items.find((item) => {
     const actual = normalizarCorte(item.nombre);
     return actual === objetivo ||
