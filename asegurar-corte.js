@@ -53,6 +53,8 @@ const CRITERIOS_CORTE_DOCUMENTO = {
   "1": [
     { id: 1, nombre: "Ramo conforme", subitems: [] },
     { id: 2, nombre: "Deshoje", subitems: ["Deshoje por debajo de altura", "Deshoje sobre tolerancia"] },
+    { id: 3, nombre: "Daño mecánico en la flor", siempreVisible: true, subitems: ["Cabezas de flor", "Penunculos quebrados"] },
+    { id: 17, nombre: "Daño mecánico en el follaje", siempreVisible: true, subitems: ["Hojas quebradas", "Maltrato"] },
     { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: [] },
     { id: 5, nombre: "Número de puntos florales por tallo", subitems: [] },
     { id: 6, nombre: "Cauchos", subitems: ["Alimenacion", "Numero de vueltas", "Ubicacion"] },
@@ -121,7 +123,9 @@ function criteriosCorteVisibles() {
   const coincidentes = base
     .map((criterio) => {
       const itemCatalogo = itemCatalogoParaCriterio(criterio);
-      return itemCatalogo ? { ...criterio, idCatalogo: Number(itemCatalogo.id) } : null;
+      return itemCatalogo
+        ? { ...criterio, idCatalogo: Number(itemCatalogo.id) }
+        : (criterio.siempreVisible ? { ...criterio, idCatalogo: 0 } : null);
     })
     .filter(Boolean);
 
