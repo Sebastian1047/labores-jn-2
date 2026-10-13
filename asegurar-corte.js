@@ -208,7 +208,10 @@ function renderCriteriosNumericosCorte() {
       </section>`;
     }
 
-    if (normalizarCorte(criterio.nombre) === "acuerdos de oro") {
+    if (
+      normalizarCorte(criterio.nombre) === "acuerdos de oro" ||
+      (modalidadSelect.value === "1" && normalizarCorte(criterio.nombre) === "alineacion de la flor")
+    ) {
       return `<section class="calidad-item-fallos calidad-item-x">${campoSeleccionXCorte(criterio)}</section>`;
     }
 
