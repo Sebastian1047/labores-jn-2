@@ -52,7 +52,7 @@ const ROLES_CALIDAD_CORTE = {
 const CRITERIOS_CORTE_DOCUMENTO = {
   "1": [
     { id: 1, nombre: "Ramo conforme", subitems: [] },
-    { id: 2, nombre: "Deshoje", subitems: ["Deshoje por debajo de altura", "Deshoje sobre tolerancia"] },
+    { id: 2, nombre: "Deshoje", subitems: [] },
     { id: 3, nombre: "Daño mecánico en la flor", siempreVisible: true, subitems: ["Cabezas de flor", "Penunculos quebrados"] },
     { id: 17, nombre: "Daño mecánico en el follaje", siempreVisible: true, subitems: ["Hojas quebradas", "Maltrato"] },
     { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: [] },
@@ -205,7 +205,7 @@ function renderCriteriosNumericosCorte() {
     if (
       normalizarCorte(criterio.nombre) === "acuerdos de oro" ||
       (modalidadSelect.value === "1" && (
-        criterio.id === 4 || criterio.id === 5 ||
+        criterio.id === 2 || criterio.id === 4 || criterio.id === 5 ||
         normalizarCorte(criterio.nombre) === "alineacion de la flor"
       ))
     ) {
