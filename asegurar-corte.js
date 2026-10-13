@@ -65,7 +65,7 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     ] },
     { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: ["Peso fuera de especificación", "Menos tallos mínimos para el peso", "Tallos ≠ orden de producción"] },
     { id: 5, nombre: "Número de puntos florales por tallo", subitems: ["Menos de 4 puntos florales", "3 puntos no permitidos", "4.º punto fuera de condición"] },
-    { id: 6, nombre: "Cauchos", subitems: ["Posición incorrecta", "Desalineados", "Color incorrecto", "Cantidad incorrecta", "Vueltas ≠ 3"] },
+    { id: 6, nombre: "Cauchos", subitems: ["Alimenacion", "Numero de vueltas", "Ubicacion"] },
     { id: 7, nombre: "Longitud del ramo", subitems: ["Corto", "Largo"] },
     { id: 8, nombre: "Base del ramo", subitems: ["Corte parejo", "Tallos rasgados", "Pata leñosa"] },
     { id: 9, nombre: "Alineación de la flor", subitems: [] },
