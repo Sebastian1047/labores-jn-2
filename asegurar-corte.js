@@ -67,7 +67,7 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     { id: 5, nombre: "Número de puntos florales por tallo", subitems: ["Menos de 4 puntos florales", "3 puntos no permitidos", "4.º punto fuera de condición"] },
     { id: 6, nombre: "Cauchos", subitems: ["Posición incorrecta", "Desalineados", "Color incorrecto", "Cantidad incorrecta", "Vueltas ≠ 3"] },
     { id: 7, nombre: "Longitud del ramo", subitems: [] },
-    { id: 8, nombre: "Base del ramo", subitems: ["Corte de base disparejo", "Tallos rasgados en la base"] },
+    { id: 8, nombre: "Base del ramo", subitems: ["Corte parejo", "Tallos rasgados", "Pata leñosa"] },
     { id: 9, nombre: "Alineación de la flor", subitems: [] },
     { id: 10, nombre: "Follaje", subitems: ["Amarillento", "Quemado", "Deshidratado", "Necrótico", "Sucio"] },
     { id: 11, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
