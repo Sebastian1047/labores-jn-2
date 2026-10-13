@@ -74,7 +74,6 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     { id: 12, nombre: "Presentación del ramo", subitems: ["Estado del capuchon", "Ubicacion del capuchon", "Flor sucia"] },
     { id: 13, nombre: "Hidratación", subitems: ["Cantidad", "Ramos en balde", "Agua en balde"] },
     { id: 14, nombre: "Aperturas", catalogoNombre: "Apertura abierta/cerrada/mezclas", subitems: ["Abierto", "Cerrado", "Mezclas"] },
-    { id: 15, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
     { id: 16, nombre: "Acuerdos de oro", subitems: [] },
   ],
   "2": [
