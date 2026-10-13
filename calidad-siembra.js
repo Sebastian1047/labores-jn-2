@@ -15,9 +15,9 @@ const criteriosPreparacionCamas = [
 ];
 
 const criteriosDesbotonPompon = [
-  { id: 1, nombre: "Tallos con Botón Principal" },
-  { id: 2, nombre: "Tallos con Tocón Largo" },
-  { id: 3, nombre: "Daño Mecánico" },
+  { id: 1, nombre: "Tallos con Botón Principal", nota: "tolerancia: 3 plantas con boton" },
+  { id: 2, nombre: "Tallos con Tocón Largo", nota: "tocon 1 cm max" },
+  { id: 3, nombre: "Daño Mecánico", nota: "2 hojas parte superior" },
   { id: 4, nombre: "Aseo de Labor" },
 ];
 
@@ -213,13 +213,19 @@ function campoSeleccionXCalidad(item) {
   </label>`;
 }
 
+function notaCriterioCalidad(item) {
+  return item.nota
+    ? `<small class="calidad-item-nota">${escaparHtmlCalidad(item.nota)}</small>`
+    : "";
+}
+
 function campoFallosCalidad(item, subitem = "", indice = 0) {
   const idItem = String(item.id);
   const nombre = escaparHtmlCalidad(item.nombre);
   const sub = escaparHtmlCalidad(subitem);
   const etiqueta = subitem || item.nombre;
   return `<label class="calidad-fallo-row">
-    <span class="calidad-fallo-label">${escaparHtmlCalidad(etiqueta)}</span>
+    <span class="calidad-fallo-label">${escaparHtmlCalidad(etiqueta)}${subitem ? "" : notaCriterioCalidad(item)}</span>
     <input
       class="calidad-fallos-input"
       type="number"
@@ -552,7 +558,7 @@ function renderCriterios() {
     const subitems = subitemsDelCriterioCalidad(item);
     if (subitems.length > 1) {
       return `<section class="calidad-item-fallos">
-        <div class="calidad-item-fallos-titulo">${escaparHtmlCalidad(item.nombre)}</div>
+        <div class="calidad-item-fallos-titulo">${escaparHtmlCalidad(item.nombre)}${notaCriterioCalidad(item)}</div>
         <div class="calidad-subitems-fallos">
           ${subitems.map((subitem, indice) => campoFallosCalidad(item, subitem, indice)).join("")}
         </div>
