@@ -70,21 +70,21 @@ const CRITERIOS_CORTE_DOCUMENTO = {
   ],
   "2": [
     { id: 1, nombre: "Ramo conforme", subitems: [] },
-    { id: 2, nombre: "Deshoje", subitems: ["Deshoje sobre rango", "Deshoje bajo rango", "Follaje sobre el capuchón"] },
-    { id: 3, nombre: "Daño mecánico", subitems: ["Cabezas quebradas", "Cabezas maltratadas", "Hojas quebradas", "Hojas maltratadas", "Tallos quebrados", "Tallos maltratados", "Novedad en entrega de cama"] },
-    { id: 4, nombre: "Número de tallos", subitems: [] },
-    { id: 5, nombre: "Cauchos", subitems: ["Posición incorrecta", "Desalineados", "Color incorrecto", "Cantidad incorrecta", "Vueltas ≠ 3"] },
-    { id: 6, nombre: "Longitud del ramo", subitems: ["Longitud sobre estándar", "Longitud bajo estándar"] },
-    { id: 7, nombre: "Base del ramo", subitems: ["Corte de base disparejo", "Tallos muy rasgados"] },
-    { id: 8, nombre: "Alineación de la flor", subitems: ["Cabezas desalineadas", "Segundo nivel fuera de 2 cm"] },
-    { id: 9, nombre: "Follaje", subitems: ["Follaje amarillento", "Follaje quemado", "Follaje deshidratado", "Follaje necrótico"] },
-    { id: 10, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
-    { id: 11, nombre: "Presentación del ramo", subitems: ["Capuchón sucio", "Arrugado no reutilizado", "Capuchón rasgado", "Ubicación incorrecta", "Capuchón ≠ orden"] },
-    { id: 12, nombre: "Ramos en malla", subitems: [] },
-    { id: 13, nombre: "Apertura abierta", subitems: [] },
-    { id: 14, nombre: "Apertura cerrada", subitems: [] },
-    { id: 15, nombre: "Mezclas", subitems: ["Diámetros de apertura diferentes", "Diámetro fuera del estándar"] },
-    { id: 16, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
+    { id: 2, nombre: "Deshoje", subitems: [] },
+    { id: 3, nombre: "Daño mecánico en la flor", siempreVisible: true, subitems: ["Cabezas de flor", "Penunculos quebrados"] },
+    { id: 17, nombre: "Daño mecánico en el follaje", siempreVisible: true, subitems: ["Hojas quebradas", "Maltrato"] },
+    { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: [] },
+    { id: 5, nombre: "Número de puntos florales por tallo", subitems: [] },
+    { id: 6, nombre: "Cauchos", subitems: ["Alimenacion", "Numero de vueltas", "Ubicacion"] },
+    { id: 7, nombre: "Longitud del ramo", subitems: ["Corto", "Largo"] },
+    { id: 8, nombre: "Base del ramo", subitems: ["Corte parejo", "Tallos rasgados", "Pata leñosa"] },
+    { id: 9, nombre: "Alineación de la flor", subitems: [] },
+    { id: 10, nombre: "Follaje", subitems: ["Amarillento", "Quemado", "Deshidratado", "Necrótico", "Sucio"] },
+    { id: 11, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
+    { id: 12, nombre: "Presentación del ramo", subitems: ["Estado del capuchon", "Ubicacion del capuchon", "Flor sucia"] },
+    { id: 13, nombre: "Hidratación", subitems: ["Cantidad", "Ramos en balde", "Agua en balde"] },
+    { id: 14, nombre: "Aperturas", catalogoNombre: "Apertura abierta/cerrada/mezclas", subitems: ["Abierto", "Cerrado", "Mezclas"] },
+    { id: 16, nombre: "Acuerdos de oro", subitems: [] },
   ],
 };
 
@@ -118,6 +118,14 @@ function itemCatalogoParaCriterio(criterio) {
 
 function criteriosCorteVisibles() {
   const base = CRITERIOS_CORTE_DOCUMENTO[String(modalidadSelect.value)] || [];
+  // Spider usa exactamente los criterios copiados de Pompón, aun si el catálogo
+  // sincronizado conserva ítems anteriores de Spider.
+  if (String(modalidadSelect.value) === "2") {
+    return base.map((criterio) => {
+      const itemCatalogo = itemCatalogoParaCriterio(criterio);
+      return { ...criterio, idCatalogo: itemCatalogo ? Number(itemCatalogo.id) : 0 };
+    });
+  }
   if (!catalogo.items.length) return base.map((criterio) => ({ ...criterio, idCatalogo: criterio.id }));
 
   const coincidentes = base
@@ -204,10 +212,8 @@ function renderCriteriosNumericosCorte() {
 
     if (
       normalizarCorte(criterio.nombre) === "acuerdos de oro" ||
-      (modalidadSelect.value === "1" && (
-        criterio.id === 2 || criterio.id === 4 || criterio.id === 5 ||
-        normalizarCorte(criterio.nombre) === "alineacion de la flor"
-      ))
+      criterio.id === 2 || criterio.id === 4 || criterio.id === 5 ||
+      normalizarCorte(criterio.nombre) === "alineacion de la flor"
     ) {
       return `<section class="calidad-item-fallos calidad-item-x">${campoSeleccionXCorte(criterio)}</section>`;
     }
