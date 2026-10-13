@@ -53,16 +53,6 @@ const CRITERIOS_CORTE_DOCUMENTO = {
   "1": [
     { id: 1, nombre: "Ramo conforme", subitems: [] },
     { id: 2, nombre: "Deshoje", subitems: ["Deshoje por debajo de altura", "Deshoje sobre tolerancia"] },
-    { id: 3, nombre: "Daño mecánico", subitems: [
-      "Flores quebradas/maltratadas",
-      "Hojas quebradas/maltratadas",
-      "Tallos quebrados/maltratados",
-      "Lateral partido (leve)",
-      "2 hojas quebradas (leve)",
-      "≥2 puntos florales partidos",
-      "≥2 laterales partidos",
-      "Cama no conforme tras corte",
-    ] },
     { id: 4, nombre: "Peso del ramo y/o número de tallos", subitems: [] },
     { id: 5, nombre: "Número de puntos florales por tallo", subitems: [] },
     { id: 6, nombre: "Cauchos", subitems: ["Alimenacion", "Numero de vueltas", "Ubicacion"] },
