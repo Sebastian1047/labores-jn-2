@@ -71,7 +71,7 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     { id: 9, nombre: "Alineación de la flor", subitems: [] },
     { id: 10, nombre: "Follaje", subitems: ["Follaje amarillento", "Follaje quemado", "Follaje deshidratado", "Follaje necrótico"] },
     { id: 11, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
-    { id: 12, nombre: "Presentación del ramo", subitems: ["Capuchón sucio", "Arrugado no reutilizado", "Capuchón rasgado", "Ubicación incorrecta", "Capuchón ≠ orden"] },
+    { id: 12, nombre: "Presentación del ramo", subitems: ["Estado del capuchon", "Ubicacion del capuchon", "Flor sucia"] },
     { id: 13, nombre: "Hidratación", subitems: ["Cantidad", "Ramos en balde", "Agua en balde"] },
     { id: 14, nombre: "Aperturas", catalogoNombre: "Apertura abierta/cerrada/mezclas", subitems: ["Abierto", "Cerrado", "Mezclas"] },
     { id: 15, nombre: "Flor sucia", subitems: ["Flor cortada con suelo", "Flor dejada con suelo"] },
