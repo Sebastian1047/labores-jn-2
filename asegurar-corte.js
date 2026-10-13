@@ -69,7 +69,7 @@ const CRITERIOS_CORTE_DOCUMENTO = {
     { id: 7, nombre: "Longitud del ramo", subitems: [] },
     { id: 8, nombre: "Base del ramo", subitems: ["Corte de base disparejo", "Tallos rasgados en la base"] },
     { id: 9, nombre: "Alineación de la flor", subitems: [] },
-    { id: 10, nombre: "Follaje", subitems: ["Follaje amarillento", "Follaje quemado", "Follaje deshidratado", "Follaje necrótico"] },
+    { id: 10, nombre: "Follaje", subitems: ["Amarillento", "Quemado", "Deshidratado", "Necrótico", "Sucio"] },
     { id: 11, nombre: "Fitosanidad", subitems: ["Botrytis", "Stemphylium", "Quemazón", "Minador", "Trips", "Áfidos", "Gusano cogollero"] },
     { id: 12, nombre: "Presentación del ramo", subitems: ["Estado del capuchon", "Ubicacion del capuchon", "Flor sucia"] },
     { id: 13, nombre: "Hidratación", subitems: ["Cantidad", "Ramos en balde", "Agua en balde"] },
