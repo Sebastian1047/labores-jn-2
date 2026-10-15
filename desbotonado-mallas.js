@@ -33,13 +33,6 @@ const tiemposResultState = document.querySelector("#tiemposResultState");
 const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 
 const registros = [];
-let registrosTiemposLabor = [];
-let vistaRendimientoLabor = "Desbotón Pompón";
-const botonesRendimientoLabor = [...document.querySelectorAll("[data-rendimiento-tipo]")];
-botonesRendimientoLabor.forEach((btn) => btn.addEventListener("click", () => {
-  vistaRendimientoLabor = btn.dataset.rendimientoTipo;
-  render();
-}));
 let catalogos = { empleados: [], camas: [] };
 
 const texto = (obj, ...keys) => {
@@ -221,36 +214,6 @@ function numero(v,d=2) {
   return new Intl.NumberFormat("es-CO",{maximumFractionDigits:d}).format(v);
 }
 
-function escaparDesbotonado(valor) {
-  return String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-// El tiempo guardado pertenece a la persona y fecha, no a cada cama.
-// Solo puede atribuirse a una labor cuando esa persona registró un único tipo
-// de labor ese día; de lo contrario no se asignan horas por suposición.
-function rendimientoPorHoraDesbotonado(registro) {
-  const delDia = registros.filter((r) =>
-    String(r.colaborador) === String(registro.colaborador) && r.fecha === registro.fecha
-  );
-  if (new Set(delDia.map((r) => r.tipoLabor)).size !== 1) return null;
-
-  const tiempo = registrosTiemposLabor.find((r) =>
-    String(r.colaborador) === String(registro.colaborador) && r.fecha === registro.fecha
-  );
-  const minutos = Number(tiempo?.tiempoRealMin);
-  if (!Number.isFinite(minutos) || minutos <= 0) return null;
-
-  const totalTallos = delDia
-    .filter((r) => r.tipoLabor === registro.tipoLabor)
-    .reduce((total, r) => total + Number(r.tallos || 0), 0);
-  return totalTallos / (minutos / 60);
-}
-
 function render() {
   const tbody = document.querySelector("#tablaRegistros");
   const nombre = empleadoSelect.selectedOptions[0]?.dataset.nombre || "";
@@ -258,31 +221,26 @@ function render() {
     ? `Colaborador: ${nombre}`
     : "Seleccione un colaborador";
 
-  botonesRendimientoLabor.forEach((btn) =>
-    btn.classList.toggle("active", btn.dataset.rendimientoTipo === vistaRendimientoLabor)
-  );
-  const filtrados = registros.filter((r) => r.tipoLabor === vistaRendimientoLabor);
-  document.querySelector("#nombreResumenTabla").textContent =
-    `${filtrados.length} cama(s) registrada(s) en esta sesión para ${vistaRendimientoLabor}.`;
+  if (!registros.length) {
+    tbody.innerHTML = '<tr><td colspan="6">Todavía no hay camas registradas.</td></tr>';
+    document.querySelector("#totalCamas").textContent = "0";
+    document.querySelector("#totalTallos").textContent = "0";
+    return;
+  }
 
-  tbody.innerHTML = filtrados.length
-    ? filtrados.map((r) => {
-        const rendimiento = rendimientoPorHoraDesbotonado(r);
-        const nombrePersona = r.colaboradorNombre || r.colaborador;
-        return `<tr>
-          <td>${escaparDesbotonado(nombrePersona)}</td>
-          <td>${escaparDesbotonado(r.bloque)}</td>
-          <td>${escaparDesbotonado(r.cama)}</td>
-          <td>${numero(r.mediosCuadros, 1)}</td>
-          <td>${numero(r.tallosCama, 2)}</td>
-          <td>${numero(r.tallos, 2)}</td>
-          <td>${rendimiento === null ? "—" : numero(rendimiento, 2)}</td>
-        </tr>`;
-      }).join("")
-    : '<tr><td colspan="7">Todavía no hay camas registradas para esta labor.</td></tr>';
+  tbody.innerHTML = registros.map(r => `
+    <tr>
+      <td>${r.tipoLabor}</td>
+      <td>${r.bloque}</td>
+      <td>${r.cama}</td>
+      <td>${numero(r.mediosCuadros,1)}</td>
+      <td>${numero(r.tallos,2)}</td>
+      <td>${r.observaciones || "—"}</td>
+    </tr>
+  `).join("");
 
-  const tallos = filtrados.reduce((total, r) => total + Number(r.tallos || 0), 0);
-  document.querySelector("#totalCamas").textContent = filtrados.length;
+  const tallos = registros.reduce((s,r)=>s+r.tallos,0);
+  document.querySelector("#totalCamas").textContent = registros.length;
   document.querySelector("#totalTallos").textContent = numero(tallos);
 }
 
@@ -301,22 +259,17 @@ form.addEventListener("submit", e => {
   }
 
   const tallos = (tallosCama - erradicaciones) / 16 * medios;
-  const tipoLabor = document.querySelector("#tipoLabor").value;
   registros.push({
     fecha: fechaInput.value,
     colaborador: empleadoSelect.value,
-    colaboradorNombre: empleadoSelect.selectedOptions[0]?.dataset.nombre || empleadoSelect.value,
-    tipoLabor,
+    tipoLabor: document.querySelector("#tipoLabor").value,
     bloque: bloqueInput.value.trim(),
     cama: camaSelect.value,
     mediosCuadros: medios,
-    tallosCama,
-    erradicaciones,
     tallos,
     observaciones: desbotonadoObservaciones.value.trim()
   });
 
-  vistaRendimientoLabor = tipoLabor;
   render();
   form.reset();
   cargarCamas();
@@ -328,7 +281,8 @@ document.querySelector("#btnLimpiarCama").addEventListener("click",()=>{
 });
 
 document.querySelector("#btnNuevoDesbotonador").addEventListener("click",()=>{
-  // Mantener las filas de los colaboradores anteriores en las tres tablas de rendimiento.
+  if (registros.length && !confirm("¿Desea iniciar otro colaborador? Se borrarán los registros de esta sesión.")) return;
+  registros.length = 0;
   empleadoSelect.innerHTML = '<option value=""></option>';
   empleadoSelect.value = "";
   empleadoBuscar.value = "";
@@ -387,8 +341,6 @@ function limpiarTiempos() {
 async function renderRegistrosTiempos() {
   const registrosTiempos = (await OfflineDb.getAll("desbotonadoMallasTiempos"))
     .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-  registrosTiemposLabor = registrosTiempos;
-  render();
 
   tiemposRegistrosLista.innerHTML = registrosTiempos.length
     ? registrosTiempos.slice(0,20).map((r) => `

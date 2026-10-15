@@ -115,7 +115,7 @@
             <strong id="totalCamas">0</strong>
           </article>
           <article class="metric">
-            <span>Tallos realizados</span>
+            <span>Tallos desbotonados</span>
             <strong id="totalTallos">0</strong>
           </article>
         </section>
@@ -123,32 +123,25 @@
         <section class="scanner-panel">
           <div class="panel-heading">
             <div>
-              <span class="scan-label">Rendimiento · Labor</span>
-              <p class="hint" id="nombreResumenTabla">Camas registradas en esta sesión, por tipo de labor.</p>
+              <span class="scan-label">Detalle de la jornada</span>
+              <p class="hint" id="nombreResumenTabla">Camas registradas en esta sesión.</p>
             </div>
-            <button type="button" class="ghost-btn" id="btnNuevoDesbotonador">Cambiar colaborador</button>
+            <button type="button" class="ghost-btn" id="btnNuevoDesbotonador">Nuevo colaborador</button>
           </div>
-          <nav class="desbotonado-tabs" aria-label="Vistas de rendimiento por labor" style="margin:12px 0;">
-            <button class="desbotonado-tab active" type="button" data-rendimiento-tipo="Desbotón Pompón">Pompón</button>
-            <button class="desbotonado-tab" type="button" data-rendimiento-tipo="Desbotón Spider">Spider</button>
-            <button class="desbotonado-tab" type="button" data-rendimiento-tipo="Malla">Mallas</button>
-          </nav>
-          <p class="hint" style="margin:0 0 10px;">Rendimiento por hora = tallos realizados por persona en la labor y fecha ÷ horas efectivas guardadas en Tiempos. Se muestra — si no hay tiempo registrado o si la persona realizó distintas labores en el mismo día sin tiempos separados.</p>
           <div class="table-scroll">
-            <table style="min-width:1040px;">
+            <table>
               <thead>
                 <tr>
-                  <th>Nombre de la persona</th>
+                  <th>Tipo</th>
                   <th>Bloque</th>
                   <th>Cama</th>
-                  <th>Medios cuadrados hechos</th>
-                  <th>Tallos por cama</th>
-                  <th>Tallos realizados</th>
-                  <th>Rendimiento por hora</th>
+                  <th>Medios cuadros</th>
+                  <th>Tallos</th>
+                  <th>Observaciones</th>
                 </tr>
               </thead>
               <tbody id="tablaRegistros">
-                <tr><td colspan="7">Todavía no hay camas registradas.</td></tr>
+                <tr><td colspan="6">Todavía no hay camas registradas.</td></tr>
               </tbody>
             </table>
           </div>
@@ -257,7 +250,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./desbotonado-mallas.js?v=1.0.103"></script>
+    <script src="./desbotonado-mallas.js?v=1.0.104"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
