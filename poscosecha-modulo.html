@@ -119,47 +119,48 @@
         </section>
 
         <section id="vistaTiempos" class="poscosecha-view" hidden>
+        <p class="hint" style="margin:12px 0;">Tiempos en <strong>horas decimales</strong> (ej.: 0,5 = 30 minutos). Admite coma o punto. Jornada sugerida: 7,25 h de lunes a viernes y 5,75 h los sábados; puedes cambiarla.</p>
           <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
             <article class="scanner-panel">
               <div class="exit-row" style="grid-template-columns:1fr 1fr;">
                 <div class="time-card">
-                  <label>Horas Laborales
-                    <input id="horasLaboralesMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Horas laborales (h)
+                    <input id="horasLaboralesMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>Horas Extra
-                    <input id="horasExtraMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Horas extra (h)
+                    <input id="horasExtraMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>PMadres
-                    <input id="pMadresMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Plantas madres (h)
+                    <input id="pMadresMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>PAbuelas
-                    <input id="pAbuelasMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Plantas abuelas (h)
+                    <input id="pAbuelasMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>Desplazamiento
-                    <input id="desplazamientoMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Desplazamiento (h)
+                    <input id="desplazamientoMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>Calistenia, Acondicionamiento, Fortalecimiento
-                    <input id="calisteniaMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Calistenia, acondicionamiento y fortalecimiento (h)
+                    <input id="calisteniaMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>Capacitación, Reunión
-                    <input id="capacitacionMin" type="number" min="0" step="1" inputmode="numeric" placeholder="Minutos" />
+                  <label>Capacitación y reunión (h)
+                    <input id="capacitacionMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)" />
                   </label>
                 </div>
                 <div class="time-card">
-                  <label>Otras labores (automático)
-                    <input id="otrasLaboresMin" type="number" value="0" readonly />
+                  <label>Otras actividades descontadas (h, automático)
+                    <input id="otrasLaboresMin" type="text" value="0" readonly />
                   </label>
                 </div>
               </div>
@@ -193,7 +194,7 @@
               <section class="result-card" aria-live="polite">
                 <div class="result-status" id="tiemposResultStatus">
                   <span class="dot"></span>
-                  <strong id="tiemposResultState">Ingresa los tiempos en minutos para calcular el tiempo real de labor.</strong>
+                  <strong id="tiemposResultState">Ingresa las horas decimales para calcular el tiempo efectivo.</strong>
                 </div>
               </section>
             </article>
@@ -329,7 +330,8 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./poscosecha-modulo.js?v=1.0.57"></script>
+    <script src="./tiempos-comun.js?v=1.0.105"></script>
+    <script src="./poscosecha-modulo.js?v=1.0.105"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

@@ -152,7 +152,7 @@ function iniciarRendimientoMipe() {
   tabs.forEach((btn) => btn.addEventListener("click",() => aplicarVista(btn.dataset.mipeVista)));
 
   function min(input) {
-    const n = Number(input.value || 0);
+    const n = TiemposLaboresJN.leerMinutos(input);
     return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
   }
   function formato(total) {
@@ -163,8 +163,8 @@ function iniciarRendimientoMipe() {
     const l=min(laborales), e=min(extras);
     const o=min(pMadres)+min(pAbuelas)+min(desplazamiento)+min(calistenia)+min(capacitacion);
     const d=l+e, r=Math.max(0,d-o);
-    otras.value=String(o); disponibleTexto.textContent=formato(d); realTexto.textContent=formato(r);
-    return {l,e,o,d,r};
+    otras.value=TiemposLaboresJN.formatearHoras(o); disponibleTexto.textContent=formato(d); realTexto.textContent=formato(r);
+    return {l,e,o,d,r,excede:o>d};
   }
   [laborales,extras,pMadres,pAbuelas,desplazamiento,calistenia,capacitacion].forEach((x)=>x.addEventListener("input",calcular));
 
@@ -175,6 +175,8 @@ function iniciarRendimientoMipe() {
   }
   function limpiarTiempos() {
     [laborales,extras,pMadres,pAbuelas,desplazamiento,calistenia,capacitacion].forEach((x)=>{x.value=""});
+    laborales.value=TiemposLaboresJN.horasJornada(fecha.value);
+    laborales.dataset.tiempoEditado="0";
     obsTiempos.value=""; calcular();
   }
   async function renderRegistros() {
@@ -189,7 +191,10 @@ function iniciarRendimientoMipe() {
     if(!fecha.value) return estado("error","Selecciona la fecha.");
     if(!seleccionado) return estado("error",`Selecciona un ${rolInfoMipe.colaborador.toLowerCase()}.`);
     const calc=calcular();
-    if(calc.d<=0) return estado("error","Ingresa los minutos de Horas Laborales o Horas Extra.");
+    if(calc.d<=0) return estado("error","Ingresa las horas laborales o extra.");
+    if(calc.excede) return estado("error","Las actividades descontadas superan las horas disponibles.");
+    const errorHoras=TiemposLaboresJN.validar([laborales,extras,pMadres,pAbuelas,desplazamiento,calistenia,capacitacion]);
+    if(errorHoras) return estado("error",errorHoras);
 
     const registro={
       id:SyncEngine.generarUUID(),area:"MIPE",rol:rolMipe,rolNombre:rolInfoMipe.nombre,
@@ -206,7 +211,7 @@ function iniciarRendimientoMipe() {
     limpiarTiempos(); await renderRegistros();
   }
   guardar.addEventListener("click",guardarTiempos);
-  limpiar.addEventListener("click",()=>{limpiarTiempos();estado(null,"Ingresa los tiempos en minutos para calcular el tiempo real de labor.")});
+  limpiar.addEventListener("click",()=>{limpiarTiempos();estado(null,"Ingresa las horas decimales para calcular el tiempo efectivo.")});
 
   async function cargarCatalogos() {
     try {

@@ -134,8 +134,7 @@ viewTabs.forEach((btn) => {
 });
 
 function minutosCampo(input) {
-  const valor = Number(input.value || 0);
-  return Number.isFinite(valor) && valor > 0 ? Math.floor(valor) : 0;
+  return TiemposLaboresJN.leerMinutos(input);
 }
 
 function formatoMinutos(total) {
@@ -158,11 +157,11 @@ function actualizarCalculoTiempos() {
   const disponible = laborales + extras;
   const real = Math.max(0, disponible - otros);
 
-  otrasLaboresMin.value = String(otros);
+  otrasLaboresMin.value = TiemposLaboresJN.formatearHoras(otros);
   tiempoDisponibleTexto.textContent = formatoMinutos(disponible);
   tiempoRealTexto.textContent = formatoMinutos(real);
 
-  return { laborales, extras, otros, disponible, real };
+  return { laborales, extras, otros, disponible, real, excede: otros > disponible };
 }
 
 [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
@@ -177,6 +176,8 @@ function marcarResultadoTiempos(tipo, mensaje) {
 function limpiarTiempos() {
   [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
+  horasLaboralesMin.value = TiemposLaboresJN.horasJornada(fechaInput.value);
+  horasLaboralesMin.dataset.tiempoEditado = "0";
   preparacionTiemposObservaciones.value = "";
   actualizarCalculoTiempos();
 }
@@ -204,8 +205,16 @@ async function guardarTiempos() {
 
   const calculo = actualizarCalculoTiempos();
   if (calculo.disponible <= 0) {
-    return marcarResultadoTiempos("error", "Ingresa los minutos de Horas Laborales o de Horas Extra.");
+    return marcarResultadoTiempos("error", "Ingresa las horas laborales o las horas extra.");
   }
+  if (calculo.excede) {
+    return marcarResultadoTiempos("error", "Las actividades descontadas superan las horas disponibles.");
+  }
+  const errorHoras = TiemposLaboresJN.validar([
+    horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin,
+    desplazamientoMin, calisteniaMin, capacitacionMin
+  ]);
+  if (errorHoras) return marcarResultadoTiempos("error", errorHoras);
 
   const codigo =
     colaboradorSeleccionado.codigo ||
@@ -248,7 +257,7 @@ async function guardarTiempos() {
 guardarTiemposBtn.addEventListener("click", guardarTiempos);
 limpiarTiemposBtn.addEventListener("click", () => {
   limpiarTiempos();
-  marcarResultadoTiempos(null, "Ingresa los tiempos en minutos para calcular el tiempo real de labor.");
+  marcarResultadoTiempos(null, "Ingresa las horas decimales para calcular el tiempo efectivo.");
 });
 
 async function cargarColaboradores() {
