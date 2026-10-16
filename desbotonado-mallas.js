@@ -86,6 +86,28 @@ function escaparHtml(value) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+// Un registro es único por fecha + colaborador + tipo + bloque + cama.
+// Normalizar la escritura evita repetir la cama usando "Cama 09" y "9".
+function normalizarUbicacion(valor) {
+  const limpio = String(valor ?? "").trim().toLocaleUpperCase("es").replace(/\s+/g, "");
+  return /^0+\d+$/.test(limpio) ? limpio.replace(/^0+(?=\d)/, "") : limpio;
+}
+function normalizarNumeroCama(valor) {
+  const sinPrefijo = String(valor ?? "").trim().replace(/^CAMA[\s#:.–-]+/i, "");
+  return normalizarUbicacion(sinPrefijo);
+}
+function registroCamaDuplicado({ fecha, colaborador, tipoLabor, bloque, cama }) {
+  const bloqueNormalizado = normalizarUbicacion(bloque);
+  const camaNormalizada = normalizarNumeroCama(cama);
+  return registros.some((r) =>
+    r.fecha === fecha &&
+    String(r.colaborador) === String(colaborador) &&
+    String(r.tipoLabor || "").trim() === String(tipoLabor || "").trim() &&
+    normalizarUbicacion(r.bloque) === bloqueNormalizado &&
+    normalizarNumeroCama(r.cama) === camaNormalizada
+  );
+}
+
 const texto = (obj, ...keys) => {
   for (const key of keys) if (obj?.[key] != null) return String(obj[key]);
   return "";
@@ -171,9 +193,20 @@ function cargarCamas(filtro = "") {
     .sort((a,b)=>a.localeCompare(b,"es",{numeric:true}))
     .filter(cama => `Cama ${cama}`.toLowerCase().includes(consulta));
 
+  const trabajador = colaboradorActual();
+  const tipoLabor = document.querySelector("#tipoLabor").value;
   camaLista.innerHTML = bloque
     ? (camas.length
-      ? camas.map((cama,i) => `<div class="pending-item" data-index="${i}" style="cursor:pointer;padding:8px 10px"><span>Cama ${cama}</span></div>`).join("")
+      ? camas.map((cama, i) => {
+          const ocupada = trabajador && tipoLabor && registroCamaDuplicado({
+            fecha: fechaInput.value,
+            colaborador: trabajador.codigo,
+            tipoLabor, bloque, cama
+          });
+          return ocupada
+            ? `<div class="pending-item" aria-disabled="true" style="opacity:.6;padding:8px 10px"><span>Cama ${escaparHtml(cama)} · Ya registrada para esta labor</span></div>`
+            : `<div class="pending-item" data-index="${i}" style="cursor:pointer;padding:8px 10px"><span>Cama ${escaparHtml(cama)}</span></div>`;
+        }).join("")
       : '<p class="hint" style="margin:0">No hay camas que coincidan con la búsqueda.</p>')
     : '<p class="hint" style="margin:0">Seleccione primero un bloque.</p>';
 
@@ -236,6 +269,10 @@ bloqueInput.addEventListener("input",()=>{
 camaBuscar.addEventListener("focus",()=>cargarCamas(camaBuscar.value));
 camaBuscar.addEventListener("input",()=>{
   cargarCamas(camaBuscar.value);
+});
+document.querySelector("#tipoLabor").addEventListener("change", () => {
+  camaLista.innerHTML = "";
+  if (camaBuscar.value.trim()) cargarCamas(camaBuscar.value);
 });
 
 document.addEventListener("click", (event) => {
@@ -381,6 +418,14 @@ form.addEventListener("submit", (event) => {
   const cama = camaBuscar.value.trim();
   if (!bloque) return alert("Ingresa el bloque.");
   if (!cama) return alert("Ingresa el número de cama.");
+  const tipoLabor = document.querySelector("#tipoLabor").value;
+  if (registroCamaDuplicado({
+    fecha: fechaInput.value, colaborador: trabajador.codigo, tipoLabor, bloque, cama
+  })) {
+    const mensaje = "Esta cama ya fue registrada por este colaborador para el mismo tipo de labor en la fecha seleccionada. Elige otra cama.";
+    document.querySelector("#apiMensaje").textContent = mensaje;
+    return alert(mensaje);
+  }
   const medios = Number(document.querySelector("#mediosCuadros").value);
   if (!Number.isFinite(medios) || medios <= 0 || medios > 16) {
     return alert("Revisa los medios cuadros trabajados (entre 0,5 y 16).");
@@ -389,7 +434,7 @@ form.addEventListener("submit", (event) => {
     fecha: fechaInput.value,
     colaborador: trabajador.codigo,
     colaboradorNombre: trabajador.nombre,
-    tipoLabor: document.querySelector("#tipoLabor").value,
+    tipoLabor,
     bloque,
     cama,
     mediosCuadros: medios,
