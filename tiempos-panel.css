@@ -94,3 +94,20 @@
   .tp-panel .tp-filtros button { padding: 6px 8px; }
   .tp-acciones button { flex: 1 1 40%; }
 }
+
+/* Flujo simplificado de Tiempos: un buscador y una fecha compartidos. */
+body.tp-vista-activa .tp-colaborador-origen { display: none !important; }
+.tp-fecha-info { display: grid; justify-items: end; gap: 4px; padding: 9px 12px; border: 1px solid #d4c8a8; background: #fffdf6; border-radius: 8px; }
+.tp-fecha-info span { font-size: .7rem; font-weight: 650; color: #796d56; }
+.tp-fecha-info strong { font-size: .95rem; font-weight: 800; color: #4a422e; }
+.tp-acciones { justify-content: flex-end; }
+.tp-acciones button { flex: 0 1 190px; }
+.tp-detalle-cola { border: 1px solid #ddd2b6; background: #fffdf6; border-radius: 9px; padding: 9px 12px; }
+.tp-detalle-cola summary { cursor: pointer; font-size: .79rem; font-weight: 800; color: #61563e; }
+.tp-detalle-cola summary span { color: #937d53; }
+.tp-detalle-cola .tp-ayuda { margin: 8px 0 0; }
+.tp-detalle-cola #tpCola { margin-top: 10px; }
+@media (max-width: 590px) {
+  .tp-fecha-info { justify-items: start; }
+  .tp-acciones button { flex: 1 1 40%; }
+}

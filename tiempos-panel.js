@@ -60,21 +60,13 @@
       '<section class="tp-cabecera">' +
         '<div><h2>Tiempos de ' + escape(cfg.titulo.toLowerCase()) + '</h2>' +
         '<p>Registra los tiempos diarios de los colaboradores.</p></div>' +
-        '<div class="tp-cabecera-acciones"><label>Fecha<input type="date" id="tpFecha"></label>' +
-        '<button type="button" data-tp-accion="refrescar">Refrescar</button>' +
-        '<button type="button" class="tp-dorado" data-tp-accion="reiniciar">↻ Reiniciar</button></div>' +
+        '<div class="tp-fecha-info"><span>Fecha de la jornada</span><strong id="tpFechaTexto"></strong></div>' +
       '</section>' +
-      '<div class="tp-contadores" id="tpContadores">' +
-        '<div><span>PENDIENTES</span><strong>0</strong></div><div><span>APLICADOS</span><strong>0</strong></div>' +
-        '<div><span>EN COLA</span><strong>0</strong></div><div><span>GUARDADOS</span><strong>0</strong></div>' +
-      '</div>' +
       '<section class="tp-tarjeta tp-personas">' +
         '<div class="tp-busqueda"><input id="tpBuscar" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">' +
           '<div class="tp-filtros">' +
-            '<button type="button" class="active" data-tp-filtro="todos">Todos</button>' +
-            '<button type="button" data-tp-filtro="pendientes">Pendientes</button>' +
+            '<button type="button" class="active" data-tp-filtro="pendientes">Pendientes</button>' +
             '<button type="button" data-tp-filtro="guardados">Guardados</button>' +
-            '<button type="button" data-tp-filtro="temporales">Temporales</button>' +
           '</div></div>' +
         '<div class="tp-seleccion"><span id="tpCantidad">0 empleados seleccionados</span>' +
           '<label><input type="checkbox" id="tpSeleccionarTodos"> Seleccionar visibles</label></div>' +
@@ -87,24 +79,20 @@
         '<div class="tp-resumen" aria-live="polite"><span>Tiempo disponible: <b id="tpDisponible">0 h</b></span>' +
           '<span>Tiempo efectivo: <b id="tpReal">0 h</b></span></div>' +
         '<div class="tp-acciones">' +
-          '<button type="button" data-tp-accion="aplicar">+ Aplicar</button>' +
-          '<button type="button" class="tp-guardar" data-tp-accion="guardar">✓ Guardar</button>' +
-          '<button type="button" data-tp-accion="limpiar">Limpiar</button>' +
-          '<button type="button" class="tp-peligro" data-tp-accion="limpiar-aplicado">Limpiar aplicado</button>' +
+          '<button type="button" class="tp-guardar" data-tp-accion="guardar">✓ Guardar tiempos</button>' +
+          '<button type="button" data-tp-accion="limpiar">Limpiar campos</button>' +
         '</div><p class="tp-mensaje" id="tpMensaje" role="status" aria-live="polite"></p>' +
       '</section>' +
-      '<section class="tp-tarjeta tp-cola"><h3>Pendientes por sincronizar</h3>' +
-        '<div id="tpCola"></div><p class="tp-ayuda">Los registros de Tiempos se conservan en este equipo; no se confirma envío al servidor sin una API de sincronización disponible.</p>' +
-      '</section>';
+      '<details class="tp-detalle-cola"><summary>Registros pendientes de sincronización <span id="tpTotalCola">0</span></summary>' +
+        '<div id="tpCola"></div><p class="tp-ayuda">Los tiempos se guardan en este equipo. El envío al servidor no está disponible hasta contar con una API de sincronización.</p>' +
+      '</details>';
     vista.appendChild(panel);
 
     const buscar = panel.querySelector("#tpBuscar");
-    const fecha = panel.querySelector("#tpFecha");
     const lista = panel.querySelector("#tpEmpleados");
-    const contadores = [...panel.querySelector("#tpContadores").children];
     const checks = panel.querySelector("#tpSeleccionarTodos");
     const vistaNombre = document.querySelector("[data-corte-rol].active")?.dataset.corteRol;
-    const estado = { empleados: [], guardados: [], aplicados: new Map(), seleccionados: new Set(), filtro: "todos", rol: "" };
+    const estado = { empleados: [], guardados: [], seleccionados: new Set(), filtro: "pendientes", rol: "" };
     const rol = () => {
       if (modulo === "corte") return document.querySelector("[data-corte-rol].active")?.dataset.corteRol || new URLSearchParams(location.search).get("rol") || "cortador";
       return new URLSearchParams(location.search).get("rol") || "";
@@ -112,20 +100,17 @@
     estado.rol = vistaNombre || rol();
 
     const getCampo = (id) => panel.querySelector('[data-tp-campo="' + id + '"]');
-    const registroDe = (e) => estado.guardados.find((r) => String(r[cfg.empleado]) === codigo(e) && r.fecha === fecha.value);
-    const estadoDe = (e) => estado.aplicados.has(codigo(e)) ? "temporal" : (registroDe(e) ? "guardado" : "pendiente");
+    const registroDe = (e) => estado.guardados.find((r) => String(r[cfg.empleado]) === codigo(e) && r.fecha === fechaPrincipal.value);
+    const estadoDe = (e) => registroDe(e) ? "guardado" : "pendiente";
     function visibles() {
       const q = buscar.value.trim().toLocaleLowerCase("es");
       return estado.empleados.filter((e) => {
         const coincide = (nombre(e) + " " + codigo(e)).toLocaleLowerCase("es").includes(q);
-        return coincide && (estado.filtro === "todos" ||
-          (estado.filtro === "pendientes" && estadoDe(e) === "pendiente") ||
-          (estado.filtro === "guardados" && estadoDe(e) === "guardado") ||
-          (estado.filtro === "temporales" && estadoDe(e) === "temporal"));
+        return coincide && estadoDe(e) === (estado.filtro === "guardados" ? "guardado" : "pendiente");
       });
     }
     function seleccion() {
-      panel.querySelector("#tpCantidad").textContent = estado.seleccionados.size + " empleados seleccionados";
+      panel.querySelector("#tpCantidad").textContent = estado.seleccionados.size + " colaboradores seleccionados";
       const actuales = visibles();
       checks.checked = actuales.length > 0 && actuales.every((e) => estado.seleccionados.has(codigo(e)));
       checks.indeterminate = actuales.some((e) => estado.seleccionados.has(codigo(e))) && !checks.checked;
@@ -138,18 +123,12 @@
           '"' + (estado.seleccionados.has(id) ? ' checked' : '') + '>' +
           '<span><b>' + escape(nombre(e)) + '</b><small>' + escape(id) + '</small></span>' +
           '<em class="tp-etiqueta tp-' + tipo + '">' + tipo.toUpperCase() + '</em></label>';
-      }).join("") : '<p class="tp-vacio">No hay colaboradores para este filtro. Puedes usar Refrescar para actualizar el catálogo.</p>';
+      }).join("") : '<p class="tp-vacio">No hay colaboradores para este filtro. Cambia de filtro para ver los demás.</p>';
       panel.querySelectorAll("[data-tp-filtro]").forEach((b) => b.classList.toggle("active", b.dataset.tpFiltro === estado.filtro));
       seleccion();
-      const porFecha = estado.guardados.filter((r) => r.fecha === fecha.value);
+      const porFecha = estado.guardados.filter((r) => r.fecha === fechaPrincipal.value);
       const cola = porFecha.filter(enCola);
-      const valores = [
-        estado.empleados.filter((e) => estadoDe(e) === "pendiente").length,
-        estado.aplicados.size,
-        cola.length,
-        porFecha.length
-      ];
-      contadores.forEach((c, i) => c.querySelector("strong").textContent = String(valores[i]));
+      panel.querySelector("#tpTotalCola").textContent = "(" + cola.length + ")";
       panel.querySelector("#tpCola").innerHTML = cola.length
         ? cola.slice(0, 30).map((r) => '<div class="tp-cola-fila"><b>' + escape(r[cfg.nombre] || r[cfg.empleado]) +
           '</b><span>' + escape(r.fecha) + ' · ' + escape(horas(r.tiempoRealMin)) + ' h · En cola local</span></div>').join("")
@@ -187,7 +166,7 @@
       panel.querySelector("#tpReal").textContent = horas(Math.max(0, disponibles - descontados)) + " h";
     }
     function limpiar() {
-      CAMPOS.forEach(([id]) => { getCampo(id).value = id === "horasLaboralesMin" ? TiemposLaboresJN.horasJornada(fecha.value) : "0"; });
+      CAMPOS.forEach(([id]) => { getCampo(id).value = id === "horasLaboralesMin" ? TiemposLaboresJN.horasJornada(fechaPrincipal.value) : "0"; });
       panel.querySelector("#tpObservaciones").value = "";
       calcular();
     }
@@ -201,7 +180,7 @@
         ...(existente || {}),
         ...datos,
         id: existente?.id || SyncEngine.generarUUID(),
-        fecha: fecha.value,
+        fecha: fechaPrincipal.value,
         [cfg.empleado]: id,
         [cfg.nombre]: nombre(e),
         syncStatus: "PendienteBackend",
@@ -222,11 +201,8 @@
       }
       return r;
     }
-    async function cargar(actualizarCatalogo = false) {
+    async function cargar() {
       try {
-        if (actualizarCatalogo && navigator.onLine) {
-          try { await SyncEngine.sincronizarCatalogos(); } catch (_) { /* conservar datos locales */ }
-        }
         const catalogos = await SyncEngine.obtenerCatalogosLocal();
         const unicos = new Map();
         (catalogos.empleados || []).forEach((e) => {
@@ -240,34 +216,25 @@
         reporte("No se pudo cargar el catálogo o los tiempos: " + err.message, true);
       }
     }
-    function reiniciar() {
-      estado.aplicados.clear();
-      estado.seleccionados.clear();
-      buscar.value = "";
-      estado.filtro = "todos";
-      limpiar();
-      reporte("Formulario reiniciado; los registros guardados no se borraron.");
-      pintar();
-    }
 
-    fecha.value = fechaPrincipal.value || new Date().toISOString().slice(0, 10);
-    fecha.addEventListener("change", () => {
-      fechaPrincipal.value = fecha.value;
-      fechaPrincipal.dispatchEvent(new Event("change", { bubbles: true }));
-      estado.aplicados.clear();
+    // Una única fecha (la del encabezado) y un único buscador visible en Tiempos.
+    const origenBuscar = document.querySelector("#sembradorBuscar, #desbotonadorBuscar, #colaboradorBuscar");
+    origenBuscar?.parentElement?.classList.add("tp-colaborador-origen");
+    function sincronizarVista() {
+      document.body.classList.toggle("tp-vista-activa", !vista.hidden && vista.getClientRects().length > 0);
+    }
+    document.querySelectorAll("[data-bandejas-vista], [data-corte-vista], [data-desbotonado-vista], [data-preparacion-vista], [data-poscosecha-vista], [data-mipe-vista]")
+      .forEach((btn) => btn.addEventListener("click", () => setTimeout(sincronizarVista, 0)));
+    setTimeout(sincronizarVista, 0);
+
+    fechaPrincipal.addEventListener("change", () => {
       estado.seleccionados.clear();
       limpiar();
+      panel.querySelector("#tpFechaTexto").textContent = fechaPrincipal.value || "Sin fecha";
       pintar();
     });
-    fechaPrincipal.addEventListener("change", () => {
-      if (fecha.value !== fechaPrincipal.value) {
-        fecha.value = fechaPrincipal.value;
-        estado.aplicados.clear();
-        estado.seleccionados.clear();
-        limpiar();
-        pintar();
-      }
-    });
+    panel.querySelector("#tpFechaTexto").textContent = fechaPrincipal.value || "Sin fecha";
+
     buscar.addEventListener("input", pintar);
     checks.addEventListener("change", () => {
       visibles().forEach((e) => checks.checked ? estado.seleccionados.add(codigo(e)) : estado.seleccionados.delete(codigo(e)));
@@ -285,55 +252,47 @@
     }));
     panel.querySelectorAll("[data-tp-campo]").forEach((input) => input.addEventListener("input", calcular));
 
-    panel.querySelector("[data-tp-accion='aplicar']").addEventListener("click", () => {
-      try {
-        if (!estado.seleccionados.size) throw new Error("Selecciona al menos un colaborador.");
-        const data = detalles();
-        estado.seleccionados.forEach((id) => estado.aplicados.set(id, { ...data }));
-        reporte("Tiempos aplicados temporalmente a " + estado.seleccionados.size + " colaborador(es). Pulsa Guardar para registrarlos.");
-        pintar();
-      } catch (err) { reporte(err.message, true); }
-    });
+    // Guardar aplica directamente los tiempos a la selección.
     panel.querySelector("[data-tp-accion='guardar']").addEventListener("click", async () => {
       const button = panel.querySelector("[data-tp-accion='guardar']");
       if (button.disabled) return;
+      if (!fechaPrincipal.value) return reporte("Selecciona la fecha de la jornada.", true);
+      if (!estado.seleccionados.size) return reporte("Selecciona al menos un colaborador.", true);
       try {
-        // Si se pulsa Guardar sin aplicar primero, se aplica a la selección actual.
-        if (!estado.aplicados.size && estado.seleccionados.size) {
-          const data = detalles();
-          estado.seleccionados.forEach((id) => estado.aplicados.set(id, { ...data }));
+        const datos = detalles();
+        const seleccionados = [...estado.seleccionados]
+          .map((id) => estado.empleados.find((e) => codigo(e) === id))
+          .filter(Boolean);
+        if (!seleccionados.length) return reporte("No hay colaboradores válidos seleccionados.", true);
+        if (seleccionados.some((e) => registroDe(e)?.syncStatus === "Sincronizado")) {
+          return reporte("No se pueden sustituir registros sincronizados. Desmarca esos colaboradores.", true);
         }
-        if (!estado.aplicados.size) throw new Error("Selecciona colaboradores y pulsa Aplicar primero.");
+        const repetidos = seleccionados.filter((e) => registroDe(e));
+        if (repetidos.length && !window.confirm(
+          "Hay " + repetidos.length + " colaborador(es) con tiempos guardados para esta fecha. ¿Actualizar sus registros locales?"
+        )) return;
         button.disabled = true;
-        const listaGuardar = [...estado.aplicados.entries()];
         let guardados = 0;
-        for (const [id, datos] of listaGuardar) {
-          const e = estado.empleados.find((c) => codigo(c) === id);
-          if (!e) continue;
-          const r = guardarRegistro(e, datos);
-          await OfflineDb.put(cfg.tienda, r);
-          estado.aplicados.delete(id);
+        for (const e of seleccionados) {
+          const registro = guardarRegistro(e, datos);
+          await OfflineDb.put(cfg.tienda, registro);
           guardados++;
         }
         estado.seleccionados.clear();
         await cargar();
-        reporte(guardados + " registro(s) guardado(s) localmente; quedan en cola mientras no exista sincronización de Tiempos con el servidor.");
+        reporte(guardados + " registro(s) guardado(s) en este equipo. Su sincronización con el servidor continúa pendiente.");
       } catch (err) {
         reporte("No se completó el guardado: " + err.message, true);
+        await cargar();
       } finally {
         button.disabled = false;
         pintar();
       }
     });
-    panel.querySelector("[data-tp-accion='limpiar']").addEventListener("click", () => { limpiar(); reporte("Campos limpiados. Los tiempos aplicados y guardados se conservan."); });
-    panel.querySelector("[data-tp-accion='limpiar-aplicado']").addEventListener("click", () => {
-      const ids = estado.seleccionados.size ? [...estado.seleccionados] : [...estado.aplicados.keys()];
-      ids.forEach((id) => estado.aplicados.delete(id));
-      reporte("Se limpiaron " + ids.length + " tiempos aplicados temporalmente. No se eliminaron registros guardados.");
-      pintar();
+    panel.querySelector("[data-tp-accion='limpiar']").addEventListener("click", () => {
+      limpiar();
+      reporte("Campos limpiados. Los registros guardados se conservan.");
     });
-    panel.querySelector("[data-tp-accion='reiniciar']").addEventListener("click", reiniciar);
-    panel.querySelector("[data-tp-accion='refrescar']").addEventListener("click", () => cargar(true));
 
     // Corte puede cambiar de rol sin cambiar de página. Mantener cada cola por rol.
     document.addEventListener("click", (event) => {
@@ -342,7 +301,6 @@
         const nuevo = rol();
         if (nuevo === estado.rol) return;
         estado.rol = nuevo;
-        estado.aplicados.clear();
         estado.seleccionados.clear();
         reporte("");
         cargar();
