@@ -269,6 +269,11 @@ form.addEventListener("submit", e => {
     tallos,
     observaciones: desbotonadoObservaciones.value.trim()
   });
+  window.RegistroLaborTiemposJN?.agregar({
+    codigo: empleadoSelect.value,
+    nombre: empleadoSelect.selectedOptions[0]?.dataset.nombre || empleadoSelect.value,
+    fecha: fechaInput.value
+  });
 
   render();
   form.reset();

@@ -136,6 +136,12 @@ function iniciarRendimientoMipe() {
       event.preventDefault();
       seleccionado = visibles[Number(el.dataset.index)];
       seleccionadoEl.textContent = etiquetaEmpleadoMipe(seleccionado);
+      window.RegistroLaborTiemposJN?.agregar({
+        codigo: codigoEmpleadoMipe(seleccionado),
+        nombre: nombreEmpleadoMipe(seleccionado),
+        fecha: fecha.value,
+        rol: rolMipe
+      });
       buscar.value = "";
       lista.innerHTML = "";
     }));

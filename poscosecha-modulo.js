@@ -162,6 +162,12 @@ function iniciarRendimiento() {
         const item = visibles[Number(el.dataset.index)];
         colaboradorSeleccionado = item;
         colaboradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
+        window.RegistroLaborTiemposJN?.agregar({
+          codigo: item.codigo || item.docid || item.id,
+          nombre: item.nombre || item.empleadoNombre,
+          fecha: fechaInput.value,
+          rol
+        });
         colaboradorBuscar.value = "";
         colaboradorLista.innerHTML = "";
       });

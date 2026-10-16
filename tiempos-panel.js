@@ -37,6 +37,34 @@
   const enCola = (r) => r.syncStatus && r.syncStatus !== "Sincronizado";
   const horas = (min) => TiemposLaboresJN.formatearHoras(min);
 
+  // Lista de colaboradores añadidos desde Registrar labor, por módulo,
+  // fecha y rol. Es independiente del catálogo general de empleados.
+  const CLAVE_LABOR = "laboresJN:colaboradores-labor:v1:";
+  function claveLabor(fecha, rol) {
+    return CLAVE_LABOR + modulo + ":" + (rol || "") + ":" + (fecha || "");
+  }
+  function obtenerLabor(fecha, rol) {
+    try {
+      const guardado = JSON.parse(sessionStorage.getItem(claveLabor(fecha, rol)) || "[]");
+      return Array.isArray(guardado) ? guardado : [];
+    } catch (_) {
+      return [];
+    }
+  }
+  window.RegistroLaborTiemposJN = {
+    agregar({ codigo: id, nombre: etiqueta, fecha, rol = "" }) {
+      const colaborador = String(id ?? "").trim();
+      if (!colaborador || !fecha) return;
+      const guardados = obtenerLabor(fecha, rol);
+      if (!guardados.some((e) => String(e.codigo) === colaborador)) {
+        guardados.push({ codigo: colaborador, nombre: String(etiqueta || colaborador) });
+        try { sessionStorage.setItem(claveLabor(fecha, rol), JSON.stringify(guardados)); }
+        catch (error) { console.warn("No se pudo conservar la selección de Registrar labor", error); }
+      }
+      window.dispatchEvent(new CustomEvent("laboresjn:registro-labor", { detail: { fecha, rol } }));
+    }
+  };
+
   function arrancar() {
     const vista = document.getElementById("vistaTiempos");
     const fechaPrincipal = document.getElementById("fecha");
@@ -61,8 +89,8 @@
         '<div><h2>Tiempos de ' + escape(cfg.titulo.toLowerCase()) + '</h2>' +
         '<p>Registra los tiempos diarios de los colaboradores.</p></div>' +
       '</section>' +
-      '<section class="tp-tarjeta tp-personas">' +
-        '<div class="tp-busqueda"><input id="tpBuscar" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">' +
+      '<section class="tp-tarjeta tp-personas"><h3>Colaboradores agregados en Registrar labor</h3>' +
+        '<div class="tp-busqueda"><input id="tpBuscar" type="search" placeholder="Buscar entre colaboradores de Registrar labor…" autocomplete="off">' +
           '<div class="tp-filtros">' +
             '<button type="button" class="active" data-tp-filtro="pendientes">Pendientes</button>' +
             '<button type="button" data-tp-filtro="guardados">Guardados</button>' +
@@ -122,7 +150,11 @@
           '"' + (estado.seleccionados.has(id) ? ' checked' : '') + '>' +
           '<span><b>' + escape(nombre(e)) + '</b><small>' + escape(id) + '</small></span>' +
           '<em class="tp-etiqueta tp-' + tipo + '">' + tipo.toUpperCase() + '</em></label>';
-      }).join("") : '<p class="tp-vacio">No hay colaboradores para este filtro. Cambia de filtro para ver los demás.</p>';
+      }).join("") : '<p class="tp-vacio">' +
+        (estado.empleados.length
+          ? 'No hay colaboradores para este filtro. Prueba con Pendientes o Guardados.'
+          : 'Todavía no se han agregado colaboradores en Registrar labor para esta fecha.') +
+        '</p>';
       panel.querySelectorAll("[data-tp-filtro]").forEach((b) => b.classList.toggle("active", b.dataset.tpFiltro === estado.filtro));
       seleccion();
       const porFecha = estado.guardados.filter((r) => r.fecha === fechaPrincipal.value);
@@ -202,19 +234,35 @@
     }
     async function cargar() {
       try {
-        const catalogos = await SyncEngine.obtenerCatalogosLocal();
+        const fecha = fechaPrincipal.value;
+        let desdeLabor = obtenerLabor(fecha, cfg.roles ? estado.rol : "");
+        // Bandejas conserva sus registros de labor en IndexedDB.
+        // Recuperar solo los sembradores de la fecha, incluso sin catálogo.
+        if (modulo === "bandejas-enraizamiento") {
+          const trabajos = await OfflineDb.getAll("bandejasEnraizamiento");
+          desdeLabor = trabajos.filter((r) => r.fecha === fecha).map((r) => ({
+            codigo: String(r.sembrador || ""),
+            nombre: r.sembradorNombre || String(r.sembrador || "")
+          }));
+        }
         const unicos = new Map();
-        (catalogos.empleados || []).forEach((e) => {
-          if (e.activo === false || e.retirado === 1 || e.retirado === true) return;
-          if (codigo(e)) unicos.set(codigo(e), e);
+        desdeLabor.forEach((e) => {
+          const id = codigo(e);
+          if (id && !unicos.has(id)) unicos.set(id, { codigo: id, nombre: nombre(e) });
         });
         estado.empleados = [...unicos.values()].sort((a, b) => nombre(a).localeCompare(nombre(b), "es"));
         estado.guardados = (await OfflineDb.getAll(cfg.tienda)).filter((r) => !cfg.roles || r.rol === estado.rol);
+        const validos = new Set(estado.empleados.map((e) => codigo(e)));
+        for (const id of estado.seleccionados) if (!validos.has(id)) estado.seleccionados.delete(id);
         pintar();
       } catch (err) {
-        reporte("No se pudo cargar el catálogo o los tiempos: " + err.message, true);
+        reporte("No se pudieron cargar los colaboradores de Registrar labor: " + err.message, true);
       }
     }
+    window.addEventListener("laboresjn:registro-labor", (event) => {
+      if (event.detail?.fecha === fechaPrincipal.value &&
+          (!cfg.roles || event.detail?.rol === estado.rol)) cargar();
+    });
 
     // Una única fecha (la del encabezado) y un único buscador visible en Tiempos.
     const origenBuscar = document.querySelector("#sembradorBuscar, #desbotonadorBuscar, #colaboradorBuscar");
@@ -223,13 +271,16 @@
       document.body.classList.toggle("tp-vista-activa", !vista.hidden && vista.getClientRects().length > 0);
     }
     document.querySelectorAll("[data-bandejas-vista], [data-corte-vista], [data-desbotonado-vista], [data-preparacion-vista], [data-poscosecha-vista], [data-mipe-vista]")
-      .forEach((btn) => btn.addEventListener("click", () => setTimeout(sincronizarVista, 0)));
+      .forEach((btn) => btn.addEventListener("click", () => setTimeout(() => {
+        sincronizarVista();
+        if (!vista.hidden) cargar();
+      }, 0)));
     setTimeout(sincronizarVista, 0);
 
     fechaPrincipal.addEventListener("change", () => {
       estado.seleccionados.clear();
       limpiar();
-      pintar();
+      cargar();
     });
 
     buscar.addEventListener("input", pintar);
