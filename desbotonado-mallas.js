@@ -6,7 +6,6 @@ const empleadoLista = document.querySelector("#desbotonadorLista");
 const colaboradorSeleccionadoEl = document.querySelector("#colaboradorSeleccionado");
 const bloqueLista = document.querySelector("#bloqueLista");
 const bloqueInput = document.querySelector("#bloque");
-const camaSelect = document.querySelector("#cama");
 const camaBuscar = document.querySelector("#camaBuscar");
 const camaLista = document.querySelector("#camaLista");
 const desbotonadoObservaciones = document.querySelector("#desbotonadoObservaciones");
@@ -181,9 +180,6 @@ function cargarCamas(filtro = "") {
   camaLista.querySelectorAll("[data-index]").forEach(el => el.addEventListener("mousedown", event => {
     event.preventDefault();
     const cama = camas[Number(el.dataset.index)];
-    camaSelect.innerHTML = "";
-    camaSelect.add(new Option(cama,cama));
-    camaSelect.value = cama;
     camaBuscar.value = cama;
     camaLista.innerHTML = "";
   }));
@@ -235,12 +231,10 @@ bloqueInput.addEventListener("focus",()=>cargarBloques(bloqueInput.value));
 bloqueInput.addEventListener("input",()=>{
   cargarBloques(bloqueInput.value);
   camaBuscar.value="";
-  camaSelect.innerHTML='<option value=""></option>';
   camaLista.innerHTML="";
 });
 camaBuscar.addEventListener("focus",()=>cargarCamas(camaBuscar.value));
 camaBuscar.addEventListener("input",()=>{
-  camaSelect.innerHTML='<option value=""></option>';
   cargarCamas(camaBuscar.value);
 });
 
@@ -305,8 +299,6 @@ function limpiarCamposCama() {
   bloqueInput.value = "";
   bloqueLista.innerHTML = "";
   camaBuscar.value = "";
-  camaSelect.innerHTML = '<option value=""></option>';
-  camaSelect.value = "";
   camaLista.innerHTML = "";
 }
 
@@ -384,6 +376,11 @@ form.addEventListener("submit", (event) => {
   const trabajador = colaboradorActual();
   if (!trabajador) return alert("Primero agrega un colaborador y selecciónalo en la lista.");
 
+  // Permitir camas escritas directamente, aunque no aparezcan en el catálogo.
+  const bloque = bloqueInput.value.trim();
+  const cama = camaBuscar.value.trim();
+  if (!bloque) return alert("Ingresa el bloque.");
+  if (!cama) return alert("Ingresa el número de cama.");
   const medios = Number(document.querySelector("#mediosCuadros").value);
   if (!Number.isFinite(medios) || medios <= 0 || medios > 16) {
     return alert("Revisa los medios cuadros trabajados (entre 0,5 y 16).");
@@ -393,14 +390,16 @@ form.addEventListener("submit", (event) => {
     colaborador: trabajador.codigo,
     colaboradorNombre: trabajador.nombre,
     tipoLabor: document.querySelector("#tipoLabor").value,
-    bloque: bloqueInput.value.trim(),
-    cama: camaSelect.value,
+    bloque,
+    cama,
     mediosCuadros: medios,
     observaciones: desbotonadoObservaciones.value.trim()
   });
   guardarJornada();
   render();
   limpiarCamposCama();
+  document.querySelector("#apiMensaje").textContent =
+    `Guardado: bloque ${bloque}, cama ${cama} para ${trabajador.nombre}.`;
 });
 
 document.querySelector("#btnLimpiarCama").addEventListener("click", limpiarCamposCama);
