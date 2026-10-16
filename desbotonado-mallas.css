@@ -12,3 +12,19 @@
 .time-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .desbotonado-results{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:640px){.time-summary,.desbotonado-results{grid-template-columns:1fr}}
+
+/* Lista de colaboradores agregados a la jornada de Desbotón y Mallas. */
+.colaborador-alta{display:flex;margin:10px 0 0}
+#btnAgregarColaborador{min-height:38px;padding:8px 14px}
+.colaboradores-jornada{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.colaboradores-jornada-encabezado{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.colaboradores-jornada-encabezado strong{font-size:.94rem}
+#cantidadColaboradoresJornada{font-size:.77rem;color:var(--muted)}
+.colaboradores-jornada-lista{display:flex;flex-wrap:wrap;gap:8px}
+.colaborador-jornada-btn{max-width:100%;display:flex;align-items:center;gap:7px;text-align:left;padding:9px 12px;border:1px solid #b7cfc1;border-radius:10px;background:#f4faf6;color:#20533d;cursor:pointer;font-size:.83rem;font-weight:750}
+.colaborador-jornada-btn:hover{background:#e7f4eb}
+.colaborador-jornada-btn.active{border-color:#187a4d;background:#187a4d;color:#fff}
+.colaborador-jornada-btn .camas-badge{min-width:19px;border-radius:999px;padding:2px 6px;background:rgba(28,94,61,.12);font-size:.73rem;text-align:center}
+.colaborador-jornada-btn.active .camas-badge{background:rgba(255,255,255,.2)}
+.colaborador-jornada-btn:focus-visible{outline:3px solid #8abc9b;outline-offset:2px}
+@media(max-width:640px){.colaborador-alta>button{width:100%}.colaborador-jornada-btn{width:100%;justify-content:space-between}}

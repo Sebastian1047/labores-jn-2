@@ -33,7 +33,59 @@ const tiemposResultState = document.querySelector("#tiemposResultState");
 const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 
 const registros = [];
+// Los colaboradores y sus camas se conservan al alternar trabajadores y vistas.
+const colaboradoresJornada = new Map();
+const SESSION_LABOR_KEY = "laboresJn:desbotonado-mallas:jornada:" +
+  (JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "local");
 let catalogos = { empleados: [], camas: [] };
+
+function claveColaborador(fecha, codigo) {
+  return String(fecha || "") + "|" + String(codigo || "");
+}
+
+function guardarJornada() {
+  try {
+    sessionStorage.setItem(SESSION_LABOR_KEY, JSON.stringify({
+      colaboradores: [...colaboradoresJornada.values()],
+      registros
+    }));
+  } catch (error) {
+    console.warn("No fue posible conservar esta jornada en la sesión", error);
+  }
+}
+
+function restaurarJornada() {
+  try {
+    const datos = JSON.parse(sessionStorage.getItem(SESSION_LABOR_KEY) || "{}");
+    if (Array.isArray(datos.colaboradores)) {
+      datos.colaboradores.forEach((c) => {
+        if (c?.fecha && c?.codigo) colaboradoresJornada.set(
+          claveColaborador(c.fecha, c.codigo),
+          { fecha: String(c.fecha), codigo: String(c.codigo), nombre: String(c.nombre || c.codigo) }
+        );
+      });
+    }
+    if (Array.isArray(datos.registros)) {
+      datos.registros.forEach((r) => {
+        if (!r?.fecha || !r?.colaborador || !r?.cama) return;
+        registros.push(r);
+        const key = claveColaborador(r.fecha, r.colaborador);
+        if (!colaboradoresJornada.has(key)) colaboradoresJornada.set(key, {
+          fecha: r.fecha, codigo: String(r.colaborador),
+          nombre: r.colaboradorNombre || String(r.colaborador)
+        });
+      });
+    }
+  } catch (error) {
+    console.warn("No se pudieron restaurar los registros de la jornada", error);
+  }
+}
+
+function escaparHtml(value) {
+  return String(value ?? "").replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 
 const texto = (obj, ...keys) => {
   for (const key of keys) if (obj?.[key] != null) return String(obj[key]);
@@ -86,6 +138,7 @@ function cargarEmpleados(filtro = "") {
     colaboradorSeleccionadoEl.textContent = `${nombre} (${codigo})`;
     empleadoBuscar.value = "";
     empleadoLista.innerHTML = "";
+    limpiarCamposCama();
     render();
   }));
 }
@@ -225,54 +278,158 @@ function numero(v,d=2) {
   return new Intl.NumberFormat("es-CO",{maximumFractionDigits:d}).format(v);
 }
 
-function render() {
-  const tbody = document.querySelector("#tablaRegistros");
-  const nombre = empleadoSelect.selectedOptions[0]?.dataset.nombre || "";
-  document.querySelector("#nombreResumen").textContent = nombre
-    ? `Colaborador: ${nombre}`
-    : "Seleccione un colaborador";
-
-  if (!registros.length) {
-    tbody.innerHTML = '<tr><td colspan="6">Todavía no hay camas registradas.</td></tr>';
-    document.querySelector("#totalCamas").textContent = "0";
-    document.querySelector("#totalTallos").textContent = "0";
-    return;
-  }
-
-  tbody.innerHTML = registros.map(r => `
-    <tr>
-      <td>${r.tipoLabor}</td>
-      <td>${r.bloque}</td>
-      <td>${r.cama}</td>
-      <td>${numero(r.mediosCuadros,1)}</td>
-      <td>${numero(r.tallos,2)}</td>
-      <td>${r.observaciones || "—"}</td>
-    </tr>
-  `).join("");
-
-  const tallos = registros.reduce((s,r)=>s+r.tallos,0);
-  document.querySelector("#totalCamas").textContent = registros.length;
-  document.querySelector("#totalTallos").textContent = numero(tallos);
+function colaboradorActual() {
+  const codigo = empleadoSelect.value;
+  return colaboradoresJornada.get(claveColaborador(fechaInput.value, codigo)) || null;
 }
 
-form.addEventListener("submit", e => {
-  e.preventDefault();
+function seleccionarColaboradorDeJornada(colaborador, enfocar = true) {
+  empleadoSelect.innerHTML = '<option value=""></option>';
+  const opcion = new Option(
+    colaborador.nombre + " (" + colaborador.codigo + ")",
+    colaborador.codigo
+  );
+  opcion.dataset.nombre = colaborador.nombre;
+  empleadoSelect.add(opcion);
+  empleadoSelect.value = colaborador.codigo;
+  empleadoBuscar.value = "";
+  empleadoLista.innerHTML = "";
+  colaboradorSeleccionadoEl.textContent =
+    colaborador.nombre + " (" + colaborador.codigo + ")";
+  limpiarCamposCama();
+  render();
 
-  if (!fechaInput.value) return alert("Seleccione la fecha.");
-  if (!empleadoSelect.value) return alert("Seleccione un colaborador.");
+  if (enfocar) {
+    const primerCampo = document.querySelector("#tipoLabor");
+    primerCampo.scrollIntoView({ behavior: "smooth", block: "center" });
+    primerCampo.focus({ preventScroll: true });
+  }
+}
+
+function agregarColaboradorActual() {
+  if (!fechaInput.value) return alert("Selecciona la fecha de la jornada.");
+  if (!empleadoSelect.value) return alert("Busca y selecciona un colaborador.");
+
+  const codigo = empleadoSelect.value;
+  const nombre = empleadoSelect.selectedOptions[0]?.dataset.nombre || codigo;
+  const colaborador = { fecha: fechaInput.value, codigo, nombre };
+  const clave = claveColaborador(colaborador.fecha, colaborador.codigo);
+  if (!colaboradoresJornada.has(clave)) {
+    colaboradoresJornada.set(clave, colaborador);
+    guardarJornada();
+    window.RegistroLaborTiemposJN?.agregar({
+      codigo, nombre, fecha: fechaInput.value
+    });
+  }
+  seleccionarColaboradorDeJornada(colaboradoresJornada.get(clave));
+}
+
+function limpiarCamposCama() {
+  form.reset();
+  bloqueInput.value = "";
+  bloqueLista.innerHTML = "";
+  camaBuscar.value = "";
+  camaSelect.innerHTML = '<option value=""></option>';
+  camaSelect.value = "";
+  camaLista.innerHTML = "";
+}
+
+function renderColaboradoresJornada() {
+  const lista = document.querySelector("#colaboradoresRegistradosLista");
+  const colaboradores = [...colaboradoresJornada.values()].filter((c) =>
+    c.fecha === fechaInput.value
+  );
+  document.querySelector("#cantidadColaboradoresJornada").textContent =
+    colaboradores.length + (colaboradores.length === 1 ? " colaborador" : " colaboradores");
+  lista.innerHTML = colaboradores.length
+    ? colaboradores.map((c) => {
+        const camas = registros.filter((r) =>
+          r.fecha === c.fecha && String(r.colaborador) === c.codigo
+        ).length;
+        const activo = colaboradorActual()?.codigo === c.codigo;
+        return `<button type="button" class="colaborador-jornada-btn${activo ? " active" : ""}"
+          data-colaborador-codigo="${escaparHtml(c.codigo)}"
+          aria-pressed="${activo}">
+          <span>${escaparHtml(c.nombre)}</span><span class="camas-badge">${camas} ${camas === 1 ? "cama" : "camas"}</span>
+        </button>`;
+      }).join("")
+    : '<span class="hint">Todavía no has agregado colaboradores para esta fecha.</span>';
+}
+
+document.querySelector("#colaboradoresRegistradosLista").addEventListener("click", (event) => {
+  const boton = event.target.closest("[data-colaborador-codigo]");
+  if (!boton) return;
+  const colaborador = colaboradoresJornada.get(
+    claveColaborador(fechaInput.value, boton.dataset.colaboradorCodigo)
+  );
+  if (colaborador) seleccionarColaboradorDeJornada(colaborador);
+});
+
+function numero(v,d=2) {
+  return new Intl.NumberFormat("es-CO",{maximumFractionDigits:d}).format(v);
+}
+
+function render() {
+  const tbody = document.querySelector("#tablaRegistros");
+  const trabajador = colaboradorActual();
+  const registrosActuales = trabajador
+    ? registros.filter((r) => r.fecha === fechaInput.value &&
+        String(r.colaborador) === trabajador.codigo)
+    : [];
+
+  document.querySelector("#nombreResumen").textContent = trabajador
+    ? `Colaborador activo: ${trabajador.nombre}`
+    : "Selecciona y agrega un colaborador";
+  document.querySelector("#nombreResumenTabla").textContent = trabajador
+    ? `${trabajador.nombre} · ${registrosActuales.length} cama(s) registradas en esta fecha.`
+    : "Selecciona un colaborador agregado para consultar sus camas.";
+
+  tbody.innerHTML = registrosActuales.length
+    ? registrosActuales.map((r) => `<tr>
+        <td>${escaparHtml(r.tipoLabor)}</td>
+        <td>${escaparHtml(r.bloque)}</td>
+        <td>${escaparHtml(r.cama)}</td>
+        <td>${numero(r.mediosCuadros, 1)}</td>
+        <td>${numero(r.tallos, 2)}</td>
+        <td>${escaparHtml(r.observaciones || "—")}</td>
+      </tr>`).join("")
+    : '<tr><td colspan="6">' + (trabajador
+      ? "Este colaborador todavía no tiene camas registradas."
+      : "Selecciona un colaborador de la lista superior.") + '</td></tr>';
+
+  document.querySelector("#totalCamas").textContent = registrosActuales.length;
+  document.querySelector("#totalTallos").textContent = numero(
+    registrosActuales.reduce((total, r) => total + Number(r.tallos || 0), 0)
+  );
+  renderColaboradoresJornada();
+}
+
+document.querySelector("#btnAgregarColaborador").addEventListener("click", agregarColaboradorActual);
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!fechaInput.value) return alert("Selecciona la fecha.");
+  const trabajador = colaboradorActual();
+  if (!trabajador) return alert("Primero agrega un colaborador y selecciónalo en la lista.");
 
   const tallosCama = Number(document.querySelector("#tallosCama").value);
   const erradicaciones = Number(document.querySelector("#erradicaciones").value);
   const medios = Number(document.querySelector("#mediosCuadros").value);
 
+  if (!Number.isFinite(tallosCama) || tallosCama < 0 ||
+      !Number.isFinite(erradicaciones) || erradicaciones < 0 ||
+      !Number.isFinite(medios) || medios <= 0) {
+    return alert("Revisa los valores numéricos de la cama.");
+  }
   if (erradicaciones > tallosCama) {
-    return alert("Las erradicaciones no pueden ser mayores que los tallos de la cama.");
+    return alert("Las erradicaciones no pueden superar los tallos de la cama.");
   }
 
   const tallos = (tallosCama - erradicaciones) / 16 * medios;
   registros.push({
     fecha: fechaInput.value,
-    colaborador: empleadoSelect.value,
+    colaborador: trabajador.codigo,
+    colaboradorNombre: trabajador.nombre,
     tipoLabor: document.querySelector("#tipoLabor").value,
     bloque: bloqueInput.value.trim(),
     cama: camaSelect.value,
@@ -280,29 +437,19 @@ form.addEventListener("submit", e => {
     tallos,
     observaciones: desbotonadoObservaciones.value.trim()
   });
-  window.RegistroLaborTiemposJN?.agregar({
-    codigo: empleadoSelect.value,
-    nombre: empleadoSelect.selectedOptions[0]?.dataset.nombre || empleadoSelect.value,
-    fecha: fechaInput.value
-  });
-
+  guardarJornada();
   render();
-  form.reset();
-  cargarCamas();
+  limpiarCamposCama();
 });
 
-document.querySelector("#btnLimpiarCama").addEventListener("click",()=>{
-  form.reset();
-  cargarCamas();
-});
+document.querySelector("#btnLimpiarCama").addEventListener("click", limpiarCamposCama);
 
-document.querySelector("#btnNuevoDesbotonador").addEventListener("click",()=>{
-  if (registros.length && !confirm("¿Desea iniciar otro colaborador? Se borrarán los registros de esta sesión.")) return;
-  registros.length = 0;
+fechaInput.addEventListener("change", () => {
   empleadoSelect.innerHTML = '<option value=""></option>';
-  empleadoSelect.value = "";
   empleadoBuscar.value = "";
+  empleadoLista.innerHTML = "";
   colaboradorSeleccionadoEl.textContent = "Sin colaborador seleccionado";
+  limpiarCamposCama();
   render();
 });
 
@@ -431,6 +578,7 @@ window.addEventListener("online", cargarCatalogos);
   limpiarTiempos();
   aplicarVista("registro");
   await cargarCatalogos();
+  restaurarJornada();
   render();
   await renderRegistrosTiempos();
 })();

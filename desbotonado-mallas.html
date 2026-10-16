@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#187a4d">
     <link rel="stylesheet" href="./styles.css">
     <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.108" />
-    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.37">
+    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.112">
   </head>
   <body>
     <main class="app-shell">
@@ -40,6 +40,19 @@
             <div id="desbotonadorLista" class="pending-list" style="max-height:180px;margin-top:8px"></div>
             <select id="desbotonador" required hidden><option value=""></option></select>
             <p class="hint" id="colaboradorSeleccionado" style="margin:6px 0 0;">Sin colaborador seleccionado</p>
+            <div class="colaborador-alta">
+              <button type="button" id="btnAgregarColaborador" class="primary-btn">+ Agregar colaborador</button>
+            </div>
+            <section class="colaboradores-jornada" aria-label="Colaboradores agregados">
+              <div class="colaboradores-jornada-encabezado">
+                <strong>Colaboradores agregados</strong>
+                <span id="cantidadColaboradoresJornada">0 colaboradores</span>
+              </div>
+              <p class="hint" style="margin:4px 0 9px;">Selecciona un nombre para registrar más camas y consultar las que ya tiene.</p>
+              <div id="colaboradoresRegistradosLista" class="colaboradores-jornada-lista">
+                <span class="hint">Todavía no has agregado colaboradores para esta fecha.</span>
+              </div>
+            </section>
           </div>
 
           <nav class="desbotonado-tabs" aria-label="Opciones de Desbotonado y Mallas" style="margin-top:16px;margin-bottom:0;">
@@ -54,7 +67,7 @@
           <article class="scanner-panel">
             <div class="exit-row" style="grid-template-columns:1fr 1fr;">
               <div>
-                <span class="scan-label">Tipo de labor</span>
+                <span class="scan-label">Colaborador activo</span>
                 <p class="hint" id="nombreResumen" style="margin:6px 0 0;">Seleccione el tipo de labor al agregar una cama.</p>
               </div>
               <div>
@@ -64,7 +77,7 @@
             </div>
 
             <div>
-              <span class="scan-label">Registrar cama</span>
+              <span class="scan-label">Registrar cama del colaborador activo</span>
               <form id="formDesbotonado" class="form-grid">
                 <label>Desbotón o malla
                   <select id="tipoLabor" required>
@@ -96,7 +109,7 @@
                   <textarea id="desbotonadoObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
                 </label>
                 <div class="action-row">
-                  <button class="primary-btn" type="submit">+ Agregar colaborador</button>
+                  <button class="primary-btn" type="submit">+ Agregar cama</button>
                   <button class="ghost-btn" type="button" id="btnLimpiarCama">Limpiar</button>
                 </div>
               </form>
@@ -113,11 +126,11 @@
 
         <section class="results-grid desbotonado-results">
           <article class="metric">
-            <span>Camas registradas</span>
+            <span>Camas del colaborador</span>
             <strong id="totalCamas">0</strong>
           </article>
           <article class="metric">
-            <span>Tallos desbotonados</span>
+            <span>Tallos del colaborador</span>
             <strong id="totalTallos">0</strong>
           </article>
         </section>
@@ -126,9 +139,8 @@
           <div class="panel-heading">
             <div>
               <span class="scan-label">Detalle de la jornada</span>
-              <p class="hint" id="nombreResumenTabla">Camas registradas en esta sesión.</p>
+              <p class="hint" id="nombreResumenTabla">Selecciona un colaborador para consultar sus camas.</p>
             </div>
-            <button type="button" class="ghost-btn" id="btnNuevoDesbotonador">Nuevo colaborador</button>
           </div>
           <div class="table-scroll">
             <table>
@@ -254,7 +266,7 @@
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./tiempos-comun.js?v=1.0.110"></script>
-    <script src="./desbotonado-mallas.js?v=1.0.111"></script>
+    <script src="./desbotonado-mallas.js?v=1.0.112"></script>
     <script src="./tiempos-panel.js?v=1.0.110"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
