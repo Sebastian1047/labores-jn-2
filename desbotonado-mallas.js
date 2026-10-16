@@ -80,6 +80,24 @@ function restaurarJornada() {
   }
 }
 
+// Informar a Tiempos cuáles colaboradores realmente tienen labor guardada.
+function sincronizarLaborGuardadaConTiempos() {
+  if (!window.RegistroLaborTiemposJN?.guardarLabor) return;
+  const procesados = new Set();
+  registros.forEach((r) => {
+    if (!r.fecha || !r.colaborador) return;
+    const key = claveColaborador(r.fecha, r.colaborador);
+    if (procesados.has(key)) return;
+    procesados.add(key);
+    window.RegistroLaborTiemposJN.guardarLabor({
+      codigo: r.colaborador,
+      nombre: r.colaboradorNombre ||
+        colaboradoresJornada.get(key)?.nombre || String(r.colaborador),
+      fecha: r.fecha
+    });
+  });
+}
+
 function escaparHtml(value) {
   return String(value ?? "").replace(/&/g, "&amp;")
     .replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -441,6 +459,12 @@ form.addEventListener("submit", (event) => {
     observaciones: desbotonadoObservaciones.value.trim()
   });
   guardarJornada();
+  // Guardar labor solo confirma la labor; NO crea un tiempo.
+  window.RegistroLaborTiemposJN?.guardarLabor({
+    codigo: trabajador.codigo,
+    nombre: trabajador.nombre,
+    fecha: fechaInput.value
+  });
   render();
   limpiarCamposCama();
   document.querySelector("#apiMensaje").textContent =
@@ -584,6 +608,9 @@ window.addEventListener("online", cargarCatalogos);
   aplicarVista("registro");
   await cargarCatalogos();
   restaurarJornada();
+  // Las camas existentes deben reconocerse como labor guardada sin
+  // convertir sus antiguos registros de tiempos en "Guardados" actuales.
+  setTimeout(sincronizarLaborGuardadaConTiempos, 0);
   render();
   await renderRegistrosTiempos();
 })();

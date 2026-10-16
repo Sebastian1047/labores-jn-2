@@ -62,6 +62,29 @@
         catch (error) { console.warn("No se pudo conservar la selección de Registrar labor", error); }
       }
       window.dispatchEvent(new CustomEvent("laboresjn:registro-labor", { detail: { fecha, rol } }));
+    },
+    // Confirmar SOLO que se guardó una labor. No crea registros en la
+    // tabla de Tiempos ni marca al colaborador como "Guardado" en esa vista.
+    guardarLabor({ codigo: id, nombre: etiqueta, fecha, rol = "" }) {
+      if (!fecha || !id) return;
+      const colaborador = String(id).trim();
+      const guardados = obtenerLabor(fecha, rol);
+      let entrada = guardados.find((e) => String(e.codigo) === colaborador);
+      if (!entrada) {
+        entrada = { codigo: colaborador, nombre: String(etiqueta || colaborador) };
+        guardados.push(entrada);
+      }
+      // La primera labor guardada determina el inicio. Guardar más camas no
+      // reinicia el estado de los tiempos ya asignados al día.
+      const primeraLabor = !entrada.laborGuardadaEn;
+      if (primeraLabor) {
+        entrada.laborGuardadaEn = new Date().toISOString();
+        try { sessionStorage.setItem(claveLabor(fecha, rol), JSON.stringify(guardados)); }
+        catch (error) { console.warn("No se pudo registrar la labor en sesión", error); }
+        window.dispatchEvent(new CustomEvent("laboresjn:registro-labor", {
+          detail: { fecha, rol, laborGuardada: true }
+        }));
+      }
     }
   };
 
@@ -90,6 +113,7 @@
         '<p>Registra los tiempos diarios de los colaboradores.</p></div>' +
       '</section>' +
       '<section class="tp-tarjeta tp-personas"><h3>Colaboradores agregados en Registrar labor</h3>' +
+        '<p class="tp-ayuda">Pendientes: labor registrada sin tiempos asignados. Guardados: tiempos confirmados con el botón Guardar tiempos.</p>' +
         '<div class="tp-busqueda"><input id="tpBuscar" type="search" placeholder="Buscar entre colaboradores de Registrar labor…" autocomplete="off">' +
           '<div class="tp-filtros">' +
             '<button type="button" class="active" data-tp-filtro="pendientes">Pendientes</button>' +
@@ -127,7 +151,27 @@
     estado.rol = vistaNombre || rol();
 
     const getCampo = (id) => panel.querySelector('[data-tp-campo="' + id + '"]');
-    const registroDe = (e) => estado.guardados.find((r) => String(r[cfg.empleado]) === codigo(e) && r.fecha === fechaPrincipal.value);
+    // Registrar labor y Guardar tiempos son procesos diferentes. En Desbotón
+    // solo cuentan los tiempos guardados DESPUÉS de la primera labor de la
+    // jornada; un tiempo antiguo de ensayo no confirma una labor nueva.
+    const registroDe = (e) => {
+      const guardados = estado.guardados.filter((r) =>
+        String(r[cfg.empleado]) === codigo(e) && r.fecha === fechaPrincipal.value
+      );
+      if (modulo !== "desbotonado-mallas") return guardados[0] || null;
+      const labor = obtenerLabor(fechaPrincipal.value, "").find((r) =>
+        String(r.codigo) === codigo(e)
+      );
+      const inicio = Date.parse(labor?.laborGuardadaEn || "");
+      if (!Number.isFinite(inicio)) return null;
+      return guardados.find((r) => {
+        const guardadoEn = Date.parse(r.createdAt || "");
+        return Number.isFinite(guardadoEn) && guardadoEn >= inicio &&
+          Number.isFinite(Number(r.tiempoRealMin)) &&
+          Number.isFinite(Number(r.tiempoDisponibleMin)) &&
+          Number(r.tiempoDisponibleMin) > 0;
+      }) || null;
+    };
     const estadoDe = (e) => registroDe(e) ? "guardado" : "pendiente";
     function visibles() {
       const q = buscar.value.trim().toLocaleLowerCase("es");
@@ -262,7 +306,12 @@
     }
     window.addEventListener("laboresjn:registro-labor", (event) => {
       if (event.detail?.fecha === fechaPrincipal.value &&
-          (!cfg.roles || event.detail?.rol === estado.rol)) cargar();
+          (!cfg.roles || event.detail?.rol === estado.rol)) {
+        if (event.detail?.laborGuardada && modulo === "desbotonado-mallas") {
+          estado.filtro = "pendientes";
+        }
+        cargar();
+      }
     });
 
     // Una única fecha (la del encabezado) y un único buscador visible en Tiempos.
@@ -328,8 +377,9 @@
           guardados++;
         }
         estado.seleccionados.clear();
+        if (modulo === "desbotonado-mallas") estado.filtro = "guardados";
         await cargar();
-        reporte(guardados + " registro(s) guardado(s) localmente. Los colaboradores PRUEBA quedan identificados como datos de ensayo y no se envían al servidor.");
+        reporte(guardados + " registro(s) de tiempos guardado(s) localmente. Los colaboradores PRUEBA quedan identificados como datos de ensayo y no se envían al servidor.");
       } catch (err) {
         reporte("No se completó el guardado: " + err.message, true);
         await cargar();
