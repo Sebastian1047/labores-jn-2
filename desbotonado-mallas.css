@@ -10,7 +10,7 @@
 .time-card label{display:block;font-weight:800}
 .time-card input{margin-top:8px}
 .time-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.desbotonado-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+.desbotonado-results{grid-template-columns:minmax(0,1fr)}
 @media(max-width:640px){.time-summary,.desbotonado-results{grid-template-columns:1fr}}
 
 /* Lista de colaboradores agregados a la jornada de Desbotón y Mallas. */

@@ -186,29 +186,7 @@ function cargarCamas(filtro = "") {
     camaSelect.value = cama;
     camaBuscar.value = cama;
     camaLista.innerHTML = "";
-    cargarTallosCama(bloque, cama);
   }));
-}
-
-async function cargarTallosCama(bloque, cama) {
-  const tallosInput = document.querySelector("#tallosCama");
-  const mensaje = document.querySelector("#apiMensaje");
-  tallosInput.value = "";
-  if (String(bloque).startsWith("PRUEBA-")) {
-    tallosInput.value = "240";
-    mensaje.textContent = "Cama de prueba: 240 tallos de ejemplo, modificables.";
-    return;
-  }
-  mensaje.textContent = "Consultando tallos de la cama…";
-  try {
-    const resultado = await SyncEngine.apiGetOnline(`/api/siembra/online/tallos-cama?bloque=${encodeURIComponent(bloque)}&cama=${encodeURIComponent(cama)}`);
-    tallosInput.value = Number(resultado.totalTallos || 0);
-    mensaje.textContent = resultado.registros?.length
-      ? `${resultado.registros.length} registro(s) usados · líneas × densidad = ${resultado.totalTallos}`
-      : "No hay registros de SiembraOnline para esta cama.";
-  } catch (error) {
-    mensaje.textContent = `No se pudieron consultar los tallos: ${error.message}`;
-  }
 }
 
 async function cargarCatalogos() {
@@ -259,12 +237,10 @@ bloqueInput.addEventListener("input",()=>{
   camaBuscar.value="";
   camaSelect.innerHTML='<option value=""></option>';
   camaLista.innerHTML="";
-  document.querySelector("#tallosCama").value="";
 });
 camaBuscar.addEventListener("focus",()=>cargarCamas(camaBuscar.value));
 camaBuscar.addEventListener("input",()=>{
   camaSelect.innerHTML='<option value=""></option>';
-  document.querySelector("#tallosCama").value="";
   cargarCamas(camaBuscar.value);
 });
 
@@ -390,17 +366,13 @@ function render() {
         <td>${escaparHtml(r.bloque)}</td>
         <td>${escaparHtml(r.cama)}</td>
         <td>${numero(r.mediosCuadros, 1)}</td>
-        <td>${numero(r.tallos, 2)}</td>
         <td>${escaparHtml(r.observaciones || "—")}</td>
       </tr>`).join("")
-    : '<tr><td colspan="6">' + (trabajador
+    : '<tr><td colspan="5">' + (trabajador
       ? "Este colaborador todavía no tiene camas registradas."
       : "Selecciona un colaborador de la lista superior.") + '</td></tr>';
 
   document.querySelector("#totalCamas").textContent = registrosActuales.length;
-  document.querySelector("#totalTallos").textContent = numero(
-    registrosActuales.reduce((total, r) => total + Number(r.tallos || 0), 0)
-  );
   renderColaboradoresJornada();
 }
 
@@ -412,20 +384,10 @@ form.addEventListener("submit", (event) => {
   const trabajador = colaboradorActual();
   if (!trabajador) return alert("Primero agrega un colaborador y selecciónalo en la lista.");
 
-  const tallosCama = Number(document.querySelector("#tallosCama").value);
-  const erradicaciones = Number(document.querySelector("#erradicaciones").value);
   const medios = Number(document.querySelector("#mediosCuadros").value);
-
-  if (!Number.isFinite(tallosCama) || tallosCama < 0 ||
-      !Number.isFinite(erradicaciones) || erradicaciones < 0 ||
-      !Number.isFinite(medios) || medios <= 0) {
-    return alert("Revisa los valores numéricos de la cama.");
+  if (!Number.isFinite(medios) || medios <= 0 || medios > 16) {
+    return alert("Revisa los medios cuadros trabajados (entre 0,5 y 16).");
   }
-  if (erradicaciones > tallosCama) {
-    return alert("Las erradicaciones no pueden superar los tallos de la cama.");
-  }
-
-  const tallos = (tallosCama - erradicaciones) / 16 * medios;
   registros.push({
     fecha: fechaInput.value,
     colaborador: trabajador.codigo,
@@ -434,7 +396,6 @@ form.addEventListener("submit", (event) => {
     bloque: bloqueInput.value.trim(),
     cama: camaSelect.value,
     mediosCuadros: medios,
-    tallos,
     observaciones: desbotonadoObservaciones.value.trim()
   });
   guardarJornada();
