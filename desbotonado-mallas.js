@@ -141,6 +141,11 @@ async function cargarTallosCama(bloque, cama) {
   const tallosInput = document.querySelector("#tallosCama");
   const mensaje = document.querySelector("#apiMensaje");
   tallosInput.value = "";
+  if (String(bloque).startsWith("PRUEBA-")) {
+    tallosInput.value = "240";
+    mensaje.textContent = "Cama de prueba: 240 tallos de ejemplo, modificables.";
+    return;
+  }
   mensaje.textContent = "Consultando tallos de la cama…";
   try {
     const resultado = await SyncEngine.apiGetOnline(`/api/siembra/online/tallos-cama?bloque=${encodeURIComponent(bloque)}&cama=${encodeURIComponent(cama)}`);
@@ -162,8 +167,10 @@ async function cargarCatalogos() {
 
   try {
     const c = await SyncEngine.obtenerCatalogosLocal();
-    catalogos.empleados = (c.empleados || []).filter(
-      (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+    catalogos.empleados = TiemposLaboresJN.conColaboradoresPrueba(
+      (c.empleados || []).filter(
+        (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+      )
     );
 
     let camas = [];
@@ -171,14 +178,18 @@ async function cargarCatalogos() {
       if (navigator.onLine) camas = await SyncEngine.apiGetOnline("/api/siembra/online/bloques-camas");
     } catch (_) {}
 
-    catalogos.camas = (camas.length ? camas : c.camas || [])
-      .map(item => ({
-        bloque: texto(item,"bloque","Bloque").trim(),
-        cama: texto(item,"cama","Cama").trim()
-      }))
-      .filter(item => item.bloque && item.cama);
+    catalogos.camas = TiemposLaboresJN.conCamasPrueba(
+      (camas.length ? camas : c.camas || [])
+        .map(item => ({
+          bloque: texto(item,"bloque","Bloque").trim(),
+          cama: texto(item,"cama","Cama").trim()
+        }))
+        .filter(item => item.bloque && item.cama)
+    );
   } catch (e) {
     console.error(e);
+    catalogos.empleados = TiemposLaboresJN.conColaboradoresPrueba(catalogos.empleados);
+    catalogos.camas = TiemposLaboresJN.conCamasPrueba(catalogos.camas);
   }
 
   empleadoLista.innerHTML = "";

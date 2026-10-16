@@ -335,16 +335,20 @@ function iniciarRendimiento() {
   async function cargarColaboradores() {
     try {
       const local = await SyncEngine.obtenerCatalogosLocal();
-      colaboradores = (local.empleados || []).filter(
-        (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+      colaboradores = TiemposLaboresJN.conColaboradoresPrueba(
+        (local.empleados || []).filter(
+          (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+        )
       );
 
       if (navigator.onLine) {
         try {
           await SyncEngine.sincronizarCatalogos();
           const actualizados = await SyncEngine.obtenerCatalogosLocal();
-          colaboradores = (actualizados.empleados || []).filter(
-            (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+          colaboradores = TiemposLaboresJN.conColaboradoresPrueba(
+            (actualizados.empleados || []).filter(
+              (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
+            )
           );
           estadoPill.textContent = "Catálogos actualizados";
           estadoPill.classList.remove("warn");
@@ -360,8 +364,8 @@ function iniciarRendimiento() {
         estadoPill.classList.add("warn");
       }
     } catch {
-      colaboradores = [];
-      estadoPill.textContent = "Sin catálogo";
+      colaboradores = TiemposLaboresJN.conColaboradoresPrueba([]);
+      estadoPill.textContent = "Datos de prueba disponibles";
       estadoPill.classList.add("warn");
     }
   }

@@ -222,15 +222,15 @@ function iniciarRendimientoMipe() {
   async function cargarCatalogos() {
     try {
       let local=await SyncEngine.obtenerCatalogosLocal();
-      colaboradores=(local.empleados||[]).filter((x)=>x.activo!==false&&x.retirado!==1&&x.retirado!==true);
-      camasCatalogo=local.camas||[]; cargarBloques();
+      colaboradores=TiemposLaboresJN.conColaboradoresPrueba((local.empleados||[]).filter((x)=>x.activo!==false&&x.retirado!==1&&x.retirado!==true));
+      camasCatalogo=TiemposLaboresJN.conCamasPrueba(local.camas||[]); cargarBloques();
 
       if(navigator.onLine) {
         try {
           await SyncEngine.sincronizarCatalogos();
           local=await SyncEngine.obtenerCatalogosLocal();
-          colaboradores=(local.empleados||[]).filter((x)=>x.activo!==false&&x.retirado!==1&&x.retirado!==true);
-          camasCatalogo=local.camas||[]; cargarBloques();
+          colaboradores=TiemposLaboresJN.conColaboradoresPrueba((local.empleados||[]).filter((x)=>x.activo!==false&&x.retirado!==1&&x.retirado!==true));
+          camasCatalogo=TiemposLaboresJN.conCamasPrueba(local.camas||[]); cargarBloques();
           estadoPillMipe.textContent="Catálogos actualizados";
           estadoPillMipe.classList.add("ok");
         } catch {
@@ -239,7 +239,7 @@ function iniciarRendimientoMipe() {
         }
       }
     } catch {
-      colaboradores=[];camasCatalogo=[];cargarBloques();
+      colaboradores=TiemposLaboresJN.conColaboradoresPrueba([]);camasCatalogo=TiemposLaboresJN.conCamasPrueba([]);cargarBloques();
       estadoPillMipe.textContent="Sin catálogo";estadoPillMipe.classList.add("warn");
     }
   }

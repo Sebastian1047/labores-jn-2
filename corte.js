@@ -338,20 +338,20 @@ limpiarTiemposBtn.addEventListener("click", () => {
 async function cargarColaboradores() {
   try {
     const local = await SyncEngine.obtenerCatalogosLocal();
-    colaboradores = (local.empleados || []).filter(
+    colaboradores = TiemposLaboresJN.conColaboradoresPrueba((local.empleados || []).filter(
       (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
-    );
-    camasCatalogo = local.camas || [];
+    ));
+    camasCatalogo = TiemposLaboresJN.conCamasPrueba(local.camas || []);
     cargarBloquesCortador();
 
     if (navigator.onLine) {
       try {
         await SyncEngine.sincronizarCatalogos();
         const actualizados = await SyncEngine.obtenerCatalogosLocal();
-        colaboradores = (actualizados.empleados || []).filter(
+        colaboradores = TiemposLaboresJN.conColaboradoresPrueba((actualizados.empleados || []).filter(
           (item) => item.activo !== false && item.retirado !== 1 && item.retirado !== true
-        );
-        camasCatalogo = actualizados.camas || [];
+        ));
+        camasCatalogo = TiemposLaboresJN.conCamasPrueba(actualizados.camas || []);
         cargarBloquesCortador();
         estadoPill.textContent = "Catálogos actualizados";
         estadoPill.classList.remove("warn");
@@ -367,8 +367,10 @@ async function cargarColaboradores() {
       estadoPill.classList.add("warn");
     }
   } catch {
-    colaboradores = [];
-    estadoPill.textContent = "Sin catálogo";
+    colaboradores = TiemposLaboresJN.conColaboradoresPrueba([]);
+    camasCatalogo = TiemposLaboresJN.conCamasPrueba([]);
+    cargarBloquesCortador();
+    estadoPill.textContent = "Datos de prueba disponibles";
     estadoPill.classList.add("warn");
   }
 }

@@ -34,7 +34,7 @@
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const codigo = (e) => String(e.codigo ?? e.Codigo ?? e.docid ?? e.id ?? "").trim();
   const nombre = (e) => String(e.nombre ?? e.Nombre ?? e.empleadoNombre ?? e.descripcion ?? codigo(e)).trim();
-  const enCola = (r) => r.syncStatus && r.syncStatus !== "Sincronizado";
+  const enCola = (r) => r.syncStatus && r.syncStatus !== "Sincronizado" && r.syncStatus !== "PruebaLocal";
   const horas = (min) => TiemposLaboresJN.formatearHoras(min);
 
   // Lista de colaboradores añadidos desde Registrar labor, por módulo,
@@ -214,7 +214,8 @@
         fecha: fechaPrincipal.value,
         [cfg.empleado]: id,
         [cfg.nombre]: nombre(e),
-        syncStatus: "PendienteBackend",
+        esPrueba: TiemposLaboresJN.esColaboradorPrueba(id),
+        syncStatus: TiemposLaboresJN.esColaboradorPrueba(id) ? "PruebaLocal" : "PendienteBackend",
         usuario: JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "",
         createdAt: existente?.createdAt || new Date().toISOString()
       };
@@ -328,7 +329,7 @@
         }
         estado.seleccionados.clear();
         await cargar();
-        reporte(guardados + " registro(s) guardado(s) en este equipo. Su sincronización con el servidor continúa pendiente.");
+        reporte(guardados + " registro(s) guardado(s) localmente. Los colaboradores PRUEBA quedan identificados como datos de ensayo y no se envían al servidor.");
       } catch (err) {
         reporte("No se completó el guardado: " + err.message, true);
         await cargar();

@@ -82,8 +82,48 @@
     laborales.dataset.tiempoEditado = "0";
   }
 
+  const COLABORADORES_PRUEBA = Object.freeze([
+    { codigo: "PRUEBA001", nombre: "COLABORADOR PRUEBA 1", activo: true, esPrueba: true },
+    { codigo: "PRUEBA002", nombre: "COLABORADOR PRUEBA 2", activo: true, esPrueba: true },
+    { codigo: "PRUEBA003", nombre: "COLABORADOR PRUEBA 3", activo: true, esPrueba: true },
+    { codigo: "PRUEBA004", nombre: "COLABORADOR PRUEBA 4", activo: true, esPrueba: true }
+  ]);
+
+  function esColaboradorPrueba(codigo) {
+    return COLABORADORES_PRUEBA.some((e) => e.codigo === String(codigo || "").trim());
+  }
+
+  function conColaboradoresPrueba(empleados) {
+    const existentes = Array.isArray(empleados) ? empleados : [];
+    const codigos = new Set(existentes.map((e) =>
+      String(e.codigo ?? e.Codigo ?? e.docid ?? e.id ?? "").trim()
+    ));
+    return [
+      ...COLABORADORES_PRUEBA.filter((e) => !codigos.has(e.codigo)).map((e) => ({ ...e })),
+      ...existentes
+    ];
+  }
+
+  const CAMAS_PRUEBA = Object.freeze([
+    { bloque: "PRUEBA-B1", cama: "CAMA-P1", esPrueba: true },
+    { bloque: "PRUEBA-B1", cama: "CAMA-P2", esPrueba: true },
+    { bloque: "PRUEBA-B2", cama: "CAMA-P1", esPrueba: true }
+  ]);
+  function conCamasPrueba(camas) {
+    const existentes = Array.isArray(camas) ? camas : [];
+    const claves = new Set(existentes.map((c) =>
+      String(c.bloque ?? c.Bloque ?? "") + "|" + String(c.cama ?? c.Cama ?? "")
+    ));
+    return [
+      ...CAMAS_PRUEBA.filter((c) => !claves.has(c.bloque + "|" + c.cama)).map((c) => ({ ...c })),
+      ...existentes
+    ];
+  }
+
   window.TiemposLaboresJN = {
-    CAMPOS, leerHoras, leerMinutos, formatearHoras, horasJornada, validar, preparar
+    CAMPOS, leerHoras, leerMinutos, formatearHoras, horasJornada, validar, preparar,
+    COLABORADORES_PRUEBA, esColaboradorPrueba, conColaboradoresPrueba,
+    CAMAS_PRUEBA, conCamasPrueba
   };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", preparar, { once: true });

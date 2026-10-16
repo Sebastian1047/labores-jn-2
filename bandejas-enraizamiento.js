@@ -499,7 +499,8 @@ async function guardarTiempos() {
     tiempoRealMin: calculo.real,
     observaciones: bandejasTiemposObservaciones.value.trim(),
     usuario: sesionBandejas?.username || "",
-    syncStatus: "PendienteBackend",
+    esPrueba: TiemposLaboresJN.esColaboradorPrueba(sembradorCodigo),
+    syncStatus: TiemposLaboresJN.esColaboradorPrueba(sembradorCodigo) ? "PruebaLocal" : "PendienteBackend",
     createdAt: new Date().toISOString(),
   };
 
@@ -639,7 +640,8 @@ async function guardarRegistro() {
     variedadNombre,
     observaciones: bandejasObservaciones.value.trim(),
     usuario: sesionBandejas?.username || "",
-    syncStatus: "PendienteBackend",
+    esPrueba: TiemposLaboresJN.esColaboradorPrueba(sembradorCodigo),
+    syncStatus: TiemposLaboresJN.esColaboradorPrueba(sembradorCodigo) ? "PruebaLocal" : "PendienteBackend",
     createdAt: new Date().toISOString(),
   };
 
@@ -683,7 +685,8 @@ async function cargarCatalogos() {
       marcarResultado("warning", "No hay sembradores disponibles.");
     }
   } catch {
-    marcarResultado("error", "No fue posible cargar los catálogos del equipo.");
+    catalogos.empleados = incluirSembradoresPrueba([]);
+    marcarResultado("warning", "Catálogo real no disponible. Puedes ensayar con los sembradores PRUEBA001–PRUEBA004.");
   }
 }
 
