@@ -17,8 +17,6 @@ const vistaTiempos = document.querySelector("#vistaTiempos");
 
 const horasLaboralesMin = document.querySelector("#horasLaboralesMin");
 const horasExtraMin = document.querySelector("#horasExtraMin");
-const pMadresMin = document.querySelector("#pMadresMin");
-const pAbuelasMin = document.querySelector("#pAbuelasMin");
 const desplazamientoMin = document.querySelector("#desplazamientoMin");
 const calisteniaMin = document.querySelector("#calisteniaMin");
 const capacitacionMin = document.querySelector("#capacitacionMin");
@@ -497,9 +495,7 @@ function actualizarCalculoTiempos() {
   const laborales = minutosCampo(horasLaboralesMin);
   const extras = minutosCampo(horasExtraMin);
   const otros =
-    minutosCampo(pMadresMin) +
-    minutosCampo(pAbuelasMin) +
-    minutosCampo(desplazamientoMin) +
+            minutosCampo(desplazamientoMin) +
     minutosCampo(calisteniaMin) +
     minutosCampo(capacitacionMin);
 
@@ -513,7 +509,7 @@ function actualizarCalculoTiempos() {
   return { laborales, extras, otros, disponible, real, excede: otros > disponible };
 }
 
-[horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
+[horasLaboralesMin, horasExtraMin, desplazamientoMin, calisteniaMin, capacitacionMin]
   .forEach((input) => input.addEventListener("input", actualizarCalculoTiempos));
 
 function marcarResultadoTiempos(tipo, mensaje) {
@@ -523,7 +519,7 @@ function marcarResultadoTiempos(tipo, mensaje) {
 }
 
 function limpiarTiempos() {
-  [horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin, desplazamientoMin, calisteniaMin, capacitacionMin]
+  [horasLaboralesMin, horasExtraMin, desplazamientoMin, calisteniaMin, capacitacionMin]
     .forEach((input) => { input.value = ""; });
   horasLaboralesMin.value = TiemposLaboresJN.horasJornada(fechaInput.value);
   horasLaboralesMin.dataset.tiempoEditado = "0";
@@ -560,7 +556,7 @@ async function guardarTiempos() {
     return marcarResultadoTiempos("error", "Las actividades descontadas superan las horas disponibles.");
   }
   const errorHoras = TiemposLaboresJN.validar([
-    horasLaboralesMin, horasExtraMin, pMadresMin, pAbuelasMin,
+    horasLaboralesMin, horasExtraMin,
     desplazamientoMin, calisteniaMin, capacitacionMin
   ]);
   if (errorHoras) return marcarResultadoTiempos("error", errorHoras);
@@ -574,9 +570,7 @@ async function guardarTiempos() {
     colaboradorNombre: nombre,
     horasLaboralesMin: calculo.laborales,
     horasExtraMin: calculo.extras,
-    pMadresMin: minutosCampo(pMadresMin),
-    pAbuelasMin: minutosCampo(pAbuelasMin),
-    desplazamientoMin: minutosCampo(desplazamientoMin),
+            desplazamientoMin: minutosCampo(desplazamientoMin),
     calisteniaMin: minutosCampo(calisteniaMin),
     capacitacionMin: minutosCampo(capacitacionMin),
     otrasLaboresMin: calculo.otros,

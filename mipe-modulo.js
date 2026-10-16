@@ -75,8 +75,6 @@ function iniciarRendimientoMipe() {
 
   const laborales = document.querySelector("#horasLaboralesMin");
   const extras = document.querySelector("#horasExtraMin");
-  const pMadres = document.querySelector("#pMadresMin");
-  const pAbuelas = document.querySelector("#pAbuelasMin");
   const desplazamiento = document.querySelector("#desplazamientoMin");
   const calistenia = document.querySelector("#calisteniaMin");
   const capacitacion = document.querySelector("#capacitacionMin");
@@ -167,12 +165,12 @@ function iniciarRendimientoMipe() {
   }
   function calcular() {
     const l=min(laborales), e=min(extras);
-    const o=min(pMadres)+min(pAbuelas)+min(desplazamiento)+min(calistenia)+min(capacitacion);
+    const o=min(desplazamiento)+min(calistenia)+min(capacitacion);
     const d=l+e, r=Math.max(0,d-o);
     otras.value=TiemposLaboresJN.formatearHoras(o); disponibleTexto.textContent=formato(d); realTexto.textContent=formato(r);
     return {l,e,o,d,r,excede:o>d};
   }
-  [laborales,extras,pMadres,pAbuelas,desplazamiento,calistenia,capacitacion].forEach((x)=>x.addEventListener("input",calcular));
+  [laborales,extras,desplazamiento,calistenia,capacitacion].forEach((x)=>x.addEventListener("input",calcular));
 
   function estado(tipo,texto) {
     resultado.classList.remove("ok","warning","error");
@@ -180,7 +178,7 @@ function iniciarRendimientoMipe() {
     mensaje.textContent=texto;
   }
   function limpiarTiempos() {
-    [laborales,extras,pMadres,pAbuelas,desplazamiento,calistenia,capacitacion].forEach((x)=>{x.value=""});
+    [laborales,extras,desplazamiento,calistenia,capacitacion].forEach((x)=>{x.value=""});
     laborales.value=TiemposLaboresJN.horasJornada(fecha.value);
     laborales.dataset.tiempoEditado="0";
     obsTiempos.value=""; calcular();
@@ -199,14 +197,14 @@ function iniciarRendimientoMipe() {
     const calc=calcular();
     if(calc.d<=0) return estado("error","Ingresa las horas laborales o extra.");
     if(calc.excede) return estado("error","Las actividades descontadas superan las horas disponibles.");
-    const errorHoras=TiemposLaboresJN.validar([laborales,extras,pMadres,pAbuelas,desplazamiento,calistenia,capacitacion]);
+    const errorHoras=TiemposLaboresJN.validar([laborales,extras,desplazamiento,calistenia,capacitacion]);
     if(errorHoras) return estado("error",errorHoras);
 
     const registro={
       id:SyncEngine.generarUUID(),area:"MIPE",rol:rolMipe,rolNombre:rolInfoMipe.nombre,
       fecha:fecha.value,colaborador:codigoEmpleadoMipe(seleccionado),colaboradorNombre:nombreEmpleadoMipe(seleccionado),
       bloque:bloque.value,cama:cama.value,
-      horasLaboralesMin:calc.l,horasExtraMin:calc.e,pMadresMin:min(pMadres),pAbuelasMin:min(pAbuelas),
+      horasLaboralesMin:calc.l,horasExtraMin:calc.e,
       desplazamientoMin:min(desplazamiento),calisteniaMin:min(calistenia),capacitacionMin:min(capacitacion),
       otrasLaboresMin:calc.o,tiempoDisponibleMin:calc.d,tiempoRealMin:calc.r,
       observaciones:obsTiempos.value.trim(),observacionesLabor:observacionesLabor.value.trim(),

@@ -4,7 +4,7 @@
 (function () {
   "use strict";
   const CAMPOS = [
-    "horasLaboralesMin", "horasExtraMin", "pMadresMin", "pAbuelasMin",
+    "horasLaboralesMin", "horasExtraMin",
     "desplazamientoMin", "calisteniaMin", "capacitacionMin"
   ];
 

@@ -18,8 +18,6 @@
   const CAMPOS = [
     ["horasLaboralesMin", "Tiempo programado"],
     ["horasExtraMin", "Horas extra"],
-    ["pAbuelasMin", "Plantas abuelas"],
-    ["pMadresMin", "Plantas madres"],
     ["pausasMin", "Pausas"],
     ["incapacidadMin", "Incapacidad"],
     ["cambioLaborMin", "Cambio de labor"],
