@@ -60,7 +60,6 @@
       '<section class="tp-cabecera">' +
         '<div><h2>Tiempos de ' + escape(cfg.titulo.toLowerCase()) + '</h2>' +
         '<p>Registra los tiempos diarios de los colaboradores.</p></div>' +
-        '<div class="tp-fecha-info"><span>Fecha de la jornada</span><strong id="tpFechaTexto"></strong></div>' +
       '</section>' +
       '<section class="tp-tarjeta tp-personas">' +
         '<div class="tp-busqueda"><input id="tpBuscar" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">' +
@@ -230,10 +229,8 @@
     fechaPrincipal.addEventListener("change", () => {
       estado.seleccionados.clear();
       limpiar();
-      panel.querySelector("#tpFechaTexto").textContent = fechaPrincipal.value || "Sin fecha";
       pintar();
     });
-    panel.querySelector("#tpFechaTexto").textContent = fechaPrincipal.value || "Sin fecha";
 
     buscar.addEventListener("input", pintar);
     checks.addEventListener("change", () => {
