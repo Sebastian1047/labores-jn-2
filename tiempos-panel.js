@@ -121,7 +121,9 @@
           '<label><input type="checkbox" id="tpSeleccionarTodos"> Seleccionar visibles</label></div>' +
         '<div id="tpEmpleados" class="tp-empleados" role="group" aria-label="Colaboradores"></div>' +
       '</section>' +
-      '<section class="tp-tarjeta"><h3>Registrar tiempo</h3>' +
+      '<section class="tp-tarjeta"><h3 id="tpFormularioTitulo">Registrar tiempo</h3>' +
+        '<div class="tp-modo-edicion" id="tpModoEdicion" hidden><span id="tpModoEdicionTexto"></span>' +
+          '<button type="button" data-tp-accion="cancelar-edicion">Cancelar modificación</button></div>' +
         '<p class="tp-ayuda">Horas decimales: 0,5 equivale a 30 minutos. Los descuentos no pueden superar el tiempo disponible.</p>' +
         '<div class="tp-campos">' + entradas + '</div>' +
         '<label class="tp-observaciones"><span>Observaciones</span><textarea id="tpObservaciones" rows="3"></textarea></label>' +
@@ -141,7 +143,7 @@
     const lista = panel.querySelector("#tpEmpleados");
     const checks = panel.querySelector("#tpSeleccionarTodos");
     const vistaNombre = document.querySelector("[data-corte-rol].active")?.dataset.corteRol;
-    const estado = { empleados: [], guardados: [], seleccionados: new Set(), filtro: "pendientes", rol: "" };
+    const estado = { empleados: [], guardados: [], seleccionados: new Set(), filtro: "pendientes", rol: "", editando: null };
     const rol = () => {
       if (modulo === "corte") return document.querySelector("[data-corte-rol].active")?.dataset.corteRol || new URLSearchParams(location.search).get("rol") || "cortador";
       return new URLSearchParams(location.search).get("rol") || "";
@@ -155,7 +157,7 @@
     const registroDe = (e) => {
       const guardados = estado.guardados.filter((r) =>
         String(r[cfg.empleado]) === codigo(e) && r.fecha === fechaPrincipal.value
-      );
+      ).sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
       if (modulo !== "desbotonado-mallas") return guardados[0] || null;
       const labor = obtenerLabor(fechaPrincipal.value, "").find((r) =>
         String(r.codigo) === codigo(e)
@@ -183,21 +185,38 @@
       const actuales = visibles();
       checks.checked = actuales.length > 0 && actuales.every((e) => estado.seleccionados.has(codigo(e)));
       checks.indeterminate = actuales.some((e) => estado.seleccionados.has(codigo(e))) && !checks.checked;
+      checks.disabled = Boolean(estado.editando);
     }
     function pintar() {
       const actuales = visibles();
       lista.innerHTML = actuales.length ? actuales.map((e) => {
         const id = codigo(e), tipo = estadoDe(e);
-        return '<label class="tp-persona"><input type="checkbox" data-tp-empleado="' + escape(id) +
-          '"' + (estado.seleccionados.has(id) ? ' checked' : '') + '>' +
-          '<span><b>' + escape(nombre(e)) + '</b><small>' + escape(id) + '</small></span>' +
-          '<em class="tp-etiqueta tp-' + tipo + '">' + tipo.toUpperCase() + '</em></label>';
+        const editando = estado.editando?.codigo === id;
+        const selector = tipo === "guardado"
+          ? '<span class="tp-persona-check" aria-hidden="true">✓</span>'
+          : '<input type="checkbox" data-tp-empleado="' + escape(id) +
+            '" aria-label="Seleccionar ' + escape(nombre(e)) + '"' +
+            (estado.seleccionados.has(id) ? ' checked' : '') +
+            (estado.editando ? ' disabled' : '') + '>';
+        const accion = tipo === "guardado"
+          ? '<button type="button" class="tp-modificar" data-tp-modificar="' + escape(id) +
+            '"' + (editando ? ' disabled' : '') + '>' +
+            (editando ? 'Modificando…' : 'Modificar tiempos') + '</button>'
+          : '';
+        return '<div class="tp-persona' + (tipo === "guardado" ? ' tp-persona-con-accion' : '') +
+          (editando ? ' tp-en-edicion' : '') + '">' +
+          selector + '<span><b>' + escape(nombre(e)) + '</b><small>' + escape(id) + '</small></span>' +
+          '<em class="tp-etiqueta tp-' + tipo + '">' + tipo.toUpperCase() + '</em>' +
+          accion + '</div>';
       }).join("") : '<p class="tp-vacio">' +
         (estado.empleados.length
           ? 'No hay colaboradores para este filtro. Prueba con Pendientes o Guardados.'
           : 'Todavía no se han agregado colaboradores en Registrar labor para esta fecha.') +
         '</p>';
       panel.querySelectorAll("[data-tp-filtro]").forEach((b) => b.classList.toggle("active", b.dataset.tpFiltro === estado.filtro));
+      // En Guardados cada persona se modifica desde su propio botón;
+      // no hay selección múltiple para evitar cambios accidentales.
+      panel.querySelector(".tp-seleccion").hidden = estado.filtro === "guardados";
       seleccion();
       const porFecha = estado.guardados.filter((r) => r.fecha === fechaPrincipal.value);
       const cola = porFecha.filter(enCola);
@@ -243,12 +262,44 @@
       panel.querySelector("#tpObservaciones").value = "";
       calcular();
     }
-    function guardarRegistro(e, datos) {
+    function salirEdicion(limpiarCampos = true) {
+      estado.editando = null;
+      panel.querySelector("#tpModoEdicion").hidden = true;
+      panel.querySelector("#tpModoEdicionTexto").textContent = "";
+      if (limpiarCampos) limpiar();
+    }
+    function iniciarEdicion(id) {
+      const empleado = estado.empleados.find((e) => codigo(e) === id);
+      const guardado = empleado && registroDe(empleado);
+      if (!guardado) return reporte("No se encontró un registro de tiempos guardado para este colaborador.", true);
+      estado.editando = {
+        codigo: id, id: guardado.id,
+        fecha: fechaPrincipal.value, rol: estado.rol
+      };
+      estado.seleccionados.clear();
+      estado.filtro = "guardados";
+      CAMPOS.forEach(([campo]) => {
+        let minutos = Number(guardado[campo]);
+        // Compatibilidad con registros anteriores a la estructura actual: los
+        // descuentos sin desglose se muestran en Otros, sin perder minutos.
+        if (campo === "otrosMin" && guardado.otrosMin == null) {
+          const conocidos = DESCUENTOS.filter((k) => k !== "otrosMin")
+            .reduce((acc, k) => acc + (Number(guardado[k]) || 0), 0);
+          minutos = Math.max(0, (Number(guardado.otrasLaboresMin) || 0) - conocidos);
+        }
+        getCampo(campo).value = horas(Number.isFinite(minutos) ? minutos : 0);
+      });
+      panel.querySelector("#tpObservaciones").value = guardado.observaciones || "";
+      panel.querySelector("#tpModoEdicionTexto").textContent =
+        "Modificando tiempos de " + nombre(empleado) + " · " + fechaPrincipal.value;
+      panel.querySelector("#tpModoEdicion").hidden = false;
+      calcular();
+      pintar();
+      reporte("Puedes corregir los valores y pulsar Guardar tiempos para actualizar solo a " + nombre(empleado) + ".");
+      panel.querySelector("#tpFormularioTitulo").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    function guardarRegistro(e, datos, existente = registroDe(e)) {
       const id = codigo(e);
-      const existente = registroDe(e);
-      if (existente && existente.syncStatus === "Sincronizado") {
-        throw new Error("Ya existe un registro sincronizado para " + nombre(e) + ". No se sobrescribirá.");
-      }
       const r = {
         ...(existente || {}),
         ...datos,
@@ -259,8 +310,13 @@
         esPrueba: TiemposLaboresJN.esColaboradorPrueba(id),
         syncStatus: TiemposLaboresJN.esColaboradorPrueba(id) ? "PruebaLocal" : "PendienteBackend",
         usuario: JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "",
-        createdAt: existente?.createdAt || new Date().toISOString()
+        createdAt: existente?.createdAt || new Date().toISOString(),
+        updatedAt: existente ? new Date().toISOString() : undefined
       };
+      // Los campos retirados de la captura no deben reaparecer al actualizar
+      // registros de versiones anteriores.
+      delete r.pMadresMin;
+      delete r.pAbuelasMin;
       if (cfg.roles) {
         r.rol = estado.rol;
         r.rolNombre = modulo === "corte"
@@ -326,6 +382,7 @@
     setTimeout(sincronizarVista, 0);
 
     fechaPrincipal.addEventListener("change", () => {
+      if (estado.editando) salirEdicion();
       estado.seleccionados.clear();
       limpiar();
       cargar();
@@ -333,16 +390,24 @@
 
     buscar.addEventListener("input", pintar);
     checks.addEventListener("change", () => {
-      visibles().forEach((e) => checks.checked ? estado.seleccionados.add(codigo(e)) : estado.seleccionados.delete(codigo(e)));
+      if (estado.editando) return;
+      visibles().filter((e) => estadoDe(e) === "pendiente")
+        .forEach((e) => checks.checked ? estado.seleccionados.add(codigo(e)) : estado.seleccionados.delete(codigo(e)));
       pintar();
     });
     lista.addEventListener("change", (event) => {
       const input = event.target.closest("[data-tp-empleado]");
-      if (!input) return;
+      if (!input || estado.editando) return;
       input.checked ? estado.seleccionados.add(input.dataset.tpEmpleado) : estado.seleccionados.delete(input.dataset.tpEmpleado);
       seleccion();
     });
+    lista.addEventListener("click", (event) => {
+      const boton = event.target.closest("[data-tp-modificar]");
+      if (boton && !boton.disabled) iniciarEdicion(boton.dataset.tpModificar);
+    });
     panel.querySelectorAll("[data-tp-filtro]").forEach((button) => button.addEventListener("click", () => {
+      if (estado.editando) salirEdicion();
+      estado.seleccionados.clear();
       estado.filtro = button.dataset.tpFiltro;
       pintar();
     }));
@@ -353,9 +418,28 @@
       const button = panel.querySelector("[data-tp-accion='guardar']");
       if (button.disabled) return;
       if (!fechaPrincipal.value) return reporte("Selecciona la fecha de la jornada.", true);
-      if (!estado.seleccionados.size) return reporte("Selecciona al menos un colaborador.", true);
+      if (!estado.editando && !estado.seleccionados.size) return reporte("Selecciona al menos un colaborador.", true);
       try {
         const datos = detalles();
+        if (estado.editando) {
+          const edicion = estado.editando;
+          if (edicion.fecha !== fechaPrincipal.value || edicion.rol !== estado.rol) {
+            return reporte("La fecha o el rol cambió. Vuelve a seleccionar Modificar tiempos.", true);
+          }
+          const empleado = estado.empleados.find((e) => codigo(e) === edicion.codigo);
+          const guardado = empleado && registroDe(empleado);
+          if (!guardado || guardado.id !== edicion.id) {
+            return reporte("El registro cambió. Actualiza la lista y vuelve a modificar los tiempos.", true);
+          }
+          button.disabled = true;
+          const actualizado = guardarRegistro(empleado, datos, guardado);
+          await OfflineDb.put(cfg.tienda, actualizado);
+          salirEdicion();
+          estado.seleccionados.clear();
+          estado.filtro = "guardados";
+          await cargar();
+          return reporte("Tiempos de " + nombre(empleado) + " actualizados correctamente en este equipo. No se creó otro registro.");
+        }
         const seleccionados = [...estado.seleccionados]
           .map((id) => estado.empleados.find((e) => codigo(e) === id))
           .filter(Boolean);
@@ -375,7 +459,8 @@
           guardados++;
         }
         estado.seleccionados.clear();
-        if (modulo === "desbotonado-mallas") estado.filtro = "guardados";
+        // Mostrar los registros recién guardados y su acción Modificar tiempos.
+        estado.filtro = "guardados";
         await cargar();
         reporte(guardados + " registro(s) de tiempos guardado(s) localmente. Los colaboradores PRUEBA quedan identificados como datos de ensayo y no se envían al servidor.");
       } catch (err) {
@@ -388,7 +473,14 @@
     });
     panel.querySelector("[data-tp-accion='limpiar']").addEventListener("click", () => {
       limpiar();
-      reporte("Campos limpiados. Los registros guardados se conservan.");
+      reporte(estado.editando
+        ? "Campos restablecidos. Sigues modificando al mismo colaborador; pulsa Guardar tiempos para aplicar cambios."
+        : "Campos limpiados. Los registros guardados se conservan.");
+    });
+    panel.querySelector("[data-tp-accion='cancelar-edicion']").addEventListener("click", () => {
+      salirEdicion();
+      pintar();
+      reporte("Modificación cancelada. No se cambió ningún tiempo guardado.");
     });
 
     // Corte puede cambiar de rol sin cambiar de página. Mantener cada cola por rol.
@@ -397,6 +489,7 @@
       setTimeout(() => {
         const nuevo = rol();
         if (nuevo === estado.rol) return;
+        if (estado.editando) salirEdicion();
         estado.rol = nuevo;
         estado.seleccionados.clear();
         reporte("");

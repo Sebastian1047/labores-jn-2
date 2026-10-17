@@ -107,3 +107,62 @@ body.tp-vista-activa .tp-colaborador-origen { display: none !important; }
 @media (max-width: 590px) {
   .tp-acciones button { flex: 1 1 40%; }
 }
+
+/* Edición explícita de tiempos ya guardados: una persona a la vez. */
+.tp-persona-con-accion {
+  grid-template-columns: 19px minmax(0,1fr) auto auto;
+}
+.tp-persona-check {
+  color: #2a7c53;
+  font-size: .91rem;
+  font-weight: 800;
+  text-align: center;
+}
+.tp-panel .tp-modificar {
+  background: #e5f3ec;
+  color: #216443;
+  border: 1px solid #87b9a0;
+  font-weight: 800;
+  white-space: nowrap;
+  padding: 7px 11px;
+  min-height: 32px;
+}
+.tp-panel .tp-modificar:hover:not(:disabled) {
+  background: #d0e9dc;
+}
+.tp-en-edicion {
+  background: #e9f6ef;
+  box-shadow: inset 3px 0 #268a58;
+}
+.tp-modo-edicion {
+  margin: 0 0 12px;
+  background: #e8f4ec;
+  border: 1px solid #8bb79d;
+  padding: 10px 12px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #225b3a;
+  font-size: .82rem;
+  font-weight: 750;
+}
+.tp-modo-edicion[hidden],
+.tp-seleccion[hidden] { display: none !important; }
+.tp-panel .tp-modo-edicion button {
+  background: #fffef8;
+  border: 1px solid #83b49b;
+  color: #286043;
+}
+@media(max-width: 650px) {
+  .tp-persona-con-accion {
+    grid-template-columns: 19px minmax(0,1fr) auto;
+    gap: 6px 8px;
+  }
+  .tp-persona-con-accion .tp-modificar {
+    grid-column: 2 / -1;
+    justify-self: end;
+  }
+}
