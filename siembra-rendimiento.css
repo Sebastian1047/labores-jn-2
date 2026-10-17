@@ -1,0 +1,50 @@
+/* Siembra Rendimiento: misma jerarquía visual de Registrar labor / Tiempos. */
+.siembra-rendimiento-shell { max-width: 1200px; }
+.siembra-rendimiento-shell .sr-panel { background: var(--panel,#fff); border: 1px solid var(--line,#d3ddd7); border-radius: 15px; padding: clamp(12px,2vw,19px); margin-bottom: 13px; }
+.sr-inicio { display:grid;gap:10px; }
+.sr-field { display:grid;align-content:start;gap:5px;font-size:.85rem;font-weight:760;color:var(--text,#293d35);min-width:0;position:relative; }
+.sr-field input,.sr-field select,.sr-field textarea { width:100%;min-width:0;border:1px solid var(--line,#cad7cf);border-radius:9px;background:var(--panel,#fff);color:var(--text,#203328);padding:9px 10px;font:inherit;font-weight:500; }
+.sr-field input,.sr-field select { min-height:39px; }
+.sr-field textarea { resize:vertical;min-height:69px; }
+.sr-field input:focus-visible,.sr-field select:focus-visible,.sr-field textarea:focus-visible,.sr-panel button:focus-visible { outline:3px solid #78b99a;outline-offset:1px; }
+.sr-fecha { max-width:100%; }
+.sr-elegido { margin:0!important; }
+.sr-sugerencias { width:100%;border:1px solid #c6d8cc;border-radius:9px;background:#fff;max-height:175px;overflow:auto;z-index:6;box-shadow:0 7px 15px #0c4c2c15; }
+.sr-sugerencias[hidden] { display:none!important; }
+.sr-sugerencias button { width:100%;display:block;padding:9px 10px;border:0;border-bottom:1px solid #eef1eb;text-align:left;background:#fff;cursor:pointer;font-weight:600;color:#28503a; }
+.sr-sugerencias button:hover:not(:disabled) { background:#e7f5ec; }
+.sr-sugerencias button:disabled { opacity:.5;cursor:not-allowed; }
+.sr-integrantes { margin-top:7px;padding:13px;border:1px solid #cfddd2;border-radius:11px;background:#fcfefb; }
+.sr-integrantes-titulo { display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;align-items:center; }
+#contadorColaboradores { color:var(--muted,#587063);font-size:.77rem; }
+.sr-integrantes .hint { margin:6px 0 9px!important; }
+.sr-integrantes-lista { display:flex;flex-wrap:wrap;gap:8px; }
+.sr-integrantes-lista button { display:inline-flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #94bca3;border-radius:9px;color:#266544;background:#eaf5ed;cursor:pointer;font-weight:760; }
+.sr-integrantes-lista button.active { color:#fff;background:#187a4d;border-color:#187a4d; }
+.sr-integrantes-lista .sr-count { border-radius:14px;background:#217d5026;padding:3px 6px;font-size:.73rem; }
+.sr-integrantes-lista button.active .sr-count { background:#ffffff29; }
+.sr-tabs { display:flex;gap:9px; }
+.sr-tab { flex:1;min-height:45px;border:1px solid #b6d2bf;border-radius:9px;background:#f6faf7;font-weight:800;color:#1e5a3e;cursor:pointer; }
+.sr-tab.active { background:#187a4d;border-color:#187a4d;color:white; }
+.sr-vista[hidden] { display:none!important; }
+.sr-panel-heading { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:13px; }
+.sr-panel-heading h2 { margin:0 0 4px;font-size:1.02rem; }
+.sr-panel-heading .hint { margin:0; }
+.sr-pill { padding:6px 10px;border-radius:25px;background:#e7f2e9;color:#2c6947;font-size:.75rem;font-weight:800; }
+.sr-form { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px; }
+.sr-form .sr-observaciones,.sr-form-acciones,.sr-aviso-edicion { grid-column:1/-1; }
+.sr-form-acciones { display:flex;align-items:center;gap:9px;flex-wrap:wrap; }
+.sr-aviso-edicion { display:flex;align-items:center;justify-content:space-between;gap:10px;background:#e8f5ed;color:#1c5c39;border:1px solid #80b996;border-radius:10px;padding:11px;font-size:.83rem; }
+.sr-aviso-edicion[hidden] { display:none!important; }
+.sr-mensaje { background:#eaf5ee;border:1px solid #c5decb;border-radius:9px;padding:10px 12px;font-size:.83rem;color:#21603c;margin:13px 0 0; }
+.sr-mensaje.error { color:#993c35;background:#fff3ee;border-color:#e9bcb3; }
+.sr-tabla-scroll { max-width:100%;overflow-x:auto; }
+.sr-tabla { border-collapse:collapse;width:100%;min-width:1060px;font-size:.8rem; }
+.sr-tabla th { color:#467053;background:#f0f6f1;text-align:left;white-space:nowrap;font-size:.73rem; }
+.sr-tabla th,.sr-tabla td { padding:10px 9px;border-bottom:1px solid #dfebe2;vertical-align:middle; }
+.sr-tabla tbody tr:hover { background:#f4faf6; }
+.sr-tabla tr.sr-editando { background:#e2f4e9; }
+.sr-tabla .sr-modificar { cursor:pointer;padding:7px 10px;border:1px solid #93baa1;border-radius:8px;background:#eaf5ed;color:#20603e;font-weight:800; }
+.sr-tabla .sr-modificar:disabled { opacity:.55;cursor:default; }
+.sr-nota-final { color:var(--muted,#67766c);font-size:.78rem;text-align:center;margin:12px 0; }
+@media(max-width:640px) { .sr-form { grid-template-columns:1fr; } .sr-form .sr-observaciones,.sr-form-acciones,.sr-aviso-edicion { grid-column:1; } .sr-tabs { gap:5px; } .sr-integrantes-lista button { width:100%;justify-content:space-between; } }

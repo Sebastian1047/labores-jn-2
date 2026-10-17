@@ -6,6 +6,7 @@
   const modulo = location.pathname.split("/").pop().replace(".html", "");
   const opciones = {
     "bandejas-enraizamiento": { titulo: "Bandejas de enraizamiento", tienda: "bandejasTiempos", empleado: "sembrador", nombre: "sembradorNombre" },
+    "siembra-rendimiento": { titulo: "siembra rendimiento", tienda: "siembraRendimientoTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
     "corte": { titulo: "Corte", tienda: "corteTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true },
     "desbotonado-mallas": { titulo: "Desbotón y mallas", tienda: "desbotonadoMallasTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
     "preparacion-camas": { titulo: "Preparación de camas", tienda: "preparacionCamasTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
@@ -32,7 +33,7 @@
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const codigo = (e) => String(e.codigo ?? e.Codigo ?? e.docid ?? e.id ?? "").trim();
   const nombre = (e) => String(e.nombre ?? e.Nombre ?? e.empleadoNombre ?? e.descripcion ?? codigo(e)).trim();
-  const enCola = (r) => r.syncStatus && r.syncStatus !== "Sincronizado" && r.syncStatus !== "PruebaLocal";
+  const enCola = (r) => r.syncStatus && !["Sincronizado", "PruebaLocal", "SoloLocal"].includes(r.syncStatus);
   const horas = (min) => TiemposLaboresJN.formatearHoras(min);
 
   // Lista de colaboradores añadidos desde Registrar labor, por módulo,
@@ -354,7 +355,7 @@
         [cfg.empleado]: id,
         [cfg.nombre]: nombre(e),
         esPrueba: TiemposLaboresJN.esColaboradorPrueba(id),
-        syncStatus: TiemposLaboresJN.esColaboradorPrueba(id) ? "PruebaLocal" : "PendienteBackend",
+        syncStatus: TiemposLaboresJN.esColaboradorPrueba(id) ? "PruebaLocal" : (modulo === "siembra-rendimiento" ? "SoloLocal" : "PendienteBackend"),
         usuario: JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "",
         createdAt: existente?.createdAt || new Date().toISOString(),
         updatedAt: existente ? new Date().toISOString() : undefined
@@ -383,11 +384,13 @@
         let desdeLabor = obtenerLabor(fecha, cfg.roles ? estado.rol : "");
         // Bandejas conserva sus registros de labor en IndexedDB.
         // Recuperar solo los sembradores de la fecha, incluso sin catálogo.
-        if (modulo === "bandejas-enraizamiento") {
-          const trabajos = await OfflineDb.getAll("bandejasEnraizamiento");
+        if (modulo === "bandejas-enraizamiento" || modulo === "siembra-rendimiento") {
+          const esBandejas = modulo === "bandejas-enraizamiento";
+          const trabajos = await OfflineDb.getAll(esBandejas ? "bandejasEnraizamiento" : "siembraRendimientoRegistros");
           desdeLabor = trabajos.filter((r) => r.fecha === fecha).map((r) => ({
-            codigo: String(r.sembrador || ""),
-            nombre: r.sembradorNombre || String(r.sembrador || "")
+            codigo: String(esBandejas ? r.sembrador || "" : r.colaborador || ""),
+            nombre: esBandejas ? (r.sembradorNombre || String(r.sembrador || "")) :
+              (r.colaboradorNombre || String(r.colaborador || ""))
           }));
         }
         const unicos = new Map();
@@ -420,7 +423,7 @@
     function sincronizarVista() {
       document.body.classList.toggle("tp-vista-activa", !vista.hidden && vista.getClientRects().length > 0);
     }
-    document.querySelectorAll("[data-bandejas-vista], [data-corte-vista], [data-desbotonado-vista], [data-preparacion-vista], [data-poscosecha-vista], [data-mipe-vista]")
+    document.querySelectorAll("[data-bandejas-vista], [data-corte-vista], [data-desbotonado-vista], [data-preparacion-vista], [data-poscosecha-vista], [data-mipe-vista], [data-siembra-vista]")
       .forEach((btn) => btn.addEventListener("click", () => setTimeout(() => {
         sincronizarVista();
         if (!vista.hidden) cargar();

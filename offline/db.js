@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 21;
+const DB_VERSION = 22;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -192,6 +192,17 @@ function abrirDb() {
         mipeCalidad.createIndex("fecha", "fecha");
         mipeCalidad.createIndex("rol", "rol");
         mipeCalidad.createIndex("syncStatus", "syncStatus");
+      }
+      // Siembra Rendimiento opera en almacenes independientes del Registro original.
+      if (!db.objectStoreNames.contains("siembraRendimientoRegistros")) {
+        const labor = db.createObjectStore("siembraRendimientoRegistros", { keyPath: "id" });
+        labor.createIndex("fecha", "fecha");
+        labor.createIndex("colaborador", "colaborador");
+      }
+      if (!db.objectStoreNames.contains("siembraRendimientoTiempos")) {
+        const tiempos = db.createObjectStore("siembraRendimientoTiempos", { keyPath: "id" });
+        tiempos.createIndex("fecha", "fecha");
+        tiempos.createIndex("syncStatus", "syncStatus");
       }
     };
 

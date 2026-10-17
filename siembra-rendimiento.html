@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Siembra Rendimiento — Labores JN</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#187a4d" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./siembra-rendimiento.css?v=1.0.122" />
+  <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.122" />
+</head>
+<body>
+<main class="app-shell siembra-rendimiento-shell">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Producción / Siembra Campo / Rendimiento</p>
+      <h1>🌱 Siembra Rendimiento</h1>
+    </div>
+    <section class="status-strip">
+      <span class="pill" id="apiStatusPill">Catálogos locales</span>
+      <span class="pill strong" id="usuarioPill">Usuario</span>
+      <a class="pill" href="./siembra-hub.html">← Siembra</a>
+      <a class="pill" href="./menu.html">← Menú</a>
+    </section>
+  </header>
+
+  <section class="sr-panel sr-inicio">
+    <label class="sr-field sr-fecha">Fecha
+      <input id="fecha" type="date" required />
+    </label>
+    <label class="sr-field">Colaborador (sembrador)
+      <input id="sembradorBuscar" type="search" autocomplete="off" placeholder="Buscar colaborador por nombre o código…" />
+    </label>
+    <div id="sembradorLista" class="sr-sugerencias" role="listbox" aria-label="Resultados de colaboradores" hidden></div>
+    <p class="hint sr-elegido" id="sembradorSeleccionado">Sin colaborador seleccionado</p>
+    <p class="hint">Puedes buscar PRUEBA001 a PRUEBA004 para ensayar sin usar datos reales.</p>
+    <div><button type="button" class="primary-btn" id="agregarColaborador">+ Agregar colaborador</button></div>
+    <section class="sr-integrantes">
+      <div class="sr-integrantes-titulo"><strong>Colaboradores agregados</strong><span id="contadorColaboradores">0 colaboradores</span></div>
+      <p class="hint">Selecciona un nombre para registrar siembras o revisar sus camas.</p>
+      <div id="listaColaboradores" class="sr-integrantes-lista"><span class="hint">Todavía no hay colaboradores agregados.</span></div>
+    </section>
+    <nav class="sr-tabs" aria-label="Vistas de Siembra Rendimiento">
+      <button class="sr-tab active" type="button" data-siembra-vista="registro">Registrar labor</button>
+      <button class="sr-tab" type="button" data-siembra-vista="tiempos">Tiempos</button>
+    </nav>
+  </section>
+
+  <section id="vistaRegistro" class="sr-vista">
+    <article class="sr-panel">
+      <div class="sr-panel-heading">
+        <div><h2>Registrar siembra del colaborador</h2><p class="hint" id="colaboradorActivo">Selecciona un colaborador de la lista superior.</p></div>
+        <span class="sr-pill">Registro local</span>
+      </div>
+      <form id="siembraRendimientoForm" class="sr-form">
+        <label class="sr-field">Origen
+          <select id="origen" required><option value="">Seleccione un origen</option></select>
+        </label>
+        <label class="sr-field">Líneas (opcional)
+          <input id="lineas" type="text" inputmode="numeric" maxlength="3" placeholder="Pendiente de conteo" />
+        </label>
+        <label class="sr-field">Densidad
+          <input id="densidad" type="text" inputmode="numeric" maxlength="5" required placeholder="Densidad de siembra" />
+        </label>
+        <label class="sr-field">Semana planeación
+          <input id="semanaProgramada" type="number" min="1" max="53" required />
+        </label>
+        <label class="sr-field">Año planeación
+          <input id="anoProgramado" type="number" min="2000" max="2100" required />
+        </label>
+        <label class="sr-field sr-buscador">Bloque
+          <input id="bloqueBuscar" type="text" autocomplete="off" required placeholder="Buscar bloque por número…" />
+          <span id="bloqueLista" class="sr-sugerencias" role="listbox" hidden></span>
+        </label>
+        <label class="sr-field sr-buscador">Cama
+          <input id="camaBuscar" type="text" autocomplete="off" required placeholder="Buscar cama por número…" />
+          <span id="camaLista" class="sr-sugerencias" role="listbox" hidden></span>
+        </label>
+        <label class="sr-field sr-buscador">Variedad
+          <input id="variedadBuscar" type="text" autocomplete="off" required placeholder="Buscar variedad…" />
+          <span id="variedadLista" class="sr-sugerencias" role="listbox" hidden></span>
+        </label>
+        <label class="sr-field sr-buscador">Clon (opcional)
+          <input id="clonBuscar" type="text" autocomplete="off" placeholder="Buscar clon…" />
+          <span id="clonLista" class="sr-sugerencias" role="listbox" hidden></span>
+        </label>
+        <label class="sr-field sr-observaciones">Observaciones
+          <textarea id="observaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
+        </label>
+        <div id="avisoEdicion" class="sr-aviso-edicion" hidden>
+          <strong id="textoEdicion">Modificando siembra</strong>
+          <button type="button" class="ghost-btn" id="cancelarEdicion">Cancelar modificación</button>
+        </div>
+        <div class="sr-form-acciones">
+          <button class="primary-btn" id="guardarLabor" type="submit">Guardar</button>
+          <button class="ghost-btn" id="limpiarLabor" type="button">Limpiar</button>
+        </div>
+      </form>
+      <p class="sr-mensaje" id="registroMensaje" role="status" aria-live="polite">Registra las siembras de cada colaborador para consultar su jornada.</p>
+    </article>
+    <article class="sr-panel">
+      <div class="sr-panel-heading">
+        <div><h2>Detalle de la jornada</h2><p class="hint" id="detallePersona">Selecciona un colaborador para consultar sus registros.</p></div>
+        <span id="contadorRegistros" class="sr-pill">0 registros</span>
+      </div>
+      <div class="sr-tabla-scroll">
+        <table class="sr-tabla">
+          <thead><tr><th>Origen</th><th>Bloque</th><th>Cama</th><th>Variedad</th><th>Clon</th><th>Líneas</th><th>Densidad</th><th>Semana</th><th>Año</th><th>Observaciones</th><th>Acción</th></tr></thead>
+          <tbody id="tablaRegistros"><tr><td colspan="11">Selecciona un colaborador de la lista superior.</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section id="vistaTiempos" class="sr-vista" hidden></section>
+  <p class="sr-nota-final">Siembra Rendimiento guarda los registros localmente en este dispositivo. El Registro original de Siembra Campo y su sincronización siguen siendo independientes.</p>
+</main>
+<script src="./offline/api-base.js"></script>
+<script src="./offline/db.js"></script>
+<script src="./offline/sync-engine.js"></script>
+<script src="./tiempos-comun.js?v=1.0.118"></script>
+<script src="./siembra-rendimiento.js?v=1.0.122"></script>
+<script src="./tiempos-panel.js?v=1.0.122"></script>
+<script src="./offline/register-sw.js"></script>
+</body>
+</html>

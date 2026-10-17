@@ -73,6 +73,15 @@ async function sincronizar() {
 }
 
 document.querySelector("#cardRegistro").addEventListener("click", () => (window.location.href = "./siembra.html"));
+const cardRendimiento = document.querySelector("#cardRendimiento");
+function abrirSiembraRendimiento() { window.location.href = "./siembra-rendimiento.html"; }
+cardRendimiento.addEventListener("click", abrirSiembraRendimiento);
+cardRendimiento.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    abrirSiembraRendimiento();
+  }
+});
 document.querySelector("#cardRevision").addEventListener("click", () => (window.location.href = "./siembra-revision.html"));
 document.querySelector("#cardDetalle").addEventListener("click", () => (window.location.href = "./siembra-promedios.html"));
 document.querySelector("#cardSincronizar").addEventListener("click", sincronizar);
