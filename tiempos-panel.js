@@ -134,6 +134,18 @@
           '<button type="button" data-tp-accion="limpiar">Limpiar campos</button>' +
         '</div><p class="tp-mensaje" id="tpMensaje" role="status" aria-live="polite"></p>' +
       '</section>' +
+      '<section class="tp-tarjeta tp-tabla-guardados">' +
+        '<div class="tp-tabla-titulo"><div><h3>Tiempos guardados por colaborador</h3>' +
+          '<p class="tp-ayuda">Selecciona Modificar en la fila correspondiente. Los cambios se guardan con Guardar tiempos.</p></div>' +
+          '<span id="tpGuardadosContador" class="tp-tabla-contador">0 registros</span></div>' +
+        '<div class="tp-tabla-scroll"><table class="tp-tabla-registros">' +
+          '<thead><tr>' +
+            '<th>Colaborador</th><th>Programado</th><th>Horas extra</th>' +
+            '<th>Actividades descontadas</th><th>Tiempo efectivo</th>' +
+            '<th>Observaciones</th><th>Acción</th>' +
+          '</tr></thead><tbody id="tpTablaGuardados"></tbody>' +
+        '</table></div>' +
+      '</section>' +
       '<details class="tp-detalle-cola"><summary>Registros pendientes de sincronización <span id="tpTotalCola">0</span></summary>' +
         '<div id="tpCola"></div><p class="tp-ayuda">Los tiempos se guardan en este equipo. El envío al servidor no está disponible hasta contar con una API de sincronización.</p>' +
       '</details>';
@@ -187,27 +199,68 @@
       checks.indeterminate = actuales.some((e) => estado.seleccionados.has(codigo(e))) && !checks.checked;
       checks.disabled = Boolean(estado.editando);
     }
+    // La misma lectura de minutos alimenta la tabla y el formulario de edición,
+    // incluidos los registros anteriores a la estructura vigente.
+    function minutosGuardados(registro, campo) {
+      if (campo === "otrosMin" && registro.otrosMin == null) {
+        const conocidos = DESCUENTOS.filter((k) => k !== "otrosMin")
+          .reduce((total, k) => total + (Number(registro[k]) || 0), 0);
+        return Math.max(0, (Number(registro.otrasLaboresMin) || 0) - conocidos);
+      }
+      const minutos = Number(registro[campo]);
+      return Number.isFinite(minutos) && minutos > 0 ? minutos : 0;
+    }
+
+    function pintarTablaGuardados() {
+      const trabajadores = estado.empleados
+        .map((e) => ({ empleado: e, registro: registroDe(e) }))
+        .filter((x) => Boolean(x.registro));
+      const cuerpo = panel.querySelector("#tpTablaGuardados");
+      panel.querySelector("#tpGuardadosContador").textContent =
+        trabajadores.length + (trabajadores.length === 1 ? " registro" : " registros");
+      cuerpo.innerHTML = trabajadores.length ? trabajadores.map(({ empleado, registro }) => {
+        const descuentos = DESCUENTOS
+          .map((campo) => ({ campo, minutos: minutosGuardados(registro, campo) }))
+          .filter((item) => item.minutos > 0);
+        const detalle = descuentos.length
+          ? descuentos.map(({ campo, minutos }) => {
+              const etiqueta = CAMPOS.find(([id]) => id === campo)?.[1] || campo;
+              return '<span class="tp-descuento">' + escape(etiqueta) + ': <b>' +
+                escape(horas(minutos)) + ' h</b></span>';
+            }).join("")
+          : '<span class="tp-sin-descuentos">Sin descuentos (0 h)</span>';
+        const activo = estado.editando?.id === registro.id;
+        return '<tr' + (activo ? ' class="tp-fila-editando"' : '') + '>' +
+          '<td class="tp-celda-colaborador"><b>' + escape(nombre(empleado)) + '</b>' +
+            '<small>' + escape(codigo(empleado)) + '</small></td>' +
+          '<td>' + escape(horas(minutosGuardados(registro, "horasLaboralesMin"))) + ' h</td>' +
+          '<td>' + escape(horas(minutosGuardados(registro, "horasExtraMin"))) + ' h</td>' +
+          '<td class="tp-celda-descuentos">' + detalle + '</td>' +
+          '<td class="tp-celda-efectivo"><b>' + escape(horas(registro.tiempoRealMin)) + ' h</b></td>' +
+          '<td class="tp-celda-observaciones">' + escape(registro.observaciones || "—") + '</td>' +
+          '<td><button type="button" class="tp-modificar" data-tp-modificar="' +
+             escape(codigo(empleado)) + '"' + (estado.editando ? ' disabled' : '') +
+             ' aria-label="Modificar tiempos de ' + escape(nombre(empleado)) + '">' +
+             (activo ? 'Modificando…' : 'Modificar') + '</button></td></tr>';
+      }).join("")
+      : '<tr><td colspan="7" class="tp-tabla-vacia">' +
+          'Todavía no hay colaboradores con tiempos guardados para esta fecha.' +
+        '</td></tr>';
+    }
+
     function pintar() {
       const actuales = visibles();
       lista.innerHTML = actuales.length ? actuales.map((e) => {
         const id = codigo(e), tipo = estadoDe(e);
-        const editando = estado.editando?.codigo === id;
         const selector = tipo === "guardado"
           ? '<span class="tp-persona-check" aria-hidden="true">✓</span>'
           : '<input type="checkbox" data-tp-empleado="' + escape(id) +
             '" aria-label="Seleccionar ' + escape(nombre(e)) + '"' +
             (estado.seleccionados.has(id) ? ' checked' : '') +
             (estado.editando ? ' disabled' : '') + '>';
-        const accion = tipo === "guardado"
-          ? '<button type="button" class="tp-modificar" data-tp-modificar="' + escape(id) +
-            '"' + (editando ? ' disabled' : '') + '>' +
-            (editando ? 'Modificando…' : 'Modificar tiempos') + '</button>'
-          : '';
-        return '<div class="tp-persona' + (tipo === "guardado" ? ' tp-persona-con-accion' : '') +
-          (editando ? ' tp-en-edicion' : '') + '">' +
+        return '<div class="tp-persona">' +
           selector + '<span><b>' + escape(nombre(e)) + '</b><small>' + escape(id) + '</small></span>' +
-          '<em class="tp-etiqueta tp-' + tipo + '">' + tipo.toUpperCase() + '</em>' +
-          accion + '</div>';
+          '<em class="tp-etiqueta tp-' + tipo + '">' + tipo.toUpperCase() + '</em></div>';
       }).join("") : '<p class="tp-vacio">' +
         (estado.empleados.length
           ? 'No hay colaboradores para este filtro. Prueba con Pendientes o Guardados.'
@@ -218,6 +271,7 @@
       // no hay selección múltiple para evitar cambios accidentales.
       panel.querySelector(".tp-seleccion").hidden = estado.filtro === "guardados";
       seleccion();
+      pintarTablaGuardados();
       const porFecha = estado.guardados.filter((r) => r.fecha === fechaPrincipal.value);
       const cola = porFecha.filter(enCola);
       panel.querySelector("#tpTotalCola").textContent = "(" + cola.length + ")";
@@ -279,15 +333,7 @@
       estado.seleccionados.clear();
       estado.filtro = "guardados";
       CAMPOS.forEach(([campo]) => {
-        let minutos = Number(guardado[campo]);
-        // Compatibilidad con registros anteriores a la estructura actual: los
-        // descuentos sin desglose se muestran en Otros, sin perder minutos.
-        if (campo === "otrosMin" && guardado.otrosMin == null) {
-          const conocidos = DESCUENTOS.filter((k) => k !== "otrosMin")
-            .reduce((acc, k) => acc + (Number(guardado[k]) || 0), 0);
-          minutos = Math.max(0, (Number(guardado.otrasLaboresMin) || 0) - conocidos);
-        }
-        getCampo(campo).value = horas(Number.isFinite(minutos) ? minutos : 0);
+        getCampo(campo).value = horas(minutosGuardados(guardado, campo));
       });
       panel.querySelector("#tpObservaciones").value = guardado.observaciones || "";
       panel.querySelector("#tpModoEdicionTexto").textContent =
@@ -401,7 +447,7 @@
       input.checked ? estado.seleccionados.add(input.dataset.tpEmpleado) : estado.seleccionados.delete(input.dataset.tpEmpleado);
       seleccion();
     });
-    lista.addEventListener("click", (event) => {
+    panel.querySelector("#tpTablaGuardados").addEventListener("click", (event) => {
       const boton = event.target.closest("[data-tp-modificar]");
       if (boton && !boton.disabled) iniciarEdicion(boton.dataset.tpModificar);
     });
