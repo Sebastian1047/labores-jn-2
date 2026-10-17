@@ -132,12 +132,18 @@ function renderListaColaboradores() {
       const item = visibles[Number(el.dataset.index)];
       colaboradorSeleccionado = item;
       colaboradorSeleccionadoEl.textContent = etiquetaEmpleado(item);
-      window.RegistroLaborTiemposJN?.agregar({
-        codigo: item.codigo || item.docid || item.id,
-        nombre: item.nombre || item.empleadoNombre,
-        fecha: fechaInput.value,
-        rol: rolActivo
-      });
+      if (rolActivo === "cortador") {
+        // En Cortador solo se incorpora a Tiempos al guardar una labor real.
+        window.CorteCortadorRegistro?.seleccionar(item);
+      } else {
+        // El flujo de Transportador y Recogedor no cambia.
+        window.RegistroLaborTiemposJN?.agregar({
+          codigo: item.codigo || item.docid || item.id,
+          nombre: item.nombre || item.empleadoNombre,
+          fecha: fechaInput.value,
+          rol: rolActivo
+        });
+      }
       colaboradorBuscar.value = "";
       colaboradorLista.innerHTML = "";
     });
@@ -172,6 +178,7 @@ function aplicarRol(rol) {
   if (rolActivo !== "cortador") limpiarUbicacionCortador();
   limpiarColaborador();
   aplicarVista("registro");
+  window.CorteCortadorRegistro?.cambiarRol(rolActivo);
   renderRegistrosTiempos();
 
   const url = new URL(window.location.href);

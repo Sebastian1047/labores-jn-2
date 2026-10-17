@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.120" />
+    <link rel="stylesheet" href="./corte-cortador-registro.css?v=1.0.123" />
     <style>
       .corte-tabs,
       .corte-subtabs {
@@ -100,19 +101,14 @@
             <p class="hint" style="margin:5px 0 7px;">Para ensayar: busca <strong>PRUEBA</strong> (PRUEBA001 a PRUEBA004). Datos ficticios y guardado local.</p>
             <div id="colaboradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
             <p class="hint" id="colaboradorSeleccionado" style="margin: 6px 0 0;">Sin cortador seleccionado</p>
-          </div>
-
-          <div id="ubicacionCortador" class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:16px;">
-            <label>Bloque
-              <select id="bloqueCortador" required>
-                <option value="">Seleccione un bloque</option>
-              </select>
-            </label>
-            <label>Cama
-              <select id="camaCortador" required disabled>
-                <option value="">Seleccione primero un bloque</option>
-              </select>
-            </label>
+            <section id="cortadorColaboradoresPanel" class="cc-colaboradores" hidden>
+              <button id="agregarCortador" type="button" class="primary-btn">+ Agregar colaborador</button>
+              <div class="cc-lista-superior">
+                <div class="cc-lista-encabezado"><strong>Colaboradores agregados</strong><span id="contadorCortadores">0 colaboradores</span></div>
+                <p class="hint">Selecciona un nombre para registrar más camas o consultar las que tiene.</p>
+                <div id="listaCortadores" class="cc-chips"><span class="hint">Todavía no hay colaboradores agregados.</span></div>
+              </div>
+            </section>
           </div>
 
           <nav class="corte-subtabs" aria-label="Opciones del formulario de Corte" style="margin-top:16px;margin-bottom:0;">
@@ -123,7 +119,55 @@
       </section>
 
       <section id="vistaRegistro" class="corte-view">
-        <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
+        <section id="registroCortadorNuevo" hidden>
+          <article class="scanner-panel cc-panel">
+            <div class="cc-panel-heading">
+              <div><h2>Registrar labor del cortador</h2><p id="cortadorActivoTexto" class="hint">Selecciona un colaborador.</p></div>
+              <span class="cc-modo">Registro local</span>
+            </div>
+            <form id="registroCortadorForm" class="cc-form">
+              <div id="ubicacionCortador" class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top:16px;">
+                <label>Bloque
+                  <select id="bloqueCortador" required>
+                    <option value="">Seleccione un bloque</option>
+                  </select>
+                </label>
+                <label>Cama
+                  <select id="camaCortador" required disabled>
+                    <option value="">Seleccione primero un bloque</option>
+                  </select>
+                </label>
+              </div>
+
+
+              <label>Observaciones
+                <textarea id="observacionesCortadorNuevo" rows="3" placeholder="Observaciones opcionales"></textarea>
+              </label>
+              <div class="cc-edicion" id="cortadorAvisoEdicion" hidden>
+                <strong id="cortadorTextoEdicion">Modificando registro</strong>
+                <button id="cancelarEdicionCortador" type="button" class="ghost-btn">Cancelar modificación</button>
+              </div>
+              <div class="cc-acciones">
+                <button id="guardarCortador" class="primary-btn" type="submit">Guardar</button>
+                <button id="limpiarCortador" class="ghost-btn" type="button">Limpiar</button>
+              </div>
+            </form>
+            <div id="mensajeRegistroCortador" class="cc-mensaje" role="status" aria-live="polite">Registra el bloque y la cama trabajados por el colaborador.</div>
+          </article>
+          <article class="scanner-panel cc-panel">
+            <div class="cc-panel-heading">
+              <div><h2>Detalle de la jornada</h2><p id="resumenCortador" class="hint">Selecciona un colaborador para consultar sus camas.</p></div>
+              <span id="contadorCamasCortador" class="cc-modo">0 camas</span>
+            </div>
+            <div class="cc-tabla-scroll">
+              <table class="cc-tabla">
+                <thead><tr><th>Bloque</th><th>Cama</th><th>Observaciones</th><th>Acción</th></tr></thead>
+                <tbody id="tablaCortadorRegistros"><tr><td colspan="4">Selecciona un colaborador.</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+        <section id="corteRegistroLegacy" class="workspace" style="grid-template-columns: minmax(0, 1fr);">
           <article class="scanner-panel">
             <div style="margin-bottom:16px;">
               <label>Observaciones
@@ -229,8 +273,9 @@
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./tiempos-comun.js?v=1.0.118"></script>
-    <script src="./corte.js?v=1.0.118"></script>
-    <script src="./tiempos-panel.js?v=1.0.122"></script>
+    <script src="./corte.js?v=1.0.123"></script>
+    <script src="./corte-cortador-registro.js?v=1.0.123"></script>
+    <script src="./tiempos-panel.js?v=1.0.123"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

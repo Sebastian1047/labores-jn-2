@@ -1,0 +1,48 @@
+/* Corte: estructura de Registro de labor solo para Cortador. */
+.app-shell.cc-shell-activo { max-width: 1060px !important; }
+#cortadorColaboradoresPanel[hidden],
+#registroCortadorNuevo[hidden],
+#corteRegistroLegacy[hidden],
+#cortadorAvisoEdicion[hidden] { display:none!important; }
+.cc-colaboradores { display:grid; gap:10px; margin-top:11px; }
+.cc-colaboradores > .primary-btn { justify-self:start; min-height:37px; }
+.cc-lista-superior { margin-top:2px; border:1px solid #c8dcce;border-radius:11px;padding:12px;background:#fbfefb; }
+.cc-lista-encabezado { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap; }
+.cc-lista-encabezado strong { font-size:.9rem; }
+#contadorCortadores { color:#637b6e;font-size:.75rem; }
+.cc-lista-superior .hint { margin:6px 0 10px; }
+.cc-chips { display:flex;align-items:stretch;gap:8px;flex-wrap:wrap; }
+.cc-chips button { display:flex;align-items:center;gap:8px;border:1px solid #a3ccb4;border-radius:9px;background:#edf8f0;color:#235d3e;font:inherit;font-weight:800;font-size:.78rem;padding:9px 11px;cursor:pointer;text-align:left; }
+.cc-chips button.active { background:#187a4d;border-color:#187a4d;color:white; }
+.cc-chips .cc-contador { padding:3px 6px;background:#30795021;border-radius:16px;font-size:.7rem;white-space:nowrap; }
+.cc-chips button.active .cc-contador { background:#ffffff2b; }
+.cc-panel { margin-bottom:13px; }
+.cc-panel-heading { display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px; }
+.cc-panel-heading h2 { font-size:1.02rem;margin:0 0 5px; }
+.cc-panel-heading .hint { margin:0; }
+.cc-modo { border-radius:25px;background:#eaf5ed;color:#216341;padding:6px 10px;font-size:.75rem;font-weight:800; }
+.cc-form { display:grid;gap:13px; }
+.cc-form #ubicacionCortador { margin-top:0!important; margin-bottom:0; }
+.cc-form textarea { width:100%;min-height:74px;resize:vertical;margin-top:6px; }
+.cc-acciones { display:flex;align-items:center;gap:9px;flex-wrap:wrap; }
+.cc-acciones button { min-height:38px; }
+.cc-edicion { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 12px;border:1px solid #8fbda2;border-radius:10px;background:#e6f4eb;color:#1e5b3d;font-size:.84rem; }
+.cc-mensaje { background:#e8f5ed;color:#205f3d;border:1px solid #c5e2ce;border-radius:10px;padding:11px 13px;font-size:.83rem;margin-top:13px; }
+.cc-mensaje.error { background:#fff1ec;color:#a13d34;border-color:#ecbdb3; }
+.cc-tabla-scroll { overflow-x:auto;max-width:100%; }
+.cc-tabla { width:100%;min-width:650px;border-collapse:collapse;font-size:.81rem; }
+.cc-tabla th { text-align:left;background:#eef5ef;color:#345a40;font-size:.73rem;white-space:nowrap; }
+.cc-tabla td,.cc-tabla th { padding:11px 10px;border-bottom:1px solid #dfe9e1;vertical-align:middle; }
+.cc-tabla tbody tr:last-child td { border-bottom:0; }
+.cc-tabla tbody tr:hover { background:#f2f9f5; }
+.cc-tabla tr.cc-editando { background:#e8f6ec; }
+.cc-tabla td:nth-child(3) { max-width:320px;overflow-wrap:anywhere; }
+.cc-modificar { border:1px solid #8dbca0;border-radius:8px;background:#e6f4ec;color:#206041;font:inherit;font-size:.8rem;font-weight:800;padding:7px 12px;cursor:pointer; }
+.cc-modificar:hover:not(:disabled) { background:#cfebda; }
+.cc-modificar:disabled { opacity:.65;cursor:default; }
+.cc-chips button:focus-visible,.cc-modificar:focus-visible { outline:3px solid #80bfa0;outline-offset:2px; }
+@media(max-width:640px) {
+  .cc-chips button { width:100%;justify-content:space-between; }
+  .cc-form #ubicacionCortador { grid-template-columns:1fr!important; }
+  .cc-acciones button { flex:1; }
+}

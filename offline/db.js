@@ -2,7 +2,7 @@
 // Se usa nativo, sin librería externa: solo lectura/escritura offline-first para Pronósticos y Siembra.
 
 const DB_NAME = "labores-jn-offline";
-const DB_VERSION = 22;
+const DB_VERSION = 23;
 
 function abrirDb() {
   return new Promise((resolve, reject) => {
@@ -203,6 +203,12 @@ function abrirDb() {
         const tiempos = db.createObjectStore("siembraRendimientoTiempos", { keyPath: "id" });
         tiempos.createIndex("fecha", "fecha");
         tiempos.createIndex("syncStatus", "syncStatus");
+      }
+      // Corte / Cortador: registro de camas independiente del resto de funciones.
+      if (!db.objectStoreNames.contains("cortadorRendimientoRegistros")) {
+        const cortes = db.createObjectStore("cortadorRendimientoRegistros", { keyPath: "id" });
+        cortes.createIndex("fecha", "fecha");
+        cortes.createIndex("colaborador", "colaborador");
       }
     };
 

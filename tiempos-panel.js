@@ -384,6 +384,17 @@
         let desdeLabor = obtenerLabor(fecha, cfg.roles ? estado.rol : "");
         // Bandejas conserva sus registros de labor en IndexedDB.
         // Recuperar solo los sembradores de la fecha, incluso sin catálogo.
+        // Solo Cortador recupera sus trabajadores desde los registros de labor
+        // persistidos. Transportador y Recogedor siguen con su flujo anterior.
+        if (modulo === "corte" && estado.rol === "cortador") {
+          const laboresCortador = await OfflineDb.getAll("cortadorRendimientoRegistros");
+          desdeLabor = desdeLabor.concat(laboresCortador
+            .filter((r) => r.fecha === fecha)
+            .map((r) => ({
+              codigo: String(r.colaborador || ""),
+              nombre: r.colaboradorNombre || String(r.colaborador || "")
+            })));
+        }
         if (modulo === "bandejas-enraizamiento" || modulo === "siembra-rendimiento") {
           const esBandejas = modulo === "bandejas-enraizamiento";
           const trabajos = await OfflineDb.getAll(esBandejas ? "bandejasEnraizamiento" : "siembraRendimientoRegistros");
