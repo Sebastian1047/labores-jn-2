@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#187a4d">
     <link rel="stylesheet" href="./styles.css">
     <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.120" />
-    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.114">
+    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.121">
   </head>
   <body>
     <main class="app-shell">
@@ -102,6 +102,10 @@
                 <label>Observaciones
                   <textarea id="desbotonadoObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
                 </label>
+                <div id="avisoEdicionCama" class="aviso-edicion-cama" hidden>
+                  <span id="textoEdicionCama">Modificando registro de labor.</span>
+                  <button type="button" id="btnCancelarEdicionCama" class="ghost-btn">Cancelar modificación</button>
+                </div>
                 <div class="action-row">
                   <button class="primary-btn" type="submit">Guardar</button>
                   <button class="ghost-btn" type="button" id="btnLimpiarCama">Limpiar</button>
@@ -141,10 +145,11 @@
                   <th>Cama</th>
                   <th>Medios cuadros</th>
                   <th>Observaciones</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody id="tablaRegistros">
-                <tr><td colspan="5">Todavía no hay camas registradas.</td></tr>
+                <tr><td colspan="6">Todavía no hay camas registradas.</td></tr>
               </tbody>
             </table>
           </div>
@@ -245,7 +250,7 @@
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./tiempos-comun.js?v=1.0.118"></script>
-    <script src="./desbotonado-mallas.js?v=1.0.118"></script>
+    <script src="./desbotonado-mallas.js?v=1.0.121"></script>
     <script src="./tiempos-panel.js?v=1.0.120"></script>
     <script src="./offline/register-sw.js"></script>
   </body>

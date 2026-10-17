@@ -28,3 +28,21 @@
 .colaborador-jornada-btn.active .camas-badge{background:rgba(255,255,255,.2)}
 .colaborador-jornada-btn:focus-visible{outline:3px solid #8abc9b;outline-offset:2px}
 @media(max-width:640px){.colaborador-alta>button{width:100%}.colaborador-jornada-btn{width:100%;justify-content:space-between}}
+
+/* Edición de camas existentes sin crear registros adicionales. */
+#avisoEdicionCama[hidden]{display:none!important}
+.aviso-edicion-cama{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:9px;padding:12px;border:1px solid #86b69c;
+  border-radius:10px;background:#e8f5ed;color:#205d3d;font-weight:750
+}
+.aviso-edicion-cama .ghost-btn{min-height:34px;white-space:nowrap}
+.btn-modificar-cama{
+  min-height:32px;padding:6px 12px;border:1px solid #75b393;border-radius:9px;
+  background:#e7f4eb;color:#195a38;font:inherit;font-size:.82rem;
+  font-weight:800;cursor:pointer
+}
+.btn-modificar-cama:hover:not(:disabled){background:#cce9d9}
+.btn-modificar-cama:disabled{cursor:default;opacity:.75}
+.fila-cama-editando{background:#eaf7ef}
+.btn-modificar-cama:focus-visible{outline:3px solid #7bbba1;outline-offset:2px}

@@ -30,6 +30,8 @@ const tiemposResultState = document.querySelector("#tiemposResultState");
 const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 
 const registros = [];
+// Índice del registro de cama que está abierto para corregir; null significa nuevo registro.
+let indiceRegistroEditando = null;
 // Los colaboradores y sus camas se conservan al alternar trabajadores y vistas.
 const colaboradoresJornada = new Map();
 const SESSION_LABOR_KEY = "laboresJn:desbotonado-mallas:jornada:" +
@@ -112,10 +114,11 @@ function normalizarNumeroCama(valor) {
   const sinPrefijo = String(valor ?? "").trim().replace(/^CAMA[\s#:.–-]+/i, "");
   return normalizarUbicacion(sinPrefijo);
 }
-function registroCamaDuplicado({ fecha, colaborador, tipoLabor, bloque, cama }) {
+function registroCamaDuplicado({ fecha, colaborador, tipoLabor, bloque, cama, excluirIndice = null }) {
   const bloqueNormalizado = normalizarUbicacion(bloque);
   const camaNormalizada = normalizarNumeroCama(cama);
-  return registros.some((r) =>
+  return registros.some((r, indice) =>
+    indice !== excluirIndice &&
     r.fecha === fecha &&
     String(r.colaborador) === String(colaborador) &&
     String(r.tipoLabor || "").trim() === String(tipoLabor || "").trim() &&
@@ -217,7 +220,8 @@ function cargarCamas(filtro = "") {
           const ocupada = trabajador && tipoLabor && registroCamaDuplicado({
             fecha: fechaInput.value,
             colaborador: trabajador.codigo,
-            tipoLabor, bloque, cama
+            tipoLabor, bloque, cama,
+            excluirIndice: indiceRegistroEditando
           });
           return ocupada
             ? `<div class="pending-item" aria-disabled="true" style="opacity:.6;padding:8px 10px"><span>Cama ${escaparHtml(cama)} · Ya registrada para esta labor</span></div>`
@@ -348,12 +352,51 @@ function agregarColaboradorActual() {
 }
 
 function limpiarCamposCama() {
+  indiceRegistroEditando = null;
+  document.querySelector("#avisoEdicionCama").hidden = true;
   form.reset();
   bloqueInput.value = "";
   bloqueLista.innerHTML = "";
   camaBuscar.value = "";
   camaLista.innerHTML = "";
 }
+
+function iniciarEdicionCama(indice) {
+  const registro = registros[indice];
+  const trabajador = colaboradorActual();
+  if (!registro || !trabajador || registro.fecha !== fechaInput.value ||
+      String(registro.colaborador) !== trabajador.codigo) {
+    return alert("No se encontró esta cama para el colaborador y la fecha seleccionados.");
+  }
+  limpiarCamposCama();
+  indiceRegistroEditando = indice;
+  document.querySelector("#tipoLabor").value = registro.tipoLabor;
+  bloqueInput.value = registro.bloque;
+  camaBuscar.value = registro.cama;
+  document.querySelector("#mediosCuadros").value = registro.mediosCuadros;
+  desbotonadoObservaciones.value = registro.observaciones || "";
+  document.querySelector("#textoEdicionCama").textContent =
+    `Modificando ${registro.tipoLabor} · Bloque ${registro.bloque} · Cama ${registro.cama} de ${trabajador.nombre}`;
+  document.querySelector("#avisoEdicionCama").hidden = false;
+  document.querySelector("#apiMensaje").textContent =
+    "Modifica los datos necesarios y pulsa Guardar para actualizar esta misma fila.";
+  render();
+  const tipoInput = document.querySelector("#tipoLabor");
+  tipoInput.scrollIntoView({ behavior: "smooth", block: "center" });
+  tipoInput.focus({ preventScroll: true });
+}
+
+document.querySelector("#tablaRegistros").addEventListener("click", (event) => {
+  const boton = event.target.closest("[data-registro-indice]");
+  if (boton) iniciarEdicionCama(Number(boton.dataset.registroIndice));
+});
+
+document.querySelector("#btnCancelarEdicionCama").addEventListener("click", () => {
+  limpiarCamposCama();
+  document.querySelector("#apiMensaje").textContent =
+    "Modificación cancelada. Los registros guardados no han cambiado.";
+  render();
+});
 
 function renderColaboradoresJornada() {
   const lista = document.querySelector("#colaboradoresRegistradosLista");
@@ -406,14 +449,21 @@ function render() {
     : "Selecciona un colaborador agregado para consultar sus camas.";
 
   tbody.innerHTML = registrosActuales.length
-    ? registrosActuales.map((r) => `<tr>
-        <td>${escaparHtml(r.tipoLabor)}</td>
-        <td>${escaparHtml(r.bloque)}</td>
-        <td>${escaparHtml(r.cama)}</td>
-        <td>${numero(r.mediosCuadros, 1)}</td>
-        <td>${escaparHtml(r.observaciones || "—")}</td>
-      </tr>`).join("")
-    : '<tr><td colspan="5">' + (trabajador
+    ? registrosActuales.map((r) => {
+        const indice = registros.indexOf(r);
+        const editando = indiceRegistroEditando === indice;
+        return `<tr${editando ? ' class="fila-cama-editando"' : ''}>
+          <td>${escaparHtml(r.tipoLabor)}</td>
+          <td>${escaparHtml(r.bloque)}</td>
+          <td>${escaparHtml(r.cama)}</td>
+          <td>${numero(r.mediosCuadros, 1)}</td>
+          <td>${escaparHtml(r.observaciones || "—")}</td>
+          <td><button type="button" class="btn-modificar-cama"
+            data-registro-indice="${indice}"${editando ? ' disabled' : ''}>
+            ${editando ? "Modificando…" : "Modificar"}</button></td>
+        </tr>`;
+      }).join("")
+    : '<tr><td colspan="6">' + (trabajador
       ? "Este colaborador todavía no tiene camas registradas."
       : "Selecciona un colaborador de la lista superior.") + '</td></tr>';
 
@@ -435,8 +485,17 @@ form.addEventListener("submit", (event) => {
   if (!bloque) return alert("Ingresa el bloque.");
   if (!cama) return alert("Ingresa el número de cama.");
   const tipoLabor = document.querySelector("#tipoLabor").value;
+  const anterior = indiceRegistroEditando === null
+    ? null
+    : registros[indiceRegistroEditando];
+  if (indiceRegistroEditando !== null &&
+      (!anterior || anterior.fecha !== fechaInput.value ||
+       String(anterior.colaborador) !== trabajador.codigo)) {
+    return alert("El registro que intentas modificar ya no corresponde a este colaborador o fecha.");
+  }
   if (registroCamaDuplicado({
-    fecha: fechaInput.value, colaborador: trabajador.codigo, tipoLabor, bloque, cama
+    fecha: fechaInput.value, colaborador: trabajador.codigo, tipoLabor, bloque, cama,
+    excluirIndice: indiceRegistroEditando
   })) {
     const mensaje = "Esta cama ya fue registrada por este colaborador para el mismo tipo de labor en la fecha seleccionada. Elige otra cama.";
     document.querySelector("#apiMensaje").textContent = mensaje;
@@ -446,7 +505,7 @@ form.addEventListener("submit", (event) => {
   if (!Number.isFinite(medios) || medios <= 0 || medios > 16) {
     return alert("Revisa los medios cuadros trabajados (entre 0,5 y 16).");
   }
-  registros.push({
+  const datos = {
     fecha: fechaInput.value,
     colaborador: trabajador.codigo,
     colaboradorNombre: trabajador.nombre,
@@ -455,21 +514,32 @@ form.addEventListener("submit", (event) => {
     cama,
     mediosCuadros: medios,
     observaciones: desbotonadoObservaciones.value.trim()
-  });
+  };
+  const esModificacion = indiceRegistroEditando !== null;
+  if (esModificacion) {
+    // Actualizar en la misma posición: no agregar una nueva cama ni borrar datos de otras personas.
+    registros[indiceRegistroEditando] = { ...anterior, ...datos };
+  } else {
+    registros.push(datos);
+  }
   guardarJornada();
-  // Guardar labor solo confirma la labor; NO crea un tiempo.
+  // Guardar la labor no asigna horas; Tiempos mantiene su propio flujo de guardado.
   window.RegistroLaborTiemposJN?.guardarLabor({
     codigo: trabajador.codigo,
     nombre: trabajador.nombre,
     fecha: fechaInput.value
   });
-  render();
   limpiarCamposCama();
-  document.querySelector("#apiMensaje").textContent =
-    `Guardado: bloque ${bloque}, cama ${cama} para ${trabajador.nombre}.`;
+  render();
+  document.querySelector("#apiMensaje").textContent = esModificacion
+    ? `Registro actualizado: bloque ${bloque}, cama ${cama} para ${trabajador.nombre}.`
+    : `Guardado: bloque ${bloque}, cama ${cama} para ${trabajador.nombre}.`;
 });
 
-document.querySelector("#btnLimpiarCama").addEventListener("click", limpiarCamposCama);
+document.querySelector("#btnLimpiarCama").addEventListener("click", () => {
+  limpiarCamposCama();
+  render();
+});
 
 fechaInput.addEventListener("change", () => {
   empleadoSelect.innerHTML = '<option value=""></option>';
