@@ -97,6 +97,11 @@ async function verFechas() {
     }));
 
   render();
+  // Refrescar los colaboradores del formulario inferior si Detalles recuperó
+  // siembras recientes. Los tiempos usan su fecha independiente.
+  window.dispatchEvent(new CustomEvent("laboresjn:registro-labor", {
+    detail: { fecha: document.querySelector("#fecha")?.value || "" }
+  }));
 }
 
 function calcularTotales() {
@@ -211,6 +216,7 @@ exportarBtn.addEventListener("click", exportarExcel);
   const hoy = new Date();
   fechaFinalInput.value = SyncEngine.fechaLocalISO(hoy);
   fechaInicioInput.value = SyncEngine.fechaLocalISO(hoy);
+  document.querySelector("#fecha").value = SyncEngine.fechaLocalISO(hoy);
 
   const empleados = await OfflineDb.getAll("empleados");
   empleadosPorCodigo = new Map(empleados.map((e) => [e.codigo, e]));

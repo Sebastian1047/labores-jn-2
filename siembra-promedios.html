@@ -7,6 +7,7 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.126" />
   </head>
   <body>
     <main class="app-shell">
@@ -58,13 +59,27 @@
           </table>
         </div>
       </article>
+
+      <section class="detalle-tiempos-siembra" aria-label="Tiempos de Siembra Campo" style="margin-top:18px;">
+        <article class="scanner-panel" style="margin-bottom:12px;">
+          <h2 style="margin:0 0 7px;font-size:1.05rem;">Tiempos de Siembra Campo</h2>
+          <p class="hint" style="margin:0 0 12px;">Registra y modifica los tiempos diarios de los sembradores. Los registros se comparten con Siembra Rendimiento.</p>
+          <label style="display:grid;gap:6px;max-width:280px;font-weight:750;">Fecha de los tiempos
+            <input id="fecha" type="date" required aria-label="Fecha para registrar tiempos" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:9px;background:var(--panel);color:var(--text);" />
+          </label>
+          <p class="hint" style="margin:9px 0 0;">La fecha de los tiempos es independiente del rango utilizado en Detalles. «Guardar horas» en el resumen superior y «Guardar tiempos» en este formulario son acciones distintas.</p>
+        </article>
+        <section id="vistaTiempos"></section>
+      </section>
     </main>
 
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./offline/vendor/xlsx.full.min.js"></script>
-    <script src="./siembra-promedios.js"></script>
+    <script src="./tiempos-comun.js?v=1.0.118"></script>
+    <script src="./siembra-promedios.js?v=1.0.126"></script>
+    <script src="./tiempos-panel.js?v=1.0.126"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
