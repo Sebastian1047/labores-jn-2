@@ -68,9 +68,15 @@
   }
 
   function mensaje(texto, error=false) {
-    const target=document.getElementById("dtMensaje");
-    target.textContent=texto;
-    target.classList.toggle("dt-error",Boolean(error));
+    for(const [id,activo] of [
+      ["dtMensaje",estado.modo==="grupal"],
+      ["dtMensajeIndividual",estado.modo==="individual"]
+    ]){
+      const target=document.getElementById(id);
+      if(!target)continue;
+      target.textContent=activo?texto:"";
+      target.classList.toggle("dt-error",activo&&Boolean(error));
+    }
   }
   function calcular(root) {
     const inputs=[...root.querySelectorAll("[data-dt-campo]")];
@@ -111,14 +117,17 @@
   function modo(tipo){
     if(!["grupal","individual"].includes(tipo))return;
     estado.modo=tipo;
+    estado.expandido=null;
     estado.seleccionados=new Set(tipo==="grupal"?estado.grupos.map(g=>String(g.codigo)):[]);
+    document.getElementById("tiemposSiembraCampo").hidden=tipo==="individual";
+    mensaje("");
     botonGrupal.classList.toggle("active",tipo==="grupal");
     botonIndividual.classList.toggle("active",tipo==="individual");
     botonGrupal.setAttribute("aria-pressed",String(tipo==="grupal"));
     botonIndividual.setAttribute("aria-pressed",String(tipo==="individual"));
     document.getElementById("instruccionesSeleccionTiempo").textContent=tipo==="grupal"
       ? "Tiempo grupal: todos los colaboradores están seleccionados. Desmarca los que requieren un registro individual."
-      : "Tiempo individual: selecciona únicamente una persona. Las demás se atenúan mientras registras sus tiempos.";
+      : "Tiempo individual: selecciona una persona o pulsa su nombre para desplegar su formulario debajo. Las demás se atenúan.";
     document.getElementById("dtModoActual").textContent=tipo==="grupal"?"grupales":"individuales";
     pintarTabla();
     pintarResumen();
@@ -143,7 +152,8 @@
     const resultado=[];
     for(const g of estado.grupos){
       const id=String(g.codigo),checked=estado.seleccionados.has(id);
-      const guardado=guardadoPara(id),expandido=estado.expandido===id;
+      const guardado=guardadoPara(id),expandido=estado.expandido===id &&
+        (estado.modo!=="individual"||checked);
       const atenuado=estado.modo==="individual"&&!checked;
       resultado.push('<tr class="dt-fila'+(atenuado?' dt-atenuado':'')+'">'+
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
@@ -215,6 +225,7 @@
     const id=input.dataset.dtPersona;
     if(estado.modo==="individual"){
       estado.seleccionados.clear();
+      estado.expandido=input.checked?id:null;
       if(input.checked)estado.seleccionados.add(id);
     }else{
       if(input.checked)estado.seleccionados.add(id);
@@ -227,7 +238,14 @@
     const btn=event.target.closest("[data-dt-abrir]");
     if(!btn)return;
     const id=btn.dataset.dtAbrir;
-    estado.expandido=estado.expandido===id?null:id;
+    if(estado.modo==="individual"){
+      const abrir=estado.expandido!==id;
+      estado.seleccionados=new Set(abrir?[id]:[]);
+      estado.expandido=abrir?id:null;
+      pintarResumen();
+    }else{
+      estado.expandido=estado.expandido===id?null:id;
+    }
     pintarTabla();
   });
   tabla.addEventListener("input",(event)=>{
@@ -269,6 +287,7 @@
       }else{
         const ids=new Set(estado.grupos.map(g=>String(g.codigo)));
         for(const id of estado.seleccionados)if(!ids.has(id))estado.seleccionados.delete(id);
+        if(estado.expandido&&!ids.has(estado.expandido))estado.expandido=null;
         if(estado.modo==="grupal"&&!estado.seleccionados.size&&!contenedor.children.length)
           estado.seleccionados=new Set(ids);
       }
