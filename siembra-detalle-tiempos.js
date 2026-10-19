@@ -55,8 +55,12 @@
   function camposFormulario(valores, tipo) {
     return '<div class="dt-grid">' + CAMPOS.map(([campo,etiqueta]) =>
       '<label class="dt-campo"><span>'+escapar(etiqueta)+'</span>'+
-      '<input type="text" inputmode="decimal" data-dt-campo="'+campo+'" value="'+
-      escapar(valores[campo] ?? "0")+'" autocomplete="off" '+(!estado.editable?'disabled':'')+'></label>'
+      '<input type="text" inputmode="decimal" data-dt-campo="'+campo+'"'+
+      (campo==="horasLaboralesMin" ? ' data-dt-base-min="'+
+        Math.round(TiemposLaboresJN.leerHoras({value:valores[campo]})*60)+'"' : '')+
+      ' value="'+escapar(valores[campo] ?? "0")+'" autocomplete="off" '+
+      (campo==="horasLaboralesMin" ? 'title="Tiempo restante para la labor, sin horas extras. Se actualiza con los descuentos." ' : '')+
+      (!estado.editable?'disabled':'')+'></label>'
     ).join("") +
     '<label class="dt-campo dt-obs"><span>Observaciones</span>'+
       '<textarea data-dt-observaciones rows="2" '+(!estado.editable?'disabled':'')+'>'+
@@ -78,17 +82,32 @@
       target.classList.toggle("dt-error",activo&&Boolean(error));
     }
   }
-  function calcular(root) {
+  function calcular(root, editado=null) {
     const inputs=[...root.querySelectorAll("[data-dt-campo]")];
     const porCampo=new Map(inputs.map(i=>[i.dataset.dtCampo,i]));
     const leidos=new Map([...porCampo].map(([k,input])=>[k,TiemposLaboresJN.leerHoras(input)]));
     const valido=[...leidos.values()].every(n=>Number.isFinite(n) && n>=0);
-    const disponible=(leidos.get("horasLaboralesMin")||0)+(leidos.get("horasExtraMin")||0);
+    const programado=porCampo.get("horasLaboralesMin");
     const descuento=DESCUENTOS.reduce((t,k)=>t+(leidos.get(k)||0),0);
+    if(valido&&programado){
+      if(editado===programado){
+        // Si se ajusta manualmente el tiempo visible, recuperar la jornada base
+        // sumando los descuentos actuales. Así sigue siendo posible corregir jornadas.
+        programado.dataset.dtBaseMin=String(Math.round(
+          (leidos.get("horasLaboralesMin")+descuento)*60));
+      }else{
+        // Nunca descontar dos veces: la jornada original se mantiene aparte.
+        const baseMin=Number(programado.dataset.dtBaseMin);
+        if(Number.isFinite(baseMin))
+          programado.value=formato(Math.max(0,baseMin-Math.round(descuento*60)));
+      }
+    }
+    const baseMin=Number(programado?.dataset.dtBaseMin);
+    const disponible=baseMin/60+(leidos.get("horasExtraMin")||0);
     const tiempo=disponible-descuento;
     const indicador=root.querySelector("[data-dt-calculo]");
     if (indicador) {
-      indicador.textContent=valido&&disponible>0&&tiempo>=0
+      indicador.textContent=valido&&Number.isFinite(baseMin)&&disponible>0&&tiempo>=0
         ? "Tiempo efectivo: "+formato(Math.round(tiempo*60))+" h"
         : "Revisa los tiempos: las actividades no deben superar el disponible.";
     }
@@ -103,6 +122,12 @@
       if(!Number.isFinite(n)||n<0)throw Error("Los tiempos deben ser números no negativos.");
       data[input.dataset.dtCampo]=Math.round(n*60);
     }
+    // En pantalla se ve el tiempo tras descuentos; persistimos la jornada base
+    // para que al editar o calcular rendimientos los descuentos se resten solo una vez.
+    const campoProgramado=root.querySelector('[data-dt-campo="horasLaboralesMin"]');
+    data.horasLaboralesMin=Number(campoProgramado?.dataset.dtBaseMin);
+    if(!Number.isFinite(data.horasLaboralesMin)||data.horasLaboralesMin<0)
+      throw Error("Revisa el tiempo programado.");
     const disponible=data.horasLaboralesMin+data.horasExtraMin;
     const otras=DESCUENTOS.reduce((acc,k)=>acc+data[k],0);
     if(!disponible)throw Error("Ingresa un tiempo programado o horas extra mayor que cero.");
@@ -250,7 +275,7 @@
   });
   tabla.addEventListener("input",(event)=>{
     const form=event.target.closest(".dt-form-inline");
-    if(form)calcular(form);
+    if(form)calcular(form,event.target);
   });
   tabla.addEventListener("submit",async(event)=>{
     const form=event.target.closest("[data-dt-form-persona]");
@@ -271,7 +296,7 @@
   });
   contenedor.addEventListener("input",(event)=>{
     const form=event.target.closest("#dtFormGeneral");
-    if(form)calcular(form);
+    if(form)calcular(form,event.target);
   });
 
   window.SiembraDetalleTiempos={
