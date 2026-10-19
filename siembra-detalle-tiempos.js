@@ -127,7 +127,7 @@
     botonIndividual.setAttribute("aria-pressed",String(tipo==="individual"));
     document.getElementById("instruccionesSeleccionTiempo").textContent=tipo==="grupal"
       ? "Tiempo grupal: todos los colaboradores están seleccionados. Desmarca los que requieren un registro individual."
-      : "Tiempo individual: selecciona una persona o pulsa su nombre para desplegar su formulario debajo. Las demás se atenúan.";
+      : "Tiempo individual: selecciona una persona o pulsa su nombre para desplegar su formulario debajo. Las demás se atenúan únicamente después de seleccionar una persona.";
     document.getElementById("dtModoActual").textContent=tipo==="grupal"?"grupales":"individuales";
     pintarTabla();
     pintarResumen();
@@ -154,7 +154,7 @@
       const id=String(g.codigo),checked=estado.seleccionados.has(id);
       const guardado=guardadoPara(id),expandido=estado.expandido===id &&
         (estado.modo!=="individual"||checked);
-      const atenuado=estado.modo==="individual"&&!checked;
+      const atenuado=estado.modo==="individual"&&estado.seleccionados.size>0&&!checked;
       resultado.push('<tr class="dt-fila'+(atenuado?' dt-atenuado':'')+'">'+
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
           '" '+(checked?'checked ':'')+(!estado.editable?'disabled ':'')+'></td>'+
