@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#187a4d">
     <link rel="stylesheet" href="./styles.css">
     <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.120" />
-    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.121">
+    <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.124">
   </head>
   <body>
     <main class="app-shell">
@@ -24,6 +24,13 @@
           <a href="./menu.html" class="pill">← Menú</a>
         </section>
       </header>
+
+      <nav class="labor-actividad-tabs" aria-label="Selecciona la actividad de Desbotón y Mallas">
+        <button type="button" class="labor-actividad-tab active" data-desbotonado-labor="Desbotón Pompón" aria-pressed="true">Desbotón Pompón</button>
+        <button type="button" class="labor-actividad-tab" data-desbotonado-labor="Desbotón Spider" aria-pressed="false">Desbotón Spider</button>
+        <button type="button" class="labor-actividad-tab" data-desbotonado-labor="Malla" aria-pressed="false">Malla</button>
+      </nav>
+      <p class="labor-actividad-info">Actividad seleccionada: <strong id="laborSeleccionadaTexto">Desbotón Pompón</strong>. Cada actividad conserva sus colaboradores, camas y tiempos por separado.</p>
 
       <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
         <article class="scanner-panel">
@@ -77,16 +84,8 @@
             </div>
 
             <div>
-              <span class="scan-label">Registrar cama del colaborador activo</span>
+              <span class="scan-label" id="encabezadoRegistroLabor">Registrar cama · Desbotón Pompón</span>
               <form id="formDesbotonado" class="form-grid">
-                <label>Desbotón o malla
-                  <select id="tipoLabor" required>
-                    <option value="">Seleccione una opción</option>
-                    <option value="Desbotón Pompón">Desbotón Pompón</option>
-                    <option value="Desbotón Spider">Desbotón Spider</option>
-                    <option value="Malla">Malla</option>
-                  </select>
-                </label>
                 <label>Bloque
                   <input id="bloque" autocomplete="off" placeholder="Buscar bloque por número…" required>
                   <div id="bloqueLista" class="pending-list" style="max-height:150px;margin-top:8px"></div>
@@ -132,7 +131,7 @@
         <section class="scanner-panel">
           <div class="panel-heading">
             <div>
-              <span class="scan-label">Detalle de la jornada</span>
+              <span class="scan-label" id="tituloDetalleLabor">Detalle de la jornada · Desbotón Pompón</span>
               <p class="hint" id="nombreResumenTabla">Selecciona un colaborador para consultar sus camas.</p>
             </div>
           </div>
@@ -250,8 +249,8 @@
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./tiempos-comun.js?v=1.0.118"></script>
-    <script src="./desbotonado-mallas.js?v=1.0.121"></script>
-    <script src="./tiempos-panel.js?v=1.0.122"></script>
+    <script src="./desbotonado-mallas.js?v=1.0.124"></script>
+    <script src="./tiempos-panel.js?v=1.0.124"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

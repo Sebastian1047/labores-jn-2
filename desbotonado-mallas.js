@@ -29,6 +29,8 @@ const tiemposResultStatus = document.querySelector("#tiemposResultStatus");
 const tiemposResultState = document.querySelector("#tiemposResultState");
 const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 
+const TIPOS_LABOR = ["Desbotón Pompón", "Desbotón Spider", "Malla"];
+let tipoLaborActivo = TIPOS_LABOR[0];
 const registros = [];
 // Índice del registro de cama que está abierto para corregir; null significa nuevo registro.
 let indiceRegistroEditando = null;
@@ -38,8 +40,8 @@ const SESSION_LABOR_KEY = "laboresJn:desbotonado-mallas:jornada:" +
   (JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "local");
 let catalogos = { empleados: [], camas: [] };
 
-function claveColaborador(fecha, codigo) {
-  return String(fecha || "") + "|" + String(codigo || "");
+function claveColaborador(fecha, codigo, tipoLabor = tipoLaborActivo) {
+  return [String(fecha || ""), String(tipoLabor || "Sin clasificar"), String(codigo || "")].join("|");
 }
 
 function guardarJornada() {
@@ -56,25 +58,26 @@ function guardarJornada() {
 function restaurarJornada() {
   try {
     const datos = JSON.parse(sessionStorage.getItem(SESSION_LABOR_KEY) || "{}");
-    if (Array.isArray(datos.colaboradores)) {
-      datos.colaboradores.forEach((c) => {
-        if (c?.fecha && c?.codigo) colaboradoresJornada.set(
-          claveColaborador(c.fecha, c.codigo),
-          { fecha: String(c.fecha), codigo: String(c.codigo), nombre: String(c.nombre || c.codigo) }
-        );
+    if (Array.isArray(datos.colaboradores)) datos.colaboradores.forEach((c) => {
+      if (!c?.fecha || !c?.codigo) return;
+      // Los colaboradores antiguos sin una actividad conocida NO se mezclan.
+      const tipo = TIPOS_LABOR.includes(c.tipoLabor) ? c.tipoLabor : "Sin clasificar";
+      colaboradoresJornada.set(claveColaborador(c.fecha, c.codigo, tipo), {
+        fecha: String(c.fecha), codigo: String(c.codigo),
+        nombre: String(c.nombre || c.codigo), tipoLabor: tipo
       });
-    }
-    if (Array.isArray(datos.registros)) {
-      datos.registros.forEach((r) => {
-        if (!r?.fecha || !r?.colaborador || !r?.cama) return;
-        registros.push(r);
-        const key = claveColaborador(r.fecha, r.colaborador);
-        if (!colaboradoresJornada.has(key)) colaboradoresJornada.set(key, {
-          fecha: r.fecha, codigo: String(r.colaborador),
-          nombre: r.colaboradorNombre || String(r.colaborador)
-        });
+    });
+    if (Array.isArray(datos.registros)) datos.registros.forEach((r) => {
+      if (!r?.fecha || !r?.colaborador || !r?.cama) return;
+      registros.push(r);
+      if (!TIPOS_LABOR.includes(r.tipoLabor)) return;
+      const key = claveColaborador(r.fecha, r.colaborador, r.tipoLabor);
+      if (!colaboradoresJornada.has(key)) colaboradoresJornada.set(key, {
+        fecha: r.fecha, codigo: String(r.colaborador),
+        nombre: r.colaboradorNombre || String(r.colaborador),
+        tipoLabor: r.tipoLabor
       });
-    }
+    });
   } catch (error) {
     console.warn("No se pudieron restaurar los registros de la jornada", error);
   }
@@ -86,14 +89,15 @@ function sincronizarLaborGuardadaConTiempos() {
   const procesados = new Set();
   registros.forEach((r) => {
     if (!r.fecha || !r.colaborador) return;
-    const key = claveColaborador(r.fecha, r.colaborador);
+    if (!TIPOS_LABOR.includes(r.tipoLabor)) return;
+    const key = claveColaborador(r.fecha, r.colaborador, r.tipoLabor);
     if (procesados.has(key)) return;
     procesados.add(key);
     window.RegistroLaborTiemposJN.guardarLabor({
       codigo: r.colaborador,
       nombre: r.colaboradorNombre ||
         colaboradoresJornada.get(key)?.nombre || String(r.colaborador),
-      fecha: r.fecha
+      fecha: r.fecha, rol: r.tipoLabor
     });
   });
 }
@@ -151,6 +155,29 @@ function aplicarVista(vista) {
 
 viewTabs.forEach((btn) => {
   btn.addEventListener("click", () => aplicarVista(btn.dataset.desbotonadoVista));
+});
+function cambiarTipoLabor(tipo) {
+  if (!TIPOS_LABOR.includes(tipo)) return;
+  tipoLaborActivo = tipo;
+  document.querySelectorAll("[data-desbotonado-labor]").forEach((btn) => {
+    const activo = btn.dataset.desbotonadoLabor === tipo;
+    btn.classList.toggle("active", activo);
+    btn.setAttribute("aria-pressed", String(activo));
+  });
+  document.querySelector("#laborSeleccionadaTexto").textContent = tipo;
+  document.querySelector("#encabezadoRegistroLabor").textContent = "Registrar cama · " + tipo;
+  document.querySelector("#tituloDetalleLabor").textContent = "Detalle de la jornada · " + tipo;
+  empleadoSelect.innerHTML = '<option value=""></option>';
+  empleadoBuscar.value = "";
+  empleadoLista.innerHTML = "";
+  colaboradorSeleccionadoEl.textContent = "Sin colaborador seleccionado";
+  limpiarCamposCama();
+  document.querySelector("#apiMensaje").textContent = "Registro local disponible · " + tipo;
+  aplicarVista("registro");
+  render();
+}
+document.querySelectorAll("[data-desbotonado-labor]").forEach((btn) => {
+  btn.addEventListener("click", () => cambiarTipoLabor(btn.dataset.desbotonadoLabor));
 });
 
 function cargarEmpleados(filtro = "") {
@@ -213,7 +240,7 @@ function cargarCamas(filtro = "") {
     .filter(cama => `Cama ${cama}`.toLowerCase().includes(consulta));
 
   const trabajador = colaboradorActual();
-  const tipoLabor = document.querySelector("#tipoLabor").value;
+  const tipoLabor = tipoLaborActivo;
   camaLista.innerHTML = bloque
     ? (camas.length
       ? camas.map((cama, i) => {
@@ -290,10 +317,7 @@ camaBuscar.addEventListener("focus",()=>cargarCamas(camaBuscar.value));
 camaBuscar.addEventListener("input",()=>{
   cargarCamas(camaBuscar.value);
 });
-document.querySelector("#tipoLabor").addEventListener("change", () => {
-  camaLista.innerHTML = "";
-  if (camaBuscar.value.trim()) cargarCamas(camaBuscar.value);
-});
+
 
 document.addEventListener("click", (event) => {
   if (event.target !== empleadoBuscar && !empleadoLista.contains(event.target)) empleadoLista.innerHTML = "";
@@ -307,7 +331,7 @@ function numero(v,d=2) {
 
 function colaboradorActual() {
   const codigo = empleadoSelect.value;
-  return colaboradoresJornada.get(claveColaborador(fechaInput.value, codigo)) || null;
+  return colaboradoresJornada.get(claveColaborador(fechaInput.value, codigo, tipoLaborActivo)) || null;
 }
 
 function seleccionarColaboradorDeJornada(colaborador, enfocar = true) {
@@ -327,9 +351,8 @@ function seleccionarColaboradorDeJornada(colaborador, enfocar = true) {
   render();
 
   if (enfocar) {
-    const primerCampo = document.querySelector("#tipoLabor");
-    primerCampo.scrollIntoView({ behavior: "smooth", block: "center" });
-    primerCampo.focus({ preventScroll: true });
+    bloqueInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    bloqueInput.focus({ preventScroll: true });
   }
 }
 
@@ -339,14 +362,12 @@ function agregarColaboradorActual() {
 
   const codigo = empleadoSelect.value;
   const nombre = empleadoSelect.selectedOptions[0]?.dataset.nombre || codigo;
-  const colaborador = { fecha: fechaInput.value, codigo, nombre };
-  const clave = claveColaborador(colaborador.fecha, colaborador.codigo);
+  const colaborador = { fecha: fechaInput.value, codigo, nombre, tipoLabor: tipoLaborActivo };
+  const clave = claveColaborador(colaborador.fecha, colaborador.codigo, tipoLaborActivo);
   if (!colaboradoresJornada.has(clave)) {
     colaboradoresJornada.set(clave, colaborador);
     guardarJornada();
-    window.RegistroLaborTiemposJN?.agregar({
-      codigo, nombre, fecha: fechaInput.value
-    });
+    // Solo los colaboradores con camas guardadas entran en Pendientes de Tiempos.
   }
   seleccionarColaboradorDeJornada(colaboradoresJornada.get(clave));
 }
@@ -370,7 +391,7 @@ function iniciarEdicionCama(indice) {
   }
   limpiarCamposCama();
   indiceRegistroEditando = indice;
-  document.querySelector("#tipoLabor").value = registro.tipoLabor;
+  if (registro.tipoLabor !== tipoLaborActivo) return alert("Esta cama pertenece a otra actividad.");
   bloqueInput.value = registro.bloque;
   camaBuscar.value = registro.cama;
   document.querySelector("#mediosCuadros").value = registro.mediosCuadros;
@@ -381,9 +402,8 @@ function iniciarEdicionCama(indice) {
   document.querySelector("#apiMensaje").textContent =
     "Modifica los datos necesarios y pulsa Guardar para actualizar esta misma fila.";
   render();
-  const tipoInput = document.querySelector("#tipoLabor");
-  tipoInput.scrollIntoView({ behavior: "smooth", block: "center" });
-  tipoInput.focus({ preventScroll: true });
+  bloqueInput.scrollIntoView({ behavior: "smooth", block: "center" });
+  bloqueInput.focus({ preventScroll: true });
 }
 
 document.querySelector("#tablaRegistros").addEventListener("click", (event) => {
@@ -401,14 +421,15 @@ document.querySelector("#btnCancelarEdicionCama").addEventListener("click", () =
 function renderColaboradoresJornada() {
   const lista = document.querySelector("#colaboradoresRegistradosLista");
   const colaboradores = [...colaboradoresJornada.values()].filter((c) =>
-    c.fecha === fechaInput.value
+    c.fecha === fechaInput.value && c.tipoLabor === tipoLaborActivo
   );
   document.querySelector("#cantidadColaboradoresJornada").textContent =
     colaboradores.length + (colaboradores.length === 1 ? " colaborador" : " colaboradores");
   lista.innerHTML = colaboradores.length
     ? colaboradores.map((c) => {
         const camas = registros.filter((r) =>
-          r.fecha === c.fecha && String(r.colaborador) === c.codigo
+          r.fecha === c.fecha && String(r.colaborador) === c.codigo &&
+          r.tipoLabor === tipoLaborActivo
         ).length;
         const activo = colaboradorActual()?.codigo === c.codigo;
         return `<button type="button" class="colaborador-jornada-btn${activo ? " active" : ""}"
@@ -424,7 +445,7 @@ document.querySelector("#colaboradoresRegistradosLista").addEventListener("click
   const boton = event.target.closest("[data-colaborador-codigo]");
   if (!boton) return;
   const colaborador = colaboradoresJornada.get(
-    claveColaborador(fechaInput.value, boton.dataset.colaboradorCodigo)
+    claveColaborador(fechaInput.value, boton.dataset.colaboradorCodigo, tipoLaborActivo)
   );
   if (colaborador) seleccionarColaboradorDeJornada(colaborador);
 });
@@ -438,7 +459,7 @@ function render() {
   const trabajador = colaboradorActual();
   const registrosActuales = trabajador
     ? registros.filter((r) => r.fecha === fechaInput.value &&
-        String(r.colaborador) === trabajador.codigo)
+        String(r.colaborador) === trabajador.codigo && r.tipoLabor === tipoLaborActivo)
     : [];
 
   document.querySelector("#nombreResumen").textContent = trabajador
@@ -484,13 +505,14 @@ form.addEventListener("submit", (event) => {
   const cama = camaBuscar.value.trim();
   if (!bloque) return alert("Ingresa el bloque.");
   if (!cama) return alert("Ingresa el número de cama.");
-  const tipoLabor = document.querySelector("#tipoLabor").value;
+  const tipoLabor = tipoLaborActivo;
   const anterior = indiceRegistroEditando === null
     ? null
     : registros[indiceRegistroEditando];
   if (indiceRegistroEditando !== null &&
       (!anterior || anterior.fecha !== fechaInput.value ||
-       String(anterior.colaborador) !== trabajador.codigo)) {
+       String(anterior.colaborador) !== trabajador.codigo ||
+       anterior.tipoLabor !== tipoLaborActivo)) {
     return alert("El registro que intentas modificar ya no corresponde a este colaborador o fecha.");
   }
   if (registroCamaDuplicado({
@@ -527,7 +549,7 @@ form.addEventListener("submit", (event) => {
   window.RegistroLaborTiemposJN?.guardarLabor({
     codigo: trabajador.codigo,
     nombre: trabajador.nombre,
-    fecha: fechaInput.value
+    fecha: fechaInput.value, rol: tipoLaborActivo
   });
   limpiarCamposCama();
   render();
@@ -599,6 +621,7 @@ function limpiarTiempos() {
 
 async function renderRegistrosTiempos() {
   const registrosTiempos = (await OfflineDb.getAll("desbotonadoMallasTiempos"))
+    .filter((r) => r.rol === tipoLaborActivo)
     .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
 
   tiemposRegistrosLista.innerHTML = registrosTiempos.length
@@ -636,6 +659,7 @@ async function guardarTiempos() {
   const registro = {
     id: SyncEngine.generarUUID(),
     fecha,
+    rol: tipoLaborActivo,
     colaborador: empleadoSelect.value,
     colaboradorNombre: nombre,
     horasLaboralesMin: calculo.laborales,
@@ -668,6 +692,7 @@ window.addEventListener("online", cargarCatalogos);
 
 (async function iniciarDesbotonadoMallas() {
   fechaInput.value = fechaLocal();
+  cambiarTipoLabor(tipoLaborActivo);
   limpiarTiempos();
   aplicarVista("registro");
   await cargarCatalogos();

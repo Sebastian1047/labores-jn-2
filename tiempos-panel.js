@@ -8,7 +8,7 @@
     "bandejas-enraizamiento": { titulo: "Bandejas de enraizamiento", tienda: "bandejasTiempos", empleado: "sembrador", nombre: "sembradorNombre" },
     "siembra-rendimiento": { titulo: "siembra rendimiento", tienda: "siembraRendimientoTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
     "corte": { titulo: "Corte", tienda: "corteTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true },
-    "desbotonado-mallas": { titulo: "Desbotón y mallas", tienda: "desbotonadoMallasTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
+    "desbotonado-mallas": { titulo: "Desbotón y mallas", tienda: "desbotonadoMallasTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true },
     "preparacion-camas": { titulo: "Preparación de camas", tienda: "preparacionCamasTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
     "poscosecha-modulo": { titulo: "Poscosecha", tienda: "poscosechaRendimientoTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true },
     "mipe-modulo": { titulo: "MIPE", tienda: "mipeRendimientoTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true }
@@ -158,10 +158,20 @@
     const vistaNombre = document.querySelector("[data-corte-rol].active")?.dataset.corteRol;
     const estado = { empleados: [], guardados: [], seleccionados: new Set(), filtro: "pendientes", rol: "", editando: null };
     const rol = () => {
+      if (modulo === "desbotonado-mallas") {
+        return document.querySelector("[data-desbotonado-labor].active")?.dataset.desbotonadoLabor || "Desbotón Pompón";
+      }
       if (modulo === "corte") return document.querySelector("[data-corte-rol].active")?.dataset.corteRol || new URLSearchParams(location.search).get("rol") || "cortador";
       return new URLSearchParams(location.search).get("rol") || "";
     };
-    estado.rol = vistaNombre || rol();
+    estado.rol = rol();
+    function pintarTituloActividad() {
+      if (modulo !== "desbotonado-mallas") return;
+      panel.querySelector(".tp-cabecera h2").textContent = "Tiempos · " + estado.rol;
+      panel.querySelector(".tp-personas h3").textContent = "Colaboradores de " + estado.rol;
+      panel.querySelector(".tp-tabla-titulo h3").textContent = "Tiempos guardados · " + estado.rol;
+    }
+    pintarTituloActividad();
 
     const getCampo = (id) => panel.querySelector('[data-tp-campo="' + id + '"]');
     // Registrar labor y Guardar tiempos son procesos diferentes. En Desbotón
@@ -171,19 +181,9 @@
       const guardados = estado.guardados.filter((r) =>
         String(r[cfg.empleado]) === codigo(e) && r.fecha === fechaPrincipal.value
       ).sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
-      if (modulo !== "desbotonado-mallas") return guardados[0] || null;
-      const labor = obtenerLabor(fechaPrincipal.value, "").find((r) =>
-        String(r.codigo) === codigo(e)
-      );
-      const inicio = Date.parse(labor?.laborGuardadaEn || "");
-      if (!Number.isFinite(inicio)) return null;
-      return guardados.find((r) => {
-        const guardadoEn = Date.parse(r.createdAt || "");
-        return Number.isFinite(guardadoEn) && guardadoEn >= inicio &&
-          Number.isFinite(Number(r.tiempoRealMin)) &&
-          Number.isFinite(Number(r.tiempoDisponibleMin)) &&
-          Number(r.tiempoDisponibleMin) > 0;
-      }) || null;
+      // Cada registro de Tiempos incorpora rol de actividad. Los tiempos
+      // históricos sin rol se conservan pero nunca aparecen mezclados.
+      return guardados[0] || null;
     };
     const estadoDe = (e) => registroDe(e) ? "guardado" : "pendiente";
     function visibles() {
@@ -434,7 +434,7 @@
     function sincronizarVista() {
       document.body.classList.toggle("tp-vista-activa", !vista.hidden && vista.getClientRects().length > 0);
     }
-    document.querySelectorAll("[data-bandejas-vista], [data-corte-vista], [data-desbotonado-vista], [data-preparacion-vista], [data-poscosecha-vista], [data-mipe-vista], [data-siembra-vista]")
+    document.querySelectorAll("[data-bandejas-vista], [data-corte-vista], [data-desbotonado-vista], [data-preparacion-vista], [data-poscosecha-vista], [data-mipe-vista], [data-siembra-vista], [data-desbotonado-labor]")
       .forEach((btn) => btn.addEventListener("click", () => setTimeout(() => {
         sincronizarVista();
         if (!vista.hidden) cargar();
@@ -543,16 +543,23 @@
       reporte("Modificación cancelada. No se cambió ningún tiempo guardado.");
     });
 
-    // Corte puede cambiar de rol sin cambiar de página. Mantener cada cola por rol.
+    // Corte y Desbotón cambian de actividad sin navegar. Separar tanto
+    // colaboradores como registros, tiempos guardados y edición actual.
     document.addEventListener("click", (event) => {
-      if (modulo !== "corte" || !event.target.closest("[data-corte-rol]")) return;
+      const cambiaCorte = modulo === "corte" && event.target.closest("[data-corte-rol]");
+      const cambiaDesboton = modulo === "desbotonado-mallas" && event.target.closest("[data-desbotonado-labor]");
+      if (!cambiaCorte && !cambiaDesboton) return;
       setTimeout(() => {
         const nuevo = rol();
         if (nuevo === estado.rol) return;
         if (estado.editando) salirEdicion();
         estado.rol = nuevo;
         estado.seleccionados.clear();
+        estado.filtro = "pendientes";
+        buscar.value = "";
         reporte("");
+        limpiar();
+        pintarTituloActividad();
         cargar();
       }, 0);
     });

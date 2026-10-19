@@ -46,3 +46,41 @@
 .btn-modificar-cama:disabled{cursor:default;opacity:.75}
 .fila-cama-editando{background:#eaf7ef}
 .btn-modificar-cama:focus-visible{outline:3px solid #7bbba1;outline-offset:2px}
+
+/* Selector principal de actividad. Cada vista filtra su propia jornada y sus tiempos. */
+.labor-actividad-tabs {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 9px;
+  margin: 0 0 9px;
+}
+.labor-actividad-tab {
+  min-height: 49px;
+  padding: 10px 12px;
+  border: 1px solid #a5cbb6;
+  border-radius: 11px;
+  background: #f0f8f3;
+  color: #21583d;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+.labor-actividad-tab:hover:not(.active) { background: #dceddf; }
+.labor-actividad-tab.active {
+  background: #187a4d;
+  border-color: #187a4d;
+  color: white;
+  box-shadow: 0 3px 10px #146b4430;
+}
+.labor-actividad-tab:focus-visible { outline:3px solid #8cbb9a; outline-offset:2px; }
+.labor-actividad-info {
+  margin: 0 0 13px;
+  font-size: .82rem;
+  color: #506d5a;
+}
+.labor-actividad-info strong { color: #176c46; }
+@media (max-width: 600px) {
+  .labor-actividad-tabs { gap: 5px; }
+  .labor-actividad-tab { min-height: 48px; font-size: .75rem; padding: 7px 5px; }
+}
