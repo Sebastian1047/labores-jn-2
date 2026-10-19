@@ -7,6 +7,7 @@
   const opciones = {
     "bandejas-enraizamiento": { titulo: "Bandejas de enraizamiento", tienda: "bandejasTiempos", empleado: "sembrador", nombre: "sembradorNombre" },
     "siembra-rendimiento": { titulo: "siembra rendimiento", tienda: "siembraRendimientoTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
+    "siembra-revision": { titulo: "siembra campo", tienda: "siembraRendimientoTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
     "corte": { titulo: "Corte", tienda: "corteTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true },
     "desbotonado-mallas": { titulo: "Desbotón y mallas", tienda: "desbotonadoMallasTiempos", empleado: "colaborador", nombre: "colaboradorNombre", roles: true },
     "preparacion-camas": { titulo: "Preparación de camas", tienda: "preparacionCamasTiempos", empleado: "colaborador", nombre: "colaboradorNombre" },
@@ -355,7 +356,7 @@
         [cfg.empleado]: id,
         [cfg.nombre]: nombre(e),
         esPrueba: TiemposLaboresJN.esColaboradorPrueba(id),
-        syncStatus: TiemposLaboresJN.esColaboradorPrueba(id) ? "PruebaLocal" : (modulo === "siembra-rendimiento" ? "SoloLocal" : "PendienteBackend"),
+        syncStatus: TiemposLaboresJN.esColaboradorPrueba(id) ? "PruebaLocal" : (modulo === "siembra-rendimiento" || modulo === "siembra-revision" ? "SoloLocal" : "PendienteBackend"),
         usuario: JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "",
         createdAt: existente?.createdAt || new Date().toISOString(),
         updatedAt: existente ? new Date().toISOString() : undefined
@@ -394,6 +395,27 @@
               codigo: String(r.colaborador || ""),
               nombre: r.colaboradorNombre || String(r.colaborador || "")
             })));
+        }
+        if (modulo === "siembra-revision") {
+          // Revisión muestra siembras del Registro original; incorporar también
+          // las del módulo de Rendimiento. Los tiempos comparten el mismo almacén.
+          const [originales, rendimiento, empleados] = await Promise.all([
+            OfflineDb.getAll("siembras"),
+            OfflineDb.getAll("siembraRendimientoRegistros"),
+            OfflineDb.getAll("empleados")
+          ]);
+          const nombres = new Map(empleados.map((e) => [
+            String(e.codigo ?? e.Codigo ?? e.docid ?? e.id ?? ""),
+            nombre(e)
+          ]));
+          desdeLabor = desdeLabor.concat(originales.filter((r) => r.fecha === fecha).map((r) => {
+            const id = String(r.empleado || r.sembrador || "");
+            return { codigo: id, nombre: r.empleadoNombre || r.sembradorNombre || nombres.get(id) || id };
+          }));
+          desdeLabor = desdeLabor.concat(rendimiento.filter((r) => r.fecha === fecha).map((r) => ({
+            codigo: String(r.colaborador || ""),
+            nombre: r.colaboradorNombre || String(r.colaborador || "")
+          })));
         }
         if (modulo === "bandejas-enraizamiento" || modulo === "siembra-rendimiento") {
           const esBandejas = modulo === "bandejas-enraizamiento";

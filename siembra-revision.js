@@ -56,6 +56,10 @@ async function verFechas() {
   const todas = await OfflineDb.getAll("siembras");
   registrosVigentes = todas.filter((s) => s.fecha >= desde && s.fecha <= hasta);
   render();
+  // Si se recuperaron siembras nuevas, refrescar los sembradores de Tiempos.
+  window.dispatchEvent(new CustomEvent("laboresjn:registro-labor", {
+    detail: { fecha: document.querySelector("#fecha")?.value || "" }
+  }));
 }
 
 function render() {
@@ -126,6 +130,8 @@ exportarBtn.addEventListener("click", exportarJson);
   const hoy = new Date();
   fechaFinalInput.value = SyncEngine.fechaLocalISO(hoy);
   fechaInicioInput.value = SyncEngine.fechaLocalISO(hoy);
+  // Misma fecha inicial, pero filtro independiente para asignación de tiempos.
+  document.querySelector("#fecha").value = SyncEngine.fechaLocalISO(hoy);
 
   const empleados = await OfflineDb.getAll("empleados");
   empleadosPorCodigo = new Map(empleados.map((e) => [e.codigo, e]));
