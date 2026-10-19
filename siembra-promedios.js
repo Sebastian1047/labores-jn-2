@@ -1,10 +1,9 @@
 // Promedios ("Detalle") — igual a InfoIndividualView de AppLabores: agrupa por colaborador
 // (campo Empleado) las siembras del rango y calcula Rendimiento = Esquejes / Horas.
-// Horas SÍ se guarda (dbo.Horas, ver HorasService.cs) — pedido 18/09/2026, antes solo vivía en
-// esta pantalla y se perdía al salir. Granularidad real: un valor de horas por colaborador/día
-// (igual que la tabla legacy). Por eso solo se puede editar/guardar cuando el rango es UN SOLO
-// día (fechaInicio === fechaFinal) -- si se está viendo un rango de varios días, Horas se
-// muestra de solo lectura como la suma de lo ya guardado día por día (para el reporte/export).
+// La captura de tiempos grupales e individuales se guarda localmente por
+// colaborador/fecha en siembraRendimientoTiempos, compartida con Rendimiento.
+// La columna Horas se deriva del tiempo efectivo y conserva horas legacy como
+// respaldo de datos históricos que aún no tienen el desglose de actividades.
 // Exporta a Excel offline con SheetJS (Android lo hace on-device con EPPlus).
 
 const sesion = JSON.parse(sessionStorage.getItem("labores_usuario") || "null");
@@ -17,7 +16,6 @@ const usuarioPill = document.querySelector("#usuarioPill");
 const fechaInicioInput = document.querySelector("#fechaInicio");
 const fechaFinalInput = document.querySelector("#fechaFinal");
 const verBtn = document.querySelector("#verBtn");
-const guardarHorasBtn = document.querySelector("#guardarHorasBtn");
 const horasStatus = document.querySelector("#horasStatus");
 const exportarBtn = document.querySelector("#exportarBtn");
 const tablaColaboradores = document.querySelector("#tablaColaboradores");
@@ -55,10 +53,9 @@ async function verFechas() {
   const desde = fechaInicioInput.value;
   const hasta = fechaFinalInput.value || desde;
   editable = desde === hasta;
-  guardarHorasBtn.hidden = !editable;
   horasStatus.textContent = editable
     ? ""
-    : "Rango de varios días: Horas se muestra de solo lectura (suma de lo ya guardado por día). Para editar, ponga la misma fecha inicial y final.";
+    : "Para registrar tiempos, selecciona un solo día: usa la misma fecha inicial y final. En rangos de varios días solo puedes consultar el resumen.";
 
   try {
     await SyncEngine.sincronizarSiembrasDesdeServidor({ fechaInicio: desde, fechaFinal: hasta });
@@ -73,10 +70,47 @@ async function verFechas() {
 
   const todas = await OfflineDb.getAll("siembras");
   const enRango = todas.filter((s) => s.fecha >= desde && s.fecha <= hasta);
-  const horasGuardadas = await SyncEngine.obtenerHorasLocalPorRango(desde, hasta);
+  const [horasGuardadas, tiemposGuardados] = await Promise.all([
+    SyncEngine.obtenerHorasLocalPorRango(desde, hasta),
+    OfflineDb.getAll("siembraRendimientoTiempos")
+  ]);
   const horasPorEmpleado = new Map();
   for (const h of horasGuardadas) {
     horasPorEmpleado.set(h.empleado, (horasPorEmpleado.get(h.empleado) || 0) + (Number(h.horas) || 0));
+  }
+  // Los tiempos detallados tienen prioridad sobre "Horas" legacy para una misma
+  // persona y día. Si hay varios días, se suman sin duplicar un día.
+  const porDia = new Map();
+  tiemposGuardados.filter((t) => t.fecha >= desde && t.fecha <= hasta).forEach((t) => {
+    const id = String(t.colaborador || t.sembrador || "");
+    if (!id) return;
+    const key = t.fecha + "|" + id;
+    const anterior = porDia.get(key);
+    if (!anterior || String(t.updatedAt || t.createdAt || "") >=
+          String(anterior.updatedAt || anterior.createdAt || "")) {
+      porDia.set(key, t);
+    }
+  });
+  const horasDetallePorEmpleado = new Map();
+  const diasConDetalle = new Map();
+  for (const [key, t] of porDia) {
+    const id = String(t.colaborador || t.sembrador);
+    horasDetallePorEmpleado.set(id, (horasDetallePorEmpleado.get(id) || 0) +
+      Math.max(0,Number(t.tiempoRealMin) || 0) / 60);
+    const dias = diasConDetalle.get(id) || new Set();
+    dias.add(t.fecha); diasConDetalle.set(id, dias);
+  }
+  // Para un solo día, un registro detallado sustituye exactamente las horas
+  // legacy. Para varios días se suma el detalle y las horas de días sin detalle.
+  for (const [id, valor] of horasDetallePorEmpleado) {
+    if (editable) {
+      horasPorEmpleado.set(id,valor);
+    } else {
+      const legacySinDetalle = horasGuardadas.filter((h) =>
+        String(h.empleado) === id && !diasConDetalle.get(id)?.has(h.fecha))
+        .reduce((total,h)=>total+(Number(h.horas)||0),0);
+      horasPorEmpleado.set(id,valor+legacySinDetalle);
+    }
   }
 
   const porColaborador = new Map(); // codigo -> { colaborador, esquejes }
@@ -88,6 +122,7 @@ async function verFechas() {
   }
 
   grupos = [...porColaborador.entries()]
+    .filter(([codigo, dato]) => codigo && Number(dato.esquejes) > 0)
     .sort((a, b) => a[1].colaborador.localeCompare(b[1].colaborador))
     .map(([codigo, { colaborador, esquejes }]) => ({
       codigo,
@@ -113,34 +148,15 @@ function calcularTotales() {
 }
 
 function render() {
-  if (grupos.length === 0) {
-    tablaColaboradores.innerHTML = `<tr><td colspan="4">Sin siembras en este rango.</td></tr>`;
+  // Selector grupal/individual y despliegue de tiempos pertenecen a un único
+  // controlador visual. No se permite digitar Horas por un segundo camino.
+  if (window.SiembraDetalleTiempos?.render) {
+    window.SiembraDetalleTiempos.render(grupos, {
+      editable, fecha:fechaInicioInput.value, hasta:fechaFinalInput.value
+    });
   } else {
-    tablaColaboradores.innerHTML = grupos
-      .map((g, idx) => {
-        const celdaHoras = editable
-          ? `<input type="number" min="0" step="0.5" value="${g.horas || ""}" data-idx="${idx}" style="width:90px; height:32px; padding:0 8px;" />`
-          : `${g.horas || 0}`;
-        return `
-        <tr>
-          <td>${g.colaborador}</td>
-          <td>${g.esquejes}</td>
-          <td>${celdaHoras}</td>
-          <td>${g.horas > 0 ? (g.esquejes / g.horas).toFixed(2) : "-"}</td>
-        </tr>`;
-      })
-      .join("");
-
-    if (editable) {
-      tablaColaboradores.querySelectorAll("input[data-idx]").forEach((input) => {
-        input.addEventListener("input", () => {
-          grupos[Number(input.dataset.idx)].horas = Number(input.value) || 0;
-          actualizarTotales();
-        });
-      });
-    }
+    tablaColaboradores.innerHTML = '<tr><td colspan="5">Preparando el formulario de tiempos…</td></tr>';
   }
-
   actualizarTotales();
 }
 
@@ -150,42 +166,9 @@ function actualizarTotales() {
   sumaPromediosEl.textContent = sumaPromedios.toFixed(2);
   rendimientoGrupalEl.textContent = rendimientoGrupal.toFixed(2);
 
-  // refrescar solo la columna Rendimiento sin perder el foco del input de Horas
-  tablaColaboradores.querySelectorAll("tr").forEach((tr, idx) => {
-    const g = grupos[idx];
-    if (!g) return;
-    const celdaRendimiento = tr.children[3];
-    if (celdaRendimiento) celdaRendimiento.textContent = g.horas > 0 ? (g.esquejes / g.horas).toFixed(2) : "-";
-  });
+
 }
 
-async function guardarHoras() {
-  if (!editable) return;
-  const fecha = fechaInicioInput.value;
-  const conHoras = grupos.filter((g) => g.codigo && g.horas > 0);
-  if (conHoras.length === 0) {
-    horasStatus.textContent = "No hay horas para guardar -- digite al menos una.";
-    return;
-  }
-
-  guardarHorasBtn.disabled = true;
-  horasStatus.textContent = "Guardando…";
-  try {
-    for (const g of conHoras) {
-      await SyncEngine.guardarHorasLocal(fecha, g.codigo, g.horas);
-    }
-    const resultado = await SyncEngine.sincronizarPendientesHoras();
-    if (resultado.fallidas === 0) {
-      horasStatus.textContent = `Horas guardadas y sincronizadas (${resultado.subidas}).`;
-    } else {
-      horasStatus.textContent = `Horas guardadas localmente. Sin conexión para subir ${resultado.fallidas} -- se sincronizan solas más tarde con señal.`;
-    }
-  } catch (err) {
-    horasStatus.textContent = `Error guardando horas: ${err.message}`;
-  } finally {
-    guardarHorasBtn.disabled = false;
-  }
-}
 
 function exportarExcel() {
   const { totalEsquejes, totalHoras, rendimientoGrupal } = calcularTotales();
@@ -209,14 +192,12 @@ function exportarExcel() {
 }
 
 verBtn.addEventListener("click", verFechas);
-guardarHorasBtn.addEventListener("click", guardarHoras);
 exportarBtn.addEventListener("click", exportarExcel);
 
 (async function iniciar() {
   const hoy = new Date();
   fechaFinalInput.value = SyncEngine.fechaLocalISO(hoy);
   fechaInicioInput.value = SyncEngine.fechaLocalISO(hoy);
-  document.querySelector("#fecha").value = SyncEngine.fechaLocalISO(hoy);
 
   const empleados = await OfflineDb.getAll("empleados");
   empleadosPorCodigo = new Map(empleados.map((e) => [e.codigo, e]));
@@ -224,3 +205,5 @@ exportarBtn.addEventListener("click", exportarExcel);
   checkApi();
   verFechas();
 })();
+
+window.SiembraDetalleRecargar = verFechas;

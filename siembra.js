@@ -409,6 +409,67 @@ async function guardarSiembra() {
   limpiarFormulario();
 }
 
+
+const SIEMBRAS_FICTICIAS = Object.freeze([
+  { codigo: "PRUEBA001", nombre: "COLABORADOR PRUEBA 1", bloque: "PRUEBA-B1", cama: "CAMA-P1", lineas: 12, densidad: 117, variedad: "POMPON-PRUEBA" },
+  { codigo: "PRUEBA002", nombre: "COLABORADOR PRUEBA 2", bloque: "PRUEBA-B1", cama: "CAMA-P2", lineas: 9, densidad: 130, variedad: "SPIDER-PRUEBA" },
+  { codigo: "PRUEBA003", nombre: "COLABORADOR PRUEBA 3", bloque: "PRUEBA-B2", cama: "CAMA-P1", lineas: 8, densidad: 170, variedad: "POMPON-PRUEBA" },
+  { codigo: "PRUEBA004", nombre: "COLABORADOR PRUEBA 4", bloque: "PRUEBA-B2", cama: "CAMA-P2", lineas: 15, densidad: 112, variedad: "SPIDER-PRUEBA" },
+  { codigo: "PRUEBA001", nombre: "COLABORADOR PRUEBA 1", bloque: "PRUEBA-B1", cama: "CAMA-P3", lineas: 5, densidad: 117, variedad: "POMPON-PRUEBA" },
+  { codigo: "PRUEBA005", nombre: "COLABORADOR PRUEBA 5 (SIN ESQUEJES)", bloque: "PRUEBA-B2", cama: "CAMA-P3", lineas: 0, densidad: 117, variedad: "SPIDER-PRUEBA" }
+]);
+
+async function cargarSiembrasDePrueba() {
+  const boton = document.querySelector("#cargarPruebasSiembraBtn");
+  if (boton.disabled) return;
+  if (editandoId !== null) {
+    resultState.textContent = "Sal de la edición antes de cargar datos de prueba.";
+    return;
+  }
+  boton.disabled = true;
+  try {
+    const fecha = fechaInput.value || SyncEngine.fechaLocalISO();
+    const registros = await OfflineDb.getAll("siembras");
+    const existentes = new Set(registros.filter((r) => r.esPrueba && r.clavePrueba)
+      .map((r) => r.clavePrueba));
+    const ahora = new Date(fecha + "T12:00:00");
+    const semana = Math.ceil(((ahora - new Date(ahora.getFullYear(), 0, 1)) / 86400000 + new Date(ahora.getFullYear(), 0, 1).getDay() + 1) / 7);
+    let agregados = 0;
+    for (let i = 0; i < SIEMBRAS_FICTICIAS.length; i++) {
+      const ejemplo = SIEMBRAS_FICTICIAS[i];
+      const clavePrueba = "siembra-ejemplo-2026:" + fecha + ":" + (i+1);
+      if (existentes.has(clavePrueba)) continue;
+      const id = await OfflineDb.proximoIdTemporalSiembra();
+      await OfflineDb.put("siembras", {
+        id, fecha, bloque: ejemplo.bloque, cama: ejemplo.cama,
+        variedad: ejemplo.variedad, variedadNombre: ejemplo.variedad,
+        lineas: ejemplo.lineas, densidad: ejemplo.densidad,
+        empleado: ejemplo.codigo, empleadoNombre: ejemplo.nombre,
+        origen: "Prueba local", vclon: null,
+        login: sesion?.username || "prueba", semanaProgramada: semana,
+        anoProgramado: ahora.getFullYear(), reviso: false,
+        causa: null, observaciones: "DATO FICTICIO · Solo para ensayar el flujo",
+        syncStatus: "PruebaLocal", esPrueba: true, clavePrueba,
+        updatedAt: new Date().toISOString()
+      });
+      agregados++;
+    }
+    resultStatus.classList.remove("error");
+    resultStatus.classList.add("ok");
+    resultState.textContent = agregados
+      ? agregados + " siembras ficticias creadas para " + fecha + ". Abre Revisión o Detalles usando esta misma fecha."
+      : "Las 6 siembras de prueba ya están cargadas para " + fecha + ". No se crearon duplicados.";
+    document.querySelector("#enlacesPruebasSiembra").hidden = false;
+  } catch (error) {
+    resultStatus.classList.add("error");
+    resultState.textContent = "No fue posible cargar datos de prueba: " + error.message;
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+document.querySelector("#cargarPruebasSiembraBtn").addEventListener("click", cargarSiembrasDePrueba);
+
 guardarBtn.addEventListener("click", guardarSiembra);
 nuevoBtn.addEventListener("click", limpiarFormulario);
 

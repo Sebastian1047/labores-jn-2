@@ -7,20 +7,8 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.127" />
-    <style>
-      .ir-a-tiempos {
-        display: inline-flex; align-items: center; justify-content: center;
-        min-height: 48px; padding: 0 16px; border: 1px solid #7fba9a;
-        border-radius: 10px; background: #e1f2e7; color: #17683f;
-        font-weight: 800; text-decoration: none;
-      }
-      .ir-a-tiempos:hover { background: #cce9d7; }
-      .ir-a-tiempos:focus-visible { outline: 3px solid #69b38d; outline-offset: 2px; }
-      .aviso-tiempos-detalles { margin: 0 0 15px; color: #396b4c; font-size: .85rem; }
-      #tiemposSiembraCampo { scroll-margin-top: 18px; }
-      @media (max-width: 640px) { .ir-a-tiempos { width: 100%; } }
-    </style>
+    <link rel="stylesheet" href="./siembra-detalle-tiempos.css?v=1.0.128" />
+
   </head>
   <body>
     <main class="app-shell">
@@ -47,11 +35,11 @@
         </form>
         <div class="action-row">
           <button id="verBtn" class="success-btn" type="button">Ver fechas</button>
-          <button id="guardarHorasBtn" class="success-btn" type="button">💾 Guardar horas</button>
           <button id="exportarBtn" class="ghost-btn" type="button">📊 Exportar Excel</button>
-          <a href="#tiemposSiembraCampo" class="ir-a-tiempos" id="irATiempos">⏱ Ir a Tiempos ↓</a>
+          <button type="button" id="modoTiempoGrupal" class="dt-modo active" aria-pressed="true">Tiempo grupal</button>
+          <button type="button" id="modoTiempoIndividual" class="dt-modo" aria-pressed="false">Tiempo individual</button>
         </div>
-        <p class="aviso-tiempos-detalles">El formulario de <strong>Tiempos</strong> está al final de Detalles. Usa «Ir a Tiempos» para acceder directamente.</p>
+        <p class="dt-instrucciones" id="instruccionesSeleccionTiempo">Tiempo grupal: todos los colaboradores con esquejes se seleccionan inicialmente. Desmarca a quienes necesiten tiempos individuales.</p>
         <p id="horasStatus" class="hint"></p>
 
         <div class="summary-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
@@ -64,9 +52,10 @@
           <table>
             <thead>
               <tr>
-                <th>Colaborador</th>
+                <th>Seleccionar</th>
+                <th>Colaborador / Ver tiempos</th>
                 <th>Total esquejes</th>
-                <th>Horas</th>
+                <th>Tiempo efectivo</th>
                 <th>Rendimiento</th>
               </tr>
             </thead>
@@ -75,18 +64,18 @@
         </div>
       </article>
 
-      <section id="tiemposSiembraCampo" class="detalle-tiempos-siembra" aria-label="Tiempos de Siembra Campo" style="margin-top:18px;">
-        <article class="scanner-panel" style="margin-bottom:12px;">
-          <h2 style="margin:0 0 7px;font-size:1.05rem;">Tiempos de Siembra Campo</h2>
-          <p class="hint" style="margin:0 0 12px;">Registra y modifica los tiempos diarios de los sembradores. Los registros se comparten con Siembra Rendimiento.</p>
-          <label style="display:grid;gap:6px;max-width:280px;font-weight:750;">Fecha de los tiempos
-            <input id="fecha" type="date" required aria-label="Fecha para registrar tiempos" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:9px;background:var(--panel);color:var(--text);" />
-          </label>
-          <p class="hint" style="margin:9px 0 0;">La fecha de los tiempos es independiente del rango utilizado en Detalles. «Guardar horas» en el resumen superior y «Guardar tiempos» en este formulario son acciones distintas.</p>
+      <section id="tiemposSiembraCampo" class="dt-seccion" aria-label="Registrar tiempos en Siembra Campo">
+        <article class="scanner-panel">
+          <div class="dt-cabecera">
+            <div>
+              <h2>Registrar tiempos <span id="dtModoActual">grupales</span></h2>
+              <p id="dtSeleccionResumen" class="hint">Selecciona colaboradores de la tabla superior.</p>
+            </div>
+            <span class="dt-estado-local">Guardado local</span>
+          </div>
+          <div id="dtFormularioGeneral"></div>
+          <p id="dtMensaje" class="dt-mensaje" role="status" aria-live="polite"></p>
         </article>
-        <section id="vistaTiempos">
-          <div class="scanner-panel" role="status">Cargando formulario de Tiempos… Si permanece este mensaje, vuelve a abrir Detalles con conexión para actualizar la aplicación.</div>
-        </section>
       </section>
     </main>
 
@@ -95,8 +84,8 @@
     <script src="./offline/sync-engine.js"></script>
     <script src="./offline/vendor/xlsx.full.min.js"></script>
     <script src="./tiempos-comun.js?v=1.0.118"></script>
-    <script src="./siembra-promedios.js?v=1.0.127"></script>
-    <script src="./tiempos-panel.js?v=1.0.127"></script>
+    <script src="./siembra-promedios.js?v=1.0.128"></script>
+    <script src="./siembra-detalle-tiempos.js?v=1.0.128"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

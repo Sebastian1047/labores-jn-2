@@ -78,7 +78,7 @@ function render() {
     .sort((a, b) => (a.fecha < b.fecha ? 1 : -1))
     .map(
       (s) => `
-      <div class="pending-item ${s.syncStatus && s.syncStatus !== "Sincronizado" ? "mixed" : ""} ${Number(s.lineas) < 0 ? "mixed" : ""}">
+      <div class="pending-item ${!s.esPrueba && s.syncStatus && s.syncStatus !== "Sincronizado" ? "mixed" : ""} ${Number(s.lineas) < 0 ? "mixed" : ""}">
         <strong>${s.variedadNombre || s.variedad}${s.vclon ? " · " + s.vclon : ""}${Number(s.lineas) < 0 ? " · ⚠ ERRADICADA" : ""}</strong>
         <span>${s.fecha} · Bloque ${s.bloque} / Cama ${s.cama} · Origen ${s.origen || "-"}</span>
         <span>Líneas ${s.lineas} · Densidad ${s.densidad} · ${s.lineas * s.densidad} esquejes · Sem ${s.semanaProgramada ?? "-"}/${s.anoProgramado ?? "-"}</span>
@@ -88,7 +88,7 @@ function render() {
           <input type="checkbox" disabled ${s.reviso ? "checked" : ""} style="width:16px;height:16px;" />
           <span style="margin:0; color: var(--muted); font-size: 0.82rem;">Revisada</span>
         </label>
-        ${s.syncStatus && s.syncStatus !== "Sincronizado" ? `<em>Pendiente de sincronizar</em>` : ""}
+        ${s.esPrueba ? `<em>🧪 DATO DE PRUEBA · no se envía al servidor</em>` : (s.syncStatus && s.syncStatus !== "Sincronizado" ? `<em>Pendiente de sincronizar</em>` : "")}
         <div class="action-row" style="margin: 10px 0 0;">
           <button class="ghost-btn" type="button" data-id="${s.id}">Ver / Editar</button>
         </div>

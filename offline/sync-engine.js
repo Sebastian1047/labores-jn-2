@@ -248,7 +248,17 @@ async function guardarSiembraLocal(datos, idExistente) {
   const registro = { ...datos };
   if (idExistente) {
     registro.id = idExistente;
-    registro.syncStatus = idExistente < 0 ? "NuevoModificado" : "Modificado";
+    const anteriorPrueba = await OfflineDb.get("siembras", idExistente);
+    if (anteriorPrueba?.esPrueba) {
+      // Nunca convertir una siembra ficticia editada desde Revisión en una
+      // transacción del servidor. Se conserva su naturaleza local.
+      registro.esPrueba = true;
+      registro.clavePrueba = anteriorPrueba.clavePrueba;
+      registro.empleadoNombre = anteriorPrueba.empleadoNombre;
+      registro.syncStatus = "PruebaLocal";
+    } else {
+      registro.syncStatus = idExistente < 0 ? "NuevoModificado" : "Modificado";
+    }
     // Bug real encontrado 22/09/2026: editar una siembra que TODAVIA no se ha sincronizado
     // (id local negativo) reconstruia "registro" solo desde los campos del formulario -- que
     // nunca incluyen idOperacion -- y perdia el identificador de idempotencia original. Si esa
@@ -274,7 +284,7 @@ async function guardarSiembraLocal(datos, idExistente) {
 
 async function contarPendientesSiembra() {
   const todas = await OfflineDb.getAll("siembras");
-  return todas.filter((s) => s.syncStatus && s.syncStatus !== "Sincronizado").length;
+  return todas.filter((s) => s.syncStatus && !["Sincronizado", "PruebaLocal"].includes(s.syncStatus) && !s.esPrueba).length;
 }
 
 async function obtenerTodasSiembrasLocal() {
@@ -283,7 +293,7 @@ async function obtenerTodasSiembrasLocal() {
 
 async function sincronizarPendientesSiembra() {
   const todas = await OfflineDb.getAll("siembras");
-  const pendientes = todas.filter((s) => s.syncStatus && s.syncStatus !== "Sincronizado");
+  const pendientes = todas.filter((s) => s.syncStatus && !["Sincronizado", "PruebaLocal"].includes(s.syncStatus) && !s.esPrueba);
   const resultado = { subidas: 0, fallidas: 0 };
 
   for (const s of pendientes) {
