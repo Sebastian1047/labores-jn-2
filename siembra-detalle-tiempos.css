@@ -16,7 +16,9 @@
 #tablaColaboradores .dt-nombre{font-weight:800;color:#173d2a;font-size:.85rem;}
 #tablaColaboradores .dt-abrir small{color:#697766;font-size:.71rem;}
 #tablaColaboradores .dt-chevron{color:#18784c;font-size:.74rem;font-weight:750;}
-#tablaColaboradores .dt-fila.dt-atenuado {opacity:.42;background:#f0f1ed;}
+/* Atenuar los datos, no las casillas: deben seguir visibles para cambiar de persona. */
+#tablaColaboradores .dt-fila.dt-atenuado {background:#f0f1ed;}
+#tablaColaboradores .dt-fila.dt-atenuado td:not(:first-child) {opacity:.42;}
 #tablaColaboradores .dt-desplegado td {text-align:left;padding:15px;background:#eef8f1;}
 #tablaColaboradores .dt-desplegado:hover td {background:#eef8f1;}
 .dt-detalle-persona {background:#fff;border:1px solid #c3ddc9;border-radius:10px;padding:14px;}
