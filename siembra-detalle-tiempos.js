@@ -185,8 +185,9 @@
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
           '" '+(checked?'checked ':'')+(!estado.editable?'disabled ':'')+'></td>'+
         '<td><button type="button" class="dt-abrir" data-dt-abrir="'+escapar(id)+'" aria-expanded="'+expandido+'">'+
-          '<span class="dt-nombre">'+escapar(g.colaborador)+'</span><small>'+escapar(id)+' · '+
-          (guardado?'Tiempos guardados':'Pendiente de tiempos')+
+          '<span class="dt-identidad"><span class="dt-nombre">'+escapar(g.colaborador)+'</span>'+
+          '<span class="dt-estado-tiempo '+(guardado?'dt-guardado':'dt-pendiente')+'">'+
+          (guardado?'Guardado':'Pendiente')+'</span></span><small>'+escapar(id)+
           '</small><span class="dt-chevron">'+(expandido?'▴ Ocultar tiempos':'▾ Ver tiempos')+'</span></button></td>'+
         '<td>'+Number(g.esquejes).toLocaleString("es-CO")+'</td>'+
         '<td>'+((Number(g.horas)||0)>0?g.horas.toFixed(2)+' h':'—')+'</td>'+
