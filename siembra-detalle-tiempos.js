@@ -144,7 +144,7 @@
     if(!["grupal","individual"].includes(tipo))return;
     estado.modo=tipo;
     estado.expandido=null;
-    estado.seleccionados=new Set(tipo==="grupal"?estado.grupos.map(g=>String(g.codigo)):[]);
+    estado.seleccionados=new Set(tipo==="grupal"?estado.grupos.filter(g=>!guardadoPara(g.codigo)).map(g=>String(g.codigo)):[]);
     document.getElementById("tiemposSiembraCampo").hidden=tipo==="individual";
     mensaje("");
     botonGrupal.classList.toggle("active",tipo==="grupal");
@@ -152,7 +152,7 @@
     botonGrupal.setAttribute("aria-pressed",String(tipo==="grupal"));
     botonIndividual.setAttribute("aria-pressed",String(tipo==="individual"));
     document.getElementById("instruccionesSeleccionTiempo").textContent=tipo==="grupal"
-      ? "Tiempo grupal: todos los colaboradores están seleccionados. Desmarca los que requieren un registro individual."
+      ? "Tiempo grupal: solo se seleccionan los colaboradores pendientes. Los que tienen tiempos guardados no pueden seleccionarse en este modo."
       : "Tiempo individual: selecciona una persona o pulsa su nombre para desplegar su formulario debajo. Las demás se atenúan únicamente después de seleccionar una persona.";
     document.getElementById("dtModoActual").textContent=tipo==="grupal"?"grupales":"individuales";
     pintarTabla();
@@ -160,7 +160,7 @@
   }
 
   function pintarResumen(){
-    const disponibles=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo)));
+    const disponibles=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo)) && (estado.modo!=="grupal"||!guardadoPara(g.codigo)));
     document.getElementById("dtSeleccionResumen").textContent=!estado.editable
       ? "Selecciona un único día en Fecha inicial y Fecha final para registrar tiempos."
       : (estado.modo==="grupal"
@@ -177,13 +177,14 @@
     }
     const resultado=[];
     for(const g of estado.grupos){
-      const id=String(g.codigo),checked=estado.seleccionados.has(id);
-      const guardado=guardadoPara(id),expandido=estado.expandido===id &&
+      const id=String(g.codigo),guardado=guardadoPara(id);
+      const checked=estado.seleccionados.has(id)&&!(estado.modo==="grupal"&&guardado);
+      const expandido=estado.expandido===id &&
         (estado.modo!=="individual"||checked);
       const atenuado=estado.modo==="individual"&&estado.seleccionados.size>0&&!checked;
       resultado.push('<tr class="dt-fila'+(atenuado?' dt-atenuado':'')+'">'+
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
-          '" '+(checked?'checked ':'')+(!estado.editable?'disabled ':'')+'></td>'+
+          '" '+(checked?'checked ':'')+(!estado.editable||(estado.modo==='grupal'&&guardado)?'disabled ':'')+'></td>'+
         '<td><button type="button" class="dt-abrir" data-dt-abrir="'+escapar(id)+'" aria-expanded="'+expandido+'">'+
           '<span class="dt-identidad"><span class="dt-nombre">'+escapar(g.colaborador)+'</span>'+
           '<span class="dt-estado-tiempo '+(guardado?'dt-guardado':'dt-pendiente')+'">'+
@@ -208,6 +209,8 @@
     if(estado.ocupado)return;
     if(!estado.editable)throw Error("Los tiempos solo se pueden registrar para un día.");
     if(!personas.length)throw Error("Selecciona al menos un colaborador.");
+    if(origen==="grupal"&&personas.some(g=>guardadoPara(g.codigo)))
+      throw Error("El tiempo grupal solo puede aplicarse a colaboradores pendientes.");
     const datos=leerDatos(root);
     const sincronizados=personas.filter(g=>guardadoPara(g.codigo)?.syncStatus==="Sincronizado");
     if(sincronizados.length)throw Error("Hay tiempos sincronizados que no se pueden sobrescribir.");
@@ -236,6 +239,7 @@
         delete fila.pMadresMin;delete fila.pAbuelasMin;
         await OfflineDb.put(STORE,fila);
         estado.guardados.set(String(persona.codigo),fila);
+        if(origen==="grupal")estado.seleccionados.delete(String(persona.codigo));
       }
       mensaje("Tiempos "+(existentes.length?"actualizados":"guardados")+" para "+
         personas.length+" colaborador(es). Pulsa cualquier nombre para consultar o modificar sus tiempos.");
@@ -249,6 +253,9 @@
   tabla.addEventListener("change",(event)=>{
     const input=event.target.closest("[data-dt-persona]");
     if(!input||!estado.editable)return;
+    if(estado.modo==="grupal"&&guardadoPara(input.dataset.dtPersona)){
+      input.checked=false;return;
+    }
     const id=input.dataset.dtPersona;
     if(estado.modo==="individual"){
       estado.seleccionados.clear();
@@ -309,14 +316,15 @@
       if(cambioFecha){
         estado.expandido=null;
         estado.seleccionados=new Set(estado.modo==="grupal"?
-          estado.grupos.map(g=>String(g.codigo)):[]);
+          estado.grupos.filter(g=>!guardadoPara(g.codigo)).map(g=>String(g.codigo)):[]);
         mensaje("");
       }else{
         const ids=new Set(estado.grupos.map(g=>String(g.codigo)));
         for(const id of estado.seleccionados)if(!ids.has(id))estado.seleccionados.delete(id);
         if(estado.expandido&&!ids.has(estado.expandido))estado.expandido=null;
-        if(estado.modo==="grupal"&&!estado.seleccionados.size&&!contenedor.children.length)
-          estado.seleccionados=new Set(ids);
+        if(estado.modo==="grupal"){
+          for(const id of estado.seleccionados)if(guardadoPara(id))estado.seleccionados.delete(id);
+        }
       }
       const version=++estado.version;
       try{
@@ -330,6 +338,9 @@
             porPersona.set(id,r);
         });
         estado.guardados=porPersona;
+        if(estado.modo==="grupal"){
+          for(const id of estado.seleccionados)if(porPersona.has(id))estado.seleccionados.delete(id);
+        }
       }catch(error){mensaje("No se pudieron recuperar los tiempos: "+error.message,true);}
       if(version!==estado.version)return;
       pintarTabla();
