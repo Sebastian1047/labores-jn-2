@@ -31,7 +31,11 @@
     guardados:new Map(), expandido:null, version:0, ocupado:false
   };
 
-  function guardadoPara(codigo) { return estado.guardados.get(String(codigo)); }
+  function guardadoPara(codigo) { return estado.guardados.get(String(codigo).trim()); }
+  function pendienteGrupal(codigo) { return !guardadoPara(codigo); }
+  function seleccionablesGrupales() {
+    return estado.grupos.filter(g=>pendienteGrupal(g.codigo)).map(g=>String(g.codigo));
+  }
   function minutosGuardados(registro, campo) {
     if (!registro) return 0;
     if (campo === "otrosMin" && registro.otrosMin == null) {
@@ -144,7 +148,7 @@
     if(!["grupal","individual"].includes(tipo))return;
     estado.modo=tipo;
     estado.expandido=null;
-    estado.seleccionados=new Set(tipo==="grupal"?estado.grupos.filter(g=>!guardadoPara(g.codigo)).map(g=>String(g.codigo)):[]);
+    estado.seleccionados=new Set(tipo==="grupal"?seleccionablesGrupales():[]);
     document.getElementById("tiemposSiembraCampo").hidden=tipo==="individual";
     mensaje("");
     botonGrupal.classList.toggle("active",tipo==="grupal");
@@ -178,14 +182,15 @@
     const resultado=[];
     for(const g of estado.grupos){
       const id=String(g.codigo),guardado=guardadoPara(id);
-      const checked=estado.seleccionados.has(id)&&!(estado.modo==="grupal"&&guardado);
+      const bloqueado=estado.modo==="grupal"&&Boolean(guardado);
+      const checked=estado.seleccionados.has(id)&&!bloqueado;
       const expandido=estado.expandido===id &&
         (estado.modo!=="individual"||checked);
       const atenuado=estado.modo==="individual"&&estado.seleccionados.size>0&&!checked;
       resultado.push('<tr class="dt-fila'+(atenuado?' dt-atenuado':'')+'">'+
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
-          '" '+(checked?'checked ':'')+(!estado.editable||(estado.modo==='grupal'&&guardado)?'disabled ':'')+'></td>'+
-        '<td><button type="button" class="dt-abrir" data-dt-abrir="'+escapar(id)+'" aria-expanded="'+expandido+'">'+
+          '" '+(checked?'checked ':'')+(!estado.editable||bloqueado?'disabled ':'')+(bloqueado?'title="Ya tiene tiempos guardados. Para modificar utiliza Tiempo individual." ':'')+'></td>'+
+        '<td><button type="button" class="dt-abrir" data-dt-abrir="'+escapar(id)+'" aria-expanded="'+expandido+'" '+(bloqueado?'disabled title="Para modificar, selecciona Tiempo individual"':'')+'>'+
           '<span class="dt-identidad"><span class="dt-nombre">'+escapar(g.colaborador)+'</span>'+
           '<span class="dt-estado-tiempo '+(guardado?'dt-guardado':'dt-pendiente')+'">'+
           (guardado?'Guardado':'Pendiente')+'</span></span><small>'+escapar(id)+
@@ -209,7 +214,7 @@
     if(estado.ocupado)return;
     if(!estado.editable)throw Error("Los tiempos solo se pueden registrar para un día.");
     if(!personas.length)throw Error("Selecciona al menos un colaborador.");
-    if(origen==="grupal"&&personas.some(g=>guardadoPara(g.codigo)))
+    if(origen==="grupal"&&personas.some(g=>!pendienteGrupal(g.codigo)))
       throw Error("El tiempo grupal solo puede aplicarse a colaboradores pendientes.");
     const datos=leerDatos(root);
     const sincronizados=personas.filter(g=>guardadoPara(g.codigo)?.syncStatus==="Sincronizado");
@@ -272,6 +277,7 @@
     const btn=event.target.closest("[data-dt-abrir]");
     if(!btn)return;
     const id=btn.dataset.dtAbrir;
+    if(estado.modo==="grupal"&&guardadoPara(id))return;
     if(estado.modo==="individual"){
       const abrir=estado.expandido!==id;
       estado.seleccionados=new Set(abrir?[id]:[]);
@@ -299,7 +305,7 @@
     const form=event.target.closest("#dtFormGeneral");
     if(!form)return;
     event.preventDefault();
-    const personas=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo)));
+    const personas=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo)) && (estado.modo!=="grupal"||pendienteGrupal(g.codigo)));
     try{await guardarPara(personas,form,estado.modo);}
     catch(error){mensaje(error.message,true);}
   });
@@ -315,8 +321,9 @@
       estado.grupos=grupos.filter(g=>Number(g.esquejes)>0&&g.codigo);
       if(cambioFecha){
         estado.expandido=null;
+        estado.guardados=new Map(); // Evitar estados de la fecha anterior durante la carga.
         estado.seleccionados=new Set(estado.modo==="grupal"?
-          estado.grupos.filter(g=>!guardadoPara(g.codigo)).map(g=>String(g.codigo)):[]);
+          seleccionablesGrupales():[]);
         mensaje("");
       }else{
         const ids=new Set(estado.grupos.map(g=>String(g.codigo)));
@@ -339,6 +346,7 @@
         });
         estado.guardados=porPersona;
         if(estado.modo==="grupal"){
+          if(cambioFecha)estado.seleccionados=new Set(seleccionablesGrupales());
           for(const id of estado.seleccionados)if(porPersona.has(id))estado.seleccionados.delete(id);
         }
       }catch(error){mensaje("No se pudieron recuperar los tiempos: "+error.message,true);}
