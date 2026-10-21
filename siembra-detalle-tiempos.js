@@ -144,8 +144,19 @@
     return data;
   }
 
+  function actualizarBotonGrupal(){
+    // Una asignación grupal requiere al menos dos pendientes seleccionados.
+    const activos=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo))&&pendienteGrupal(g.codigo));
+    const elegibles=seleccionablesGrupales();
+    botonGrupal.disabled=!estado.editable||elegibles.length<2||
+      (estado.modo==="grupal"&&activos.length<2);
+    botonGrupal.title=botonGrupal.disabled
+      ?"Tiempo grupal requiere al menos dos colaboradores pendientes seleccionados. Usa Tiempo individual."
+      :"Asignar el mismo tiempo a dos o más colaboradores pendientes.";
+  }
   function modo(tipo){
     if(!["grupal","individual"].includes(tipo))return;
+    if(tipo==="grupal"&&seleccionablesGrupales().length<2)return;
     estado.modo=tipo;
     estado.expandido=null;
     estado.seleccionados=new Set(tipo==="grupal"?seleccionablesGrupales():[]);
@@ -168,10 +179,14 @@
     document.getElementById("dtSeleccionResumen").textContent=!estado.editable
       ? "Selecciona un único día en Fecha inicial y Fecha final para registrar tiempos."
       : (estado.modo==="grupal"
-        ? disponibles.length+" de "+estado.grupos.length+" colaboradores seleccionados para asignar el mismo tiempo."
+        ? (disponibles.length<2
+          ? "Tiempo grupal requiere al menos dos colaboradores pendientes seleccionados. Cambia a Tiempo individual."
+          : disponibles.length+" de "+estado.grupos.length+" colaboradores seleccionados para asignar el mismo tiempo.")
         : (disponibles.length ? "Tiempo particular de "+disponibles[0].colaborador : "Selecciona una sola persona para registrar su tiempo."));
     const boton=contenedor.querySelector('button[type="submit"]');
-    if(boton)boton.disabled=!estado.editable||!disponibles.length||estado.ocupado;
+    if(boton)boton.disabled=!estado.editable||estado.ocupado||
+      (estado.modo==="grupal"?disponibles.length<2:!disponibles.length);
+    actualizarBotonGrupal();
   }
 
   function pintarTabla(){
@@ -214,6 +229,8 @@
     if(estado.ocupado)return;
     if(!estado.editable)throw Error("Los tiempos solo se pueden registrar para un día.");
     if(!personas.length)throw Error("Selecciona al menos un colaborador.");
+    if(origen==="grupal"&&personas.length<2)
+      throw Error("Para una sola persona, utiliza Tiempo individual.");
     if(origen==="grupal"&&personas.some(g=>!pendienteGrupal(g.codigo)))
       throw Error("El tiempo grupal solo puede aplicarse a colaboradores pendientes.");
     const datos=leerDatos(root);
@@ -269,6 +286,16 @@
     }else{
       if(input.checked)estado.seleccionados.add(id);
       else estado.seleccionados.delete(id);
+    }
+    if(estado.modo==="grupal"){
+      const pendientes=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo))&&pendienteGrupal(g.codigo));
+      if(pendientes.length===1){
+        // Al quedar solo una persona, preparar directamente su ficha individual.
+        const unica=String(pendientes[0].codigo);
+        modo("individual");
+        estado.seleccionados=new Set([unica]);
+        estado.expandido=unica;
+      }
     }
     pintarTabla();
     pintarResumen();
@@ -351,6 +378,20 @@
         }
       }catch(error){mensaje("No se pudieron recuperar los tiempos: "+error.message,true);}
       if(version!==estado.version)return;
+      if(estado.modo==="grupal"&&seleccionablesGrupales().length<2){
+        // Si inicialmente solo hay un pendiente, no permitir modalidad grupal.
+        estado.modo="individual";
+        estado.expandido=null;
+        estado.seleccionados=new Set();
+        document.getElementById("tiemposSiembraCampo").hidden=true;
+        botonGrupal.classList.remove("active");
+        botonIndividual.classList.add("active");
+        botonGrupal.setAttribute("aria-pressed","false");
+        botonIndividual.setAttribute("aria-pressed","true");
+        document.getElementById("dtModoActual").textContent="individuales";
+        document.getElementById("instruccionesSeleccionTiempo").textContent=
+          "Tiempo individual: selecciona una persona pendiente o guardada para registrar o modificar sus tiempos.";
+      }
       pintarTabla();
       if(!contenedor.children.length||cambioFecha){
         const valores=valoresPara(null);
