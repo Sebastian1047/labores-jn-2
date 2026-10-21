@@ -13,6 +13,10 @@
   font:inherit;padding:5px 0;display:flex;flex-direction:column;align-items:flex-start;
   min-width:165px;gap:3px;
 }
+#tablaColaboradores .dt-identidad{display:flex;align-items:center;flex-wrap:wrap;gap:7px;}
+#tablaColaboradores .dt-estado-tiempo{display:inline-flex;align-items:center;border-radius:20px;padding:3px 9px;font-size:.72rem;font-weight:800;line-height:1.35;}
+#tablaColaboradores .dt-pendiente{background:#fff2d6;color:#8c5700;border:1px solid #ebce89;}
+#tablaColaboradores .dt-guardado{background:#e4f5e9;color:#176a3d;border:1px solid #a9d6b7;}
 #tablaColaboradores .dt-nombre{font-weight:800;color:#173d2a;font-size:.85rem;}
 #tablaColaboradores .dt-abrir small{color:#697766;font-size:.71rem;}
 #tablaColaboradores .dt-chevron{color:#18784c;font-size:.74rem;font-weight:750;}
