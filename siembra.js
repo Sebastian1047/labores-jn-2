@@ -484,5 +484,10 @@ nuevoBtn.addEventListener("click", limpiarFormulario);
     await cargarParaEditar(Number(idEditar));
   } else {
     limpiarFormulario();
+    // Un enlace explícito de ensayo incorpora automáticamente las siembras
+    // ficticias en este navegador. La apertura normal de Registro no crea datos.
+    if (params.get("pruebas") === "1") {
+      await cargarSiembrasDePrueba();
+    }
   }
 })();
