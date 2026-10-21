@@ -18,7 +18,8 @@
     ["capacitacionMin", "Capacitación"],
     ["vacacionesMin", "Vacaciones"],
     ["examenMedicoMin", "Examen médico"],
-    ["otrosMin", "Otros"]
+    ["otrosMin", "Otros"],
+    ["descuentoMin", "Descuento"]
   ];
   const DESCUENTOS = CAMPOS.slice(2).map(([k])=>k);
   const escapar = (s) => String(s ?? "").replace(/&/g,"&amp;")
