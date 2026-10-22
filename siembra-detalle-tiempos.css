@@ -76,3 +76,14 @@
 .dt-editar:disabled {cursor:not-allowed;opacity:.55;}
 .dt-cancelar {margin-bottom:12px;background:#fff;color:#376349;}
 @media(max-width:640px){.dt-resumen-grid{grid-template-columns:1fr;}.dt-resumen-grid .dt-dato-observaciones{grid-column:auto;}}
+
+/* Selección de grupo y campos para edición parcial, compartidos por los dos módulos. */
+.dt-submodos{display:flex;flex-wrap:wrap;gap:9px;margin:8px 0 12px;padding-left:12px;border-left:3px solid #9acdad;}
+.dt-submodos[hidden]{display:none!important;}
+.dt-submodos .dt-modo{font-size:.84rem;min-height:38px;}
+.dt-modo:disabled{opacity:.5;cursor:not-allowed;}
+.dt-parcial-grid .dt-parcial-campo{background:#f8fbf9;border:1px solid #c7dfcf;border-radius:10px;padding:10px;}
+.dt-parcial-nombre{display:flex;align-items:center;gap:8px;color:#245d3d;font-weight:800;}
+.dt-parcial-nombre input[type="checkbox"]{width:19px;height:19px;flex-shrink:0;accent-color:#168053;}
+.dt-parcial-grid input[disabled],.dt-parcial-grid textarea[disabled]{opacity:.5;cursor:not-allowed;}
+.dt-parcial-ayuda{margin:8px 0 13px;font-size:.84rem;color:#476c54;}

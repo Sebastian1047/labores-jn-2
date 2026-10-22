@@ -6,7 +6,12 @@
   const contenedor = document.getElementById("dtFormularioGeneral");
   const botonGrupal = document.getElementById("modoTiempoGrupal");
   const botonIndividual = document.getElementById("modoTiempoIndividual");
-  if (!tabla || !contenedor || !botonGrupal || !botonIndividual) return;
+  const grupoPendientes=document.getElementById("grupoTiemposPendientes");
+  const grupoGuardados=document.getElementById("grupoTiemposGuardados");
+  const submodos=document.getElementById("dtSubmodosGrupales");
+  const grupoParcial=window.TiemposGrupoGuardadosJN;
+  if(!tabla||!contenedor||!botonGrupal||!botonIndividual||
+    !grupoPendientes||!grupoGuardados||!submodos||!grupoParcial)return;
 
   const STORE = "siembraRendimientoTiempos";
   const CAMPOS = [
@@ -27,14 +32,85 @@
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   const formato = (min) => TiemposLaboresJN.formatearHoras(min);
   const estado = {
-    modo:"grupal", fecha:"", editable:true, grupos:[], seleccionados:new Set(),
+    modo:"grupal", grupo:"pendientes", fecha:"", editable:true, grupos:[], seleccionados:new Set(),
     guardados:new Map(), expandido:null, edicion:null, version:0, ocupado:false
   };
 
   function guardadoPara(codigo) { return estado.guardados.get(String(codigo).trim()); }
   function pendienteGrupal(codigo) { return !guardadoPara(codigo); }
-  function seleccionablesGrupales() {
-    return estado.grupos.filter(g=>pendienteGrupal(g.codigo)).map(g=>String(g.codigo));
+  function guardadoEditable(codigo){
+    const r=guardadoPara(codigo);
+    return Boolean(r)&&r.syncStatus!=="Sincronizado";
+  }
+  function seleccionablesGrupales(grupo=estado.grupo){
+    return estado.grupos.filter(g=>grupo==="guardados"
+      ?guardadoEditable(g.codigo):pendienteGrupal(g.codigo)).map(g=>String(g.codigo));
+  }
+  function puedeGrupo(grupo){
+    return seleccionablesGrupales(grupo).length>=(grupo==="guardados"?1:2);
+  }
+  function participantes(){
+    return estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo))&&
+      (estado.modo==="individual"||
+       (estado.grupo==="guardados"?guardadoEditable(g.codigo):pendienteGrupal(g.codigo))));
+  }
+  function uiModo(){
+    const grupal=estado.modo==="grupal",guardados=estado.grupo==="guardados";
+    document.getElementById("tiemposSiembraCampo").hidden=!grupal;
+    submodos.hidden=!grupal;
+    botonGrupal.classList.toggle("active",grupal);
+    botonIndividual.classList.toggle("active",!grupal);
+    grupoPendientes.classList.toggle("active",grupal&&!guardados);
+    grupoGuardados.classList.toggle("active",grupal&&guardados);
+    botonGrupal.setAttribute("aria-pressed",String(grupal));
+    botonIndividual.setAttribute("aria-pressed",String(!grupal));
+    grupoPendientes.setAttribute("aria-pressed",String(grupal&&!guardados));
+    grupoGuardados.setAttribute("aria-pressed",String(grupal&&guardados));
+    document.getElementById("dtModoActual").textContent=grupal
+      ?(guardados?"grupales · guardados":"grupales · pendientes"):"individuales";
+    document.getElementById("instruccionesSeleccionTiempo").textContent=!grupal
+      ?"Tiempo individual: selecciona una persona pendiente o guardada para registrar o editar."
+      :guardados
+        ?"Grupo guardados: selecciona uno o varios registros y marca solamente los campos por modificar."
+        :"Grupo pendientes: selecciona al menos dos personas que aún no tienen tiempos guardados.";
+  }
+  function formularioGrupal(){
+    if(estado.modo!=="grupal")return;
+    if(estado.grupo==="guardados"){
+      contenedor.innerHTML=grupoParcial.formulario();
+    }else{
+      contenedor.innerHTML='<form id="dtFormGeneral">'+camposFormulario(valoresPara(null),"global")+'</form>';
+      calcular(contenedor.querySelector("#dtFormGeneral"));
+    }
+  }
+  function cambiarGrupo(grupo){
+    if(estado.modo!=="grupal"||!puedeGrupo(grupo))return;
+    estado.grupo=grupo;estado.expandido=null;estado.edicion=null;
+    estado.seleccionados=new Set(seleccionablesGrupales());
+    mensaje("");uiModo();formularioGrupal();pintarTabla();pintarResumen();
+  }
+  async function guardarGrupoGuardados(form){
+    if(estado.ocupado||estado.modo!=="grupal"||estado.grupo!=="guardados")return;
+    if(!estado.editable)throw Error("Selecciona una fecha válida para editar los tiempos.");
+    const elegidos=participantes();
+    if(!elegidos.length)throw Error("Selecciona al menos un colaborador guardado.");
+    const cambios=grupoParcial.leerCambios(form);
+    const nuevos=elegidos.map(p=>grupoParcial.cambiar(guardadoPara(p.codigo),cambios));
+    const nombres=grupoParcial.nombres(cambios);
+    if(!window.confirm("Modificar "+nuevos.length+" registro(s) guardado(s). Campos: "+
+      nombres.join(", ")+". ¿Continuar?"))return;
+    estado.ocupado=true;pintarResumen();
+    try{
+      const ahora=new Date().toISOString();
+      for(const r of nuevos){
+        const actualizado={...r,updatedAt:ahora};
+        await OfflineDb.put(STORE,actualizado);
+        estado.guardados.set(String(actualizado.colaborador),actualizado);
+      }
+      mensaje("Modificados "+nuevos.length+" registro(s). Campos: "+nombres.join(", ")+".");
+      formularioGrupal();pintarTabla();
+      await window.SiembraDetalleRecargar?.();
+    }finally{estado.ocupado=false;pintarResumen();}
   }
   function minutosGuardados(registro, campo) {
     if (!registro) return 0;
@@ -185,48 +261,36 @@
   }
 
   function actualizarBotonGrupal(){
-    // Una asignación grupal requiere al menos dos pendientes seleccionados.
-    const activos=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo))&&pendienteGrupal(g.codigo));
-    const elegibles=seleccionablesGrupales();
-    botonGrupal.disabled=!estado.editable||elegibles.length<2||
-      (estado.modo==="grupal"&&activos.length<2);
-    botonGrupal.title=botonGrupal.disabled
-      ?"Tiempo grupal requiere al menos dos colaboradores pendientes seleccionados. Usa Tiempo individual."
-      :"Asignar el mismo tiempo a dos o más colaboradores pendientes.";
+    botonGrupal.disabled=!estado.editable||(!puedeGrupo("pendientes")&&!puedeGrupo("guardados"));
+    botonGrupal.title=botonGrupal.disabled?"No hay grupos disponibles":"Administrar grupos de tiempos";
+    grupoPendientes.disabled=!estado.editable||!puedeGrupo("pendientes");
+    grupoGuardados.disabled=!estado.editable||!puedeGrupo("guardados");
   }
   function modo(tipo){
     if(!["grupal","individual"].includes(tipo))return;
-    if(tipo==="grupal"&&seleccionablesGrupales().length<2)return;
+    if(tipo==="grupal"&&!puedeGrupo("pendientes")&&!puedeGrupo("guardados"))return;
     estado.modo=tipo;
-    estado.expandido=null;
-    estado.edicion=null;
+    if(tipo==="grupal")estado.grupo=puedeGrupo("pendientes")?"pendientes":"guardados";
+    estado.expandido=null;estado.edicion=null;
     estado.seleccionados=new Set(tipo==="grupal"?seleccionablesGrupales():[]);
-    document.getElementById("tiemposSiembraCampo").hidden=tipo==="individual";
-    mensaje("");
-    botonGrupal.classList.toggle("active",tipo==="grupal");
-    botonIndividual.classList.toggle("active",tipo==="individual");
-    botonGrupal.setAttribute("aria-pressed",String(tipo==="grupal"));
-    botonIndividual.setAttribute("aria-pressed",String(tipo==="individual"));
-    document.getElementById("instruccionesSeleccionTiempo").textContent=tipo==="grupal"
-      ? "Tiempo grupal: solo se seleccionan los colaboradores pendientes. Los que tienen tiempos guardados no pueden seleccionarse en este modo."
-      : "Tiempo individual: selecciona una persona o pulsa su nombre para desplegar su formulario debajo. Las demás se atenúan únicamente después de seleccionar una persona.";
-    document.getElementById("dtModoActual").textContent=tipo==="grupal"?"grupales":"individuales";
-    pintarTabla();
-    pintarResumen();
+    mensaje("");uiModo();
+    if(tipo==="grupal")formularioGrupal();
+    pintarTabla();pintarResumen();
   }
-
   function pintarResumen(){
-    const disponibles=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo)) && (estado.modo!=="grupal"||!guardadoPara(g.codigo)));
+    const elegidos=participantes();
     document.getElementById("dtSeleccionResumen").textContent=!estado.editable
-      ? "Selecciona un único día en Fecha inicial y Fecha final para registrar tiempos."
-      : (estado.modo==="grupal"
-        ? (disponibles.length<2
-          ? "Tiempo grupal requiere al menos dos colaboradores pendientes seleccionados. Cambia a Tiempo individual."
-          : disponibles.length+" de "+estado.grupos.length+" colaboradores seleccionados para asignar el mismo tiempo.")
-        : (disponibles.length ? "Tiempo particular de "+disponibles[0].colaborador : "Selecciona una sola persona para registrar su tiempo."));
-    const boton=contenedor.querySelector('button[type="submit"]');
-    if(boton)boton.disabled=!estado.editable||estado.ocupado||
-      (estado.modo==="grupal"?disponibles.length<2:!disponibles.length);
+      ?"Selecciona un único día para registrar o editar tiempos."
+      :estado.modo==="individual"
+        ?(elegidos.length?"Tiempo individual de "+elegidos[0].colaborador:"Selecciona una persona.")
+        :estado.grupo==="guardados"
+          ?elegidos.length+" guardado(s) seleccionados. Marca los campos que cambiarán en todos."
+          :elegidos.length<2
+            ?"Grupo pendientes requiere mínimo dos personas; para una utiliza Tiempo individual."
+            :elegidos.length+" pendientes seleccionados para aplicar el mismo tiempo.";
+    const btn=contenedor.querySelector('button[type="submit"]');
+    if(btn)btn.disabled=!estado.editable||estado.ocupado||
+      (estado.modo==="grupal"?(estado.grupo==="guardados"?elegidos.length<1:elegidos.length<2):elegidos.length<1);
     actualizarBotonGrupal();
   }
 
@@ -238,7 +302,8 @@
     const resultado=[],individual=estado.modo==="individual";
     for(const g of estado.grupos){
       const id=String(g.codigo),guardado=guardadoPara(id);
-      const bloqueado=!individual&&Boolean(guardado);
+      const bloqueado=!individual&&
+        (estado.grupo==="guardados"?!guardadoEditable(id):Boolean(guardado));
       const checked=estado.seleccionados.has(id)&&!bloqueado;
       const expandido=individual&&estado.expandido===id&&checked;
       const atenuado=individual&&estado.seleccionados.size>0&&!checked;
@@ -255,7 +320,7 @@
       resultado.push('<tr class="dt-fila'+(atenuado?' dt-atenuado':'')+'">'+
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
         '" '+(checked?'checked ':'')+(!estado.editable||bloqueado?'disabled ':'')+
-        (bloqueado?'title="Ya tiene tiempos guardados. Para modificar utiliza Tiempo individual." ':'')+'></td>'+
+        (bloqueado?'title="No pertenece al grupo actual o el registro está sincronizado." ':'')+'></td>'+
         '<td>'+cabecera+'</td>'+
         '<td>'+Number(g.esquejes).toLocaleString("es-CO")+'</td>'+
         '<td>'+((Number(g.horas)||0)>0?g.horas.toFixed(2)+' h':'—')+'</td>'+
@@ -282,6 +347,8 @@
     if(estado.ocupado)return;
     if(!estado.editable)throw Error("Los tiempos solo se pueden registrar para un día.");
     if(!personas.length)throw Error("Selecciona al menos un colaborador.");
+    if(origen==="grupal"&&estado.grupo!=="pendientes")
+      throw Error("Utiliza Grupo guardados para modificar registros existentes.");
     if(origen==="grupal"&&personas.length<2)
       throw Error("Para una sola persona, utiliza Tiempo individual.");
     if(origen==="grupal"&&personas.some(g=>!pendienteGrupal(g.codigo)))
@@ -325,11 +392,15 @@
   }
 
   botonGrupal.addEventListener("click",()=>modo("grupal"));
+  grupoPendientes.addEventListener("click",()=>cambiarGrupo("pendientes"));
+  grupoGuardados.addEventListener("click",()=>cambiarGrupo("guardados"));
   botonIndividual.addEventListener("click",()=>modo("individual"));
   tabla.addEventListener("change",(event)=>{
     const input=event.target.closest("[data-dt-persona]");
     if(!input||!estado.editable)return;
-    if(estado.modo==="grupal"&&guardadoPara(input.dataset.dtPersona)){
+    if(estado.modo==="grupal"&&
+        (estado.grupo==="guardados"?!guardadoEditable(input.dataset.dtPersona):
+         !pendienteGrupal(input.dataset.dtPersona))){
       input.checked=false;return;
     }
     const id=input.dataset.dtPersona;
@@ -342,8 +413,8 @@
       if(input.checked)estado.seleccionados.add(id);
       else estado.seleccionados.delete(id);
     }
-    if(estado.modo==="grupal"){
-      const pendientes=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo))&&pendienteGrupal(g.codigo));
+    if(estado.modo==="grupal"&&estado.grupo==="pendientes"){
+      const pendientes=participantes();
       if(pendientes.length===1){
         // Al quedar solo una persona, preparar directamente su ficha individual.
         const unica=String(pendientes[0].codigo);
@@ -408,12 +479,25 @@
     catch(error){mensaje(error.message,true);}
   });
   contenedor.addEventListener("submit",async(event)=>{
+    const parcial=event.target.closest("#dtFormGrupoGuardados");
+    if(parcial){
+      event.preventDefault();
+      try{await guardarGrupoGuardados(parcial);}
+      catch(error){mensaje(error.message,true);}
+      return;
+    }
     const form=event.target.closest("#dtFormGeneral");
     if(!form)return;
     event.preventDefault();
-    const personas=estado.grupos.filter(g=>estado.seleccionados.has(String(g.codigo)) && (estado.modo!=="grupal"||pendienteGrupal(g.codigo)));
-    try{await guardarPara(personas,form,estado.modo);}
+    if(estado.modo!=="grupal"||estado.grupo!=="pendientes")return;
+    try{await guardarPara(participantes(),form,"grupal");}
     catch(error){mensaje(error.message,true);}
+  });
+  contenedor.addEventListener("change",event=>{
+    const check=event.target.closest("[data-dt-grupo-habilitar]");
+    if(!check)return;
+    const campo=contenedor.querySelector('[data-dt-grupo-valor="'+check.dataset.dtGrupoHabilitar+'"]');
+    if(campo){campo.disabled=!check.checked;if(check.checked)campo.focus?.();}
   });
   contenedor.addEventListener("input",(event)=>{
     const form=event.target.closest("#dtFormGeneral");
@@ -426,6 +510,7 @@
       estado.fecha=fecha;estado.editable=Boolean(editable);
       estado.grupos=grupos.filter(g=>Number(g.esquejes)>0&&g.codigo);
       if(cambioFecha){
+        estado.grupo="pendientes";
         estado.expandido=null;
         estado.edicion=null;
         estado.guardados=new Map(); // Evitar estados de la fecha anterior durante la carga.
@@ -438,7 +523,9 @@
         if(estado.expandido&&!ids.has(estado.expandido))estado.expandido=null;
         if(estado.edicion&&!ids.has(estado.edicion))estado.edicion=null;
         if(estado.modo==="grupal"){
-          for(const id of estado.seleccionados)if(guardadoPara(id))estado.seleccionados.delete(id);
+          for(const id of estado.seleccionados)
+            if(estado.grupo==="guardados"?!guardadoEditable(id):!pendienteGrupal(id))
+              estado.seleccionados.delete(id);
         }
       }
       const version=++estado.version;
@@ -455,30 +542,27 @@
         estado.guardados=porPersona;
         if(estado.modo==="grupal"){
           if(cambioFecha)estado.seleccionados=new Set(seleccionablesGrupales());
-          for(const id of estado.seleccionados)if(porPersona.has(id))estado.seleccionados.delete(id);
+          for(const id of estado.seleccionados)
+            if(estado.grupo==="guardados"?!guardadoEditable(id):!pendienteGrupal(id))
+              estado.seleccionados.delete(id);
         }
       }catch(error){mensaje("No se pudieron recuperar los tiempos: "+error.message,true);}
       if(version!==estado.version)return;
-      if(estado.modo==="grupal"&&seleccionablesGrupales().length<2){
-        // Si inicialmente solo hay un pendiente, no permitir modalidad grupal.
-        estado.modo="individual";
-        estado.expandido=null;
-        estado.seleccionados=new Set();
-        document.getElementById("tiemposSiembraCampo").hidden=true;
-        botonGrupal.classList.remove("active");
-        botonIndividual.classList.add("active");
-        botonGrupal.setAttribute("aria-pressed","false");
-        botonIndividual.setAttribute("aria-pressed","true");
-        document.getElementById("dtModoActual").textContent="individuales";
-        document.getElementById("instruccionesSeleccionTiempo").textContent=
-          "Tiempo individual: selecciona una persona pendiente o guardada para registrar o modificar sus tiempos.";
+      if(estado.modo==="grupal"&&!puedeGrupo(estado.grupo)){
+        if(puedeGrupo("pendientes")||puedeGrupo("guardados")){
+          estado.grupo=puedeGrupo("pendientes")?"pendientes":"guardados";
+          estado.seleccionados=new Set(seleccionablesGrupales());
+        }else{
+          estado.modo="individual";
+          estado.expandido=null;estado.edicion=null;estado.seleccionados.clear();
+        }
       }
+      uiModo();
       pintarTabla();
-      if(!contenedor.children.length||cambioFecha){
-        const valores=valoresPara(null);
-        contenedor.innerHTML='<form id="dtFormGeneral">'+camposFormulario(valores,"global")+'</form>';
-        calcular(contenedor.querySelector("#dtFormGeneral"));
-      }
+      if(estado.modo==="grupal"&&(!contenedor.children.length||cambioFecha||
+         (estado.grupo==="guardados"&&!contenedor.querySelector("#dtFormGrupoGuardados"))||
+         (estado.grupo==="pendientes"&&!contenedor.querySelector("#dtFormGeneral"))))
+        formularioGrupal();
       pintarResumen();
     },
     getState(){return estado;}

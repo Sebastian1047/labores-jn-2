@@ -7,7 +7,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#187a4d">
     <link rel="stylesheet" href="./styles.css">
-    <link rel="stylesheet" href="./siembra-detalle-tiempos.css?v=1.0.140" />
+    <link rel="stylesheet" href="./siembra-detalle-tiempos.css?v=1.0.143" />
     <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.124">
   </head>
   <body>
@@ -163,7 +163,11 @@
             <button type="button" id="modoTiempoGrupal" class="dt-modo active" aria-pressed="true">Tiempo grupal</button>
             <button type="button" id="modoTiempoIndividual" class="dt-modo" aria-pressed="false">Tiempo individual</button>
           </div>
-          <p class="dt-instrucciones" id="instruccionesSeleccionTiempo">Tiempo grupal selecciona colaboradores pendientes con camas guardadas. Los tiempos existentes se modifican desde Tiempo individual.</p>
+          <div id="dtSubmodosGrupales" class="dt-submodos" role="group" aria-label="Tipo de tiempo grupal">
+          <button type="button" id="grupoTiemposPendientes" class="dt-modo active" aria-pressed="true">Grupo pendientes</button>
+          <button type="button" id="grupoTiemposGuardados" class="dt-modo" aria-pressed="false">Grupo guardados</button>
+        </div>
+        <p class="dt-instrucciones" id="instruccionesSeleccionTiempo">Tiempo grupal selecciona colaboradores pendientes con camas guardadas. Los tiempos existentes se modifican desde Tiempo individual.</p>
           <div class="table-wrap">
             <table>
               <thead><tr>
@@ -200,7 +204,8 @@
     <script src="./offline/sync-engine.js"></script>
     <script src="./tiempos-comun.js?v=1.0.118"></script>
     <script src="./desbotonado-mallas.js?v=1.0.142"></script>
-    <script src="./desbotonado-detalle-tiempos.js?v=1.0.142"></script>
+    <script src="./tiempos-grupo-parcial.js?v=1.0.143"></script>
+    <script src="./desbotonado-detalle-tiempos.js?v=1.0.143"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
