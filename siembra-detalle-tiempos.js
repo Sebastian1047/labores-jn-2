@@ -64,7 +64,7 @@
       (campo==="horasLaboralesMin" ? ' data-dt-base-min="'+
         Math.round(TiemposLaboresJN.leerHoras({value:valores[campo]})*60)+'"' : '')+
       ' value="'+escapar(valores[campo] ?? "0")+'" autocomplete="off" '+
-      (campo==="horasLaboralesMin" ? 'title="Tiempo restante para la labor, sin horas extras. Se actualiza con los descuentos." ' : '')+
+      (campo==="horasLaboralesMin" ? 'title="Jornada base más horas extra menos descuentos. Se actualiza automáticamente." ' : '')+
       (!estado.editable?'disabled':'')+'></label>'
     ).join("") +
     '<label class="dt-campo dt-obs"><span>Observaciones</span>'+
@@ -93,27 +93,29 @@
     const leidos=new Map([...porCampo].map(([k,input])=>[k,TiemposLaboresJN.leerHoras(input)]));
     const valido=[...leidos.values()].every(n=>Number.isFinite(n) && n>=0);
     const programado=porCampo.get("horasLaboralesMin");
-    const descuento=DESCUENTOS.reduce((t,k)=>t+(leidos.get(k)||0),0);
+    // El valor visible de Tiempo programado incluye horas extra y descuentos.
+    // La jornada base se conserva aparte para no sumar las horas extra dos veces.
+    const extrasMin=Math.round((leidos.get("horasExtraMin")||0)*60);
+    const descuentosMin=DESCUENTOS.reduce((t,k)=>
+      t+Math.round((leidos.get(k)||0)*60),0);
     if(valido&&programado){
       if(editado===programado){
-        // Si se ajusta manualmente el tiempo visible, recuperar la jornada base
-        // sumando los descuentos actuales. Así sigue siendo posible corregir jornadas.
-        programado.dataset.dtBaseMin=String(Math.round(
-          (leidos.get("horasLaboralesMin")+descuento)*60));
+        // Recuperar la jornada base cuando se edite manualmente el total visible.
+        const visibleMin=Math.round(leidos.get("horasLaboralesMin")*60);
+        programado.dataset.dtBaseMin=String(visibleMin-extrasMin+descuentosMin);
       }else{
-        // Nunca descontar dos veces: la jornada original se mantiene aparte.
         const baseMin=Number(programado.dataset.dtBaseMin);
         if(Number.isFinite(baseMin))
-          programado.value=formato(Math.max(0,baseMin-Math.round(descuento*60)));
+          programado.value=formato(Math.max(0,baseMin+extrasMin-descuentosMin));
       }
     }
     const baseMin=Number(programado?.dataset.dtBaseMin);
-    const disponible=baseMin/60+(leidos.get("horasExtraMin")||0);
-    const tiempo=disponible-descuento;
+    const disponible=baseMin+extrasMin;
+    const tiempo=disponible-descuentosMin;
     const indicador=root.querySelector("[data-dt-calculo]");
     if (indicador) {
-      indicador.textContent=valido&&Number.isFinite(baseMin)&&disponible>0&&tiempo>=0
-        ? "Tiempo efectivo: "+formato(Math.round(tiempo*60))+" h"
+      indicador.textContent=valido&&Number.isFinite(baseMin)&&baseMin>=0&&disponible>0&&tiempo>=0
+        ? "Tiempo efectivo: "+formato(tiempo)+" h"
         : "Revisa los tiempos: las actividades no deben superar el disponible.";
     }
   }
@@ -127,8 +129,8 @@
       if(!Number.isFinite(n)||n<0)throw Error("Los tiempos deben ser números no negativos.");
       data[input.dataset.dtCampo]=Math.round(n*60);
     }
-    // En pantalla se ve el tiempo tras descuentos; persistimos la jornada base
-    // para que al editar o calcular rendimientos los descuentos se resten solo una vez.
+    // En pantalla se ve jornada + extras - descuentos; persistimos la jornada
+    // base original para no duplicar extras ni descuentos al calcular rendimientos.
     const campoProgramado=root.querySelector('[data-dt-campo="horasLaboralesMin"]');
     data.horasLaboralesMin=Number(campoProgramado?.dataset.dtBaseMin);
     if(!Number.isFinite(data.horasLaboralesMin)||data.horasLaboralesMin<0)
