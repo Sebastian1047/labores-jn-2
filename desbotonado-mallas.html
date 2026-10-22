@@ -7,7 +7,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#187a4d">
     <link rel="stylesheet" href="./styles.css">
-    <link rel="stylesheet" href="./tiempos-panel.css?v=1.0.120" />
+    <link rel="stylesheet" href="./siembra-detalle-tiempos.css?v=1.0.140" />
     <link rel="stylesheet" href="./desbotonado-mallas.css?v=1.0.124">
   </head>
   <body>
@@ -156,85 +156,35 @@
       </section>
 
       <section id="vistaTiempos" class="desbotonado-view" hidden>
-        <p class="hint" style="margin:12px 0;">Tiempos en <strong>horas decimales</strong> (ej.: 0,5 = 30 minutos). Admite coma o punto. Jornada sugerida: 7,25 h de lunes a viernes y 5,75 h los sábados; puedes cambiarla.</p>
-        <section class="workspace" style="grid-template-columns:minmax(0,1fr);">
-          <article class="scanner-panel">
-            <div class="exit-row" style="grid-template-columns:1fr 1fr;">
-              <div class="time-card">
-                <label>Horas laborales (h)
-                  <input id="horasLaboralesMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)">
-                </label>
-              </div>
-              <div class="time-card">
-                <label>Horas extra (h)
-                  <input id="horasExtraMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)">
-                </label>
-              </div>
-              <div class="time-card">
-                <label>Desplazamiento (h)
-                  <input id="desplazamientoMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)">
-                </label>
-              </div>
-              <div class="time-card">
-                <label>Calistenia, acondicionamiento y fortalecimiento (h)
-                  <input id="calisteniaMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)">
-                </label>
-              </div>
-              <div class="time-card">
-                <label>Capacitación y reunión (h)
-                  <input id="capacitacionMin" type="text" inputmode="decimal" placeholder="Horas (ej. 0,5)">
-                </label>
-              </div>
-              <div class="time-card">
-                <label>Otras actividades descontadas (h, automático)
-                  <input id="otrasLaboresMin" type="text" value="0" readonly>
-                </label>
-              </div>
-            </div>
-
-            <div class="time-summary" style="margin-top:16px;">
-              <section class="result-card">
-                <div>
-                  <span class="scan-label">Tiempo disponible</span>
-                  <strong id="tiempoDisponibleTexto" style="display:block;margin-top:6px;">0 min</strong>
-                </div>
-              </section>
-              <section class="result-card">
-                <div>
-                  <span class="scan-label">Tiempo real dedicado a la labor</span>
-                  <strong id="tiempoRealTexto" style="display:block;margin-top:6px;">0 min</strong>
-                </div>
-              </section>
-            </div>
-
-            <div style="margin-top:16px;">
-              <label>Observaciones
-                <textarea id="desbotonadoTiemposObservaciones" rows="3" placeholder="Observaciones opcionales"></textarea>
-              </label>
-            </div>
-
-            <div class="action-row" style="margin-top:18px;">
-              <button id="guardarTiemposBtn" class="success-btn" type="button">Guardar tiempos</button>
-              <button id="limpiarTiemposBtn" class="ghost-btn" type="button">Limpiar</button>
-            </div>
-
-            <section class="result-card" aria-live="polite">
-              <div class="result-status" id="tiemposResultStatus">
-                <span class="dot"></span>
-                <strong id="tiemposResultState">Ingresa las horas decimales para calcular el tiempo efectivo.</strong>
-              </div>
-            </section>
-          </article>
-        </section>
-
-        <section class="scanner-panel" style="margin-top:16px;">
-          <div class="panel-heading">
-            <div>
-              <span class="scan-label">Registros de tiempo guardados en este equipo</span>
-              <p class="hint" style="margin:6px 0 0;">Se guardan localmente mientras se define la API del módulo.</p>
-            </div>
+        <article class="scanner-panel" style="margin-top:12px;">
+          <h2>Tiempos · <span id="dtActividadActual">Desbotón Pompón</span></h2>
+          <p class="hint">Registra horas decimales con coma o punto. Se utiliza la fecha de Registrar labor; cada actividad conserva sus tiempos.</p>
+          <div class="action-row" style="margin:12px 0;">
+            <button type="button" id="modoTiempoGrupal" class="dt-modo active" aria-pressed="true">Tiempo grupal</button>
+            <button type="button" id="modoTiempoIndividual" class="dt-modo" aria-pressed="false">Tiempo individual</button>
           </div>
-          <div id="tiemposRegistrosLista" class="pending-list"></div>
+          <p class="dt-instrucciones" id="instruccionesSeleccionTiempo">Tiempo grupal selecciona colaboradores pendientes con camas guardadas. Los tiempos existentes se modifican desde Tiempo individual.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Seleccionar</th><th>Colaborador / Ver tiempos</th>
+                <th>Camas registradas</th><th>Tiempo efectivo</th>
+              </tr></thead>
+              <tbody id="tablaColaboradores"></tbody>
+            </table>
+          </div>
+          <p id="dtMensajeIndividual" class="dt-mensaje" role="status" aria-live="polite"></p>
+        </article>
+        <section id="tiemposDesbotonadoGrupales" class="dt-seccion" aria-label="Registrar tiempos grupales">
+          <article class="scanner-panel">
+            <div class="dt-cabecera">
+              <div><h2>Registrar tiempos <span id="dtModoActual">grupales</span></h2>
+              <p id="dtSeleccionResumen" class="hint">Selecciona al menos dos colaboradores pendientes.</p></div>
+              <span class="dt-estado-local">Guardado local</span>
+            </div>
+            <div id="dtFormularioGeneral"></div>
+            <p id="dtMensaje" class="dt-mensaje" role="status" aria-live="polite"></p>
+          </article>
         </section>
       </section>
     </main>
@@ -249,8 +199,8 @@
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
     <script src="./tiempos-comun.js?v=1.0.118"></script>
-    <script src="./desbotonado-mallas.js?v=1.0.124"></script>
-    <script src="./tiempos-panel.js?v=1.0.126"></script>
+    <script src="./desbotonado-mallas.js?v=1.0.141"></script>
+    <script src="./desbotonado-detalle-tiempos.js?v=1.0.141"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>

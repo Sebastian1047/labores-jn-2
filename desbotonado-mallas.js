@@ -9,25 +9,10 @@ const bloqueInput = document.querySelector("#bloque");
 const camaBuscar = document.querySelector("#camaBuscar");
 const camaLista = document.querySelector("#camaLista");
 const desbotonadoObservaciones = document.querySelector("#desbotonadoObservaciones");
-const desbotonadoTiemposObservaciones = document.querySelector("#desbotonadoTiemposObservaciones");
 
 const viewTabs = [...document.querySelectorAll("[data-desbotonado-vista]")];
 const vistaRegistro = document.querySelector("#vistaRegistro");
 const vistaTiempos = document.querySelector("#vistaTiempos");
-
-const horasLaboralesMin = document.querySelector("#horasLaboralesMin");
-const horasExtraMin = document.querySelector("#horasExtraMin");
-const desplazamientoMin = document.querySelector("#desplazamientoMin");
-const calisteniaMin = document.querySelector("#calisteniaMin");
-const capacitacionMin = document.querySelector("#capacitacionMin");
-const otrasLaboresMin = document.querySelector("#otrasLaboresMin");
-const tiempoDisponibleTexto = document.querySelector("#tiempoDisponibleTexto");
-const tiempoRealTexto = document.querySelector("#tiempoRealTexto");
-const guardarTiemposBtn = document.querySelector("#guardarTiemposBtn");
-const limpiarTiemposBtn = document.querySelector("#limpiarTiemposBtn");
-const tiemposResultStatus = document.querySelector("#tiemposResultStatus");
-const tiemposResultState = document.querySelector("#tiemposResultState");
-const tiemposRegistrosLista = document.querySelector("#tiemposRegistrosLista");
 
 const TIPOS_LABOR = ["Desbotón Pompón", "Desbotón Spider", "Malla"];
 let tipoLaborActivo = TIPOS_LABOR[0];
@@ -39,6 +24,24 @@ const colaboradoresJornada = new Map();
 const SESSION_LABOR_KEY = "laboresJn:desbotonado-mallas:jornada:" +
   (JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "local");
 let catalogos = { empleados: [], camas: [] };
+/* Los tiempos tienen la misma estructura para las tres actividades, sin mezclar fechas ni roles.
+   Solo colaboradores con al menos una cama guardada aparecen en Tiempos. */
+window.DesbotonadoLaborTiemposSnapshot = function () {
+  const fecha=fechaInput.value,rol=tipoLaborActivo;
+  const personas=new Map();
+  registros.filter(r=>r.fecha===fecha&&r.tipoLabor===rol&&r.colaborador).forEach(r=>{
+    const codigo=String(r.colaborador);
+    const persona=personas.get(codigo)||{
+      codigo,colaborador:r.colaboradorNombre||
+        colaboradoresJornada.get(claveColaborador(fecha,codigo,rol))?.nombre||codigo,
+      camas:0
+    };
+    persona.camas++;
+    personas.set(codigo,persona);
+  });
+  return {fecha,rol,grupos:[...personas.values()].sort((a,b)=>a.colaborador.localeCompare(b.colaborador,"es"))};
+};
+
 
 function claveColaborador(fecha, codigo, tipoLabor = tipoLaborActivo) {
   return [String(fecha || ""), String(tipoLabor || "Sin clasificar"), String(codigo || "")].join("|");
@@ -81,25 +84,6 @@ function restaurarJornada() {
   } catch (error) {
     console.warn("No se pudieron restaurar los registros de la jornada", error);
   }
-}
-
-// Informar a Tiempos cuáles colaboradores realmente tienen labor guardada.
-function sincronizarLaborGuardadaConTiempos() {
-  if (!window.RegistroLaborTiemposJN?.guardarLabor) return;
-  const procesados = new Set();
-  registros.forEach((r) => {
-    if (!r.fecha || !r.colaborador) return;
-    if (!TIPOS_LABOR.includes(r.tipoLabor)) return;
-    const key = claveColaborador(r.fecha, r.colaborador, r.tipoLabor);
-    if (procesados.has(key)) return;
-    procesados.add(key);
-    window.RegistroLaborTiemposJN.guardarLabor({
-      codigo: r.colaborador,
-      nombre: r.colaboradorNombre ||
-        colaboradoresJornada.get(key)?.nombre || String(r.colaborador),
-      fecha: r.fecha, rol: r.tipoLabor
-    });
-  });
 }
 
 function escaparHtml(value) {
@@ -148,6 +132,7 @@ function aplicarVista(vista) {
   const esTiempos = vista === "tiempos";
   vistaRegistro.hidden = esTiempos;
   vistaTiempos.hidden = !esTiempos;
+  if(esTiempos)window.DesbotonadoDetalleRecargar?.();
   viewTabs.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.desbotonadoVista === (esTiempos ? "tiempos" : "registro"));
   });
@@ -490,6 +475,7 @@ function render() {
 
   document.querySelector("#totalCamas").textContent = registrosActuales.length;
   renderColaboradoresJornada();
+  window.DesbotonadoDetalleRecargar?.();
 }
 
 document.querySelector("#btnAgregarColaborador").addEventListener("click", agregarColaboradorActual);
@@ -545,12 +531,7 @@ form.addEventListener("submit", (event) => {
     registros.push(datos);
   }
   guardarJornada();
-  // Guardar la labor no asigna horas; Tiempos mantiene su propio flujo de guardado.
-  window.RegistroLaborTiemposJN?.guardarLabor({
-    codigo: trabajador.codigo,
-    nombre: trabajador.nombre,
-    fecha: fechaInput.value, rol: tipoLaborActivo
-  });
+  // Guardar una cama no equivale a registrar sus tiempos.
   limpiarCamposCama();
   render();
   document.querySelector("#apiMensaje").textContent = esModificacion
@@ -572,134 +553,14 @@ fechaInput.addEventListener("change", () => {
   render();
 });
 
-function minutosCampo(input) {
-  return TiemposLaboresJN.leerMinutos(input);
-}
-
-function formatoMinutos(total) {
-  const minutos = Math.max(0, Number(total) || 0);
-  const horas = Math.floor(minutos / 60);
-  const resto = minutos % 60;
-  return horas > 0 ? `${horas} h ${resto} min` : `${resto} min`;
-}
-
-function actualizarCalculoTiempos() {
-  const laborales = minutosCampo(horasLaboralesMin);
-  const extras = minutosCampo(horasExtraMin);
-  const otros =
-            minutosCampo(desplazamientoMin) +
-    minutosCampo(calisteniaMin) +
-    minutosCampo(capacitacionMin);
-
-  const disponible = laborales + extras;
-  const real = Math.max(0, disponible - otros);
-
-  otrasLaboresMin.value = TiemposLaboresJN.formatearHoras(otros);
-  tiempoDisponibleTexto.textContent = formatoMinutos(disponible);
-  tiempoRealTexto.textContent = formatoMinutos(real);
-
-  return { laborales, extras, otros, disponible, real, excede: otros > disponible };
-}
-
-[horasLaboralesMin, horasExtraMin, desplazamientoMin, calisteniaMin, capacitacionMin]
-  .forEach((input) => input.addEventListener("input", actualizarCalculoTiempos));
-
-function marcarResultadoTiempos(tipo, mensaje) {
-  tiemposResultStatus.classList.remove("ok", "warning", "error");
-  if (tipo) tiemposResultStatus.classList.add(tipo);
-  tiemposResultState.textContent = mensaje;
-}
-
-function limpiarTiempos() {
-  [horasLaboralesMin, horasExtraMin, desplazamientoMin, calisteniaMin, capacitacionMin]
-    .forEach((input) => { input.value = ""; });
-  horasLaboralesMin.value = TiemposLaboresJN.horasJornada(fechaInput.value);
-  horasLaboralesMin.dataset.tiempoEditado = "0";
-  desbotonadoTiemposObservaciones.value = "";
-  actualizarCalculoTiempos();
-}
-
-async function renderRegistrosTiempos() {
-  const registrosTiempos = (await OfflineDb.getAll("desbotonadoMallasTiempos"))
-    .filter((r) => r.rol === tipoLaborActivo)
-    .sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-
-  tiemposRegistrosLista.innerHTML = registrosTiempos.length
-    ? registrosTiempos.slice(0,20).map((r) => `
-        <article class="pending-item">
-          <strong>${r.fecha} · ${r.colaboradorNombre}</strong>
-          <span>Laborales: ${formatoMinutos(r.horasLaboralesMin)} · Extra: ${formatoMinutos(r.horasExtraMin)}</span>
-          <span>Otras actividades: ${formatoMinutos(r.otrasLaboresMin)}</span>
-          <span>Tiempo real de labor: ${formatoMinutos(r.tiempoRealMin)}</span>
-        </article>
-      `).join("")
-    : '<p class="hint" style="margin:0;">Todavía no hay registros de tiempo guardados.</p>';
-}
-
-async function guardarTiempos() {
-  const fecha = fechaInput.value;
-  if (!fecha) return marcarResultadoTiempos("error", "Selecciona la fecha.");
-  if (!empleadoSelect.value) return marcarResultadoTiempos("error", "Selecciona un colaborador.");
-
-  const calculo = actualizarCalculoTiempos();
-  if (calculo.disponible <= 0) {
-    return marcarResultadoTiempos("error", "Ingresa las horas laborales o las horas extra.");
-  }
-  if (calculo.excede) {
-    return marcarResultadoTiempos("error", "Las actividades descontadas superan las horas disponibles.");
-  }
-  const errorHoras = TiemposLaboresJN.validar([
-    horasLaboralesMin, horasExtraMin,
-    desplazamientoMin, calisteniaMin, capacitacionMin
-  ]);
-  if (errorHoras) return marcarResultadoTiempos("error", errorHoras);
-
-  const nombre = empleadoSelect.selectedOptions[0]?.dataset.nombre || empleadoSelect.value;
-
-  const registro = {
-    id: SyncEngine.generarUUID(),
-    fecha,
-    rol: tipoLaborActivo,
-    colaborador: empleadoSelect.value,
-    colaboradorNombre: nombre,
-    horasLaboralesMin: calculo.laborales,
-    horasExtraMin: calculo.extras,
-            desplazamientoMin: minutosCampo(desplazamientoMin),
-    calisteniaMin: minutosCampo(calisteniaMin),
-    capacitacionMin: minutosCampo(capacitacionMin),
-    otrasLaboresMin: calculo.otros,
-    tiempoDisponibleMin: calculo.disponible,
-    tiempoRealMin: calculo.real,
-    observaciones: desbotonadoTiemposObservaciones.value.trim(),
-    usuario: sesion?.username || "",
-    syncStatus: "PendienteBackend",
-    createdAt: new Date().toISOString()
-  };
-
-  await OfflineDb.put("desbotonadoMallasTiempos", registro);
-  marcarResultadoTiempos("ok", `Tiempos guardados. Tiempo real dedicado a la labor: ${formatoMinutos(registro.tiempoRealMin)}.`);
-  limpiarTiempos();
-  await renderRegistrosTiempos();
-}
-
-guardarTiemposBtn.addEventListener("click", guardarTiempos);
-limpiarTiemposBtn.addEventListener("click", () => {
-  limpiarTiempos();
-  marcarResultadoTiempos(null, "Ingresa las horas decimales para calcular el tiempo efectivo.");
-});
-
 window.addEventListener("online", cargarCatalogos);
 
 (async function iniciarDesbotonadoMallas() {
   fechaInput.value = fechaLocal();
   cambiarTipoLabor(tipoLaborActivo);
-  limpiarTiempos();
   aplicarVista("registro");
   await cargarCatalogos();
   restaurarJornada();
-  // Las camas existentes deben reconocerse como labor guardada sin
-  // convertir sus antiguos registros de tiempos en "Guardados" actuales.
-  setTimeout(sincronizarLaborGuardadaConTiempos, 0);
+  // La jornada se restaura de sesión; los tiempos guardados permanecen en IndexedDB.
   render();
-  await renderRegistrosTiempos();
 })();
