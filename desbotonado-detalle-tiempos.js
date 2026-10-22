@@ -424,7 +424,10 @@
 
   window.DesbotonadoDetalleTiempos={
     async render(grupos,{editable,fecha,rol}){
-      const cambioFecha=fecha!==estado.fecha||rol!==estado.rol;
+      // Al restaurar la jornada desde sessionStorage, recalcular selección inicial.
+      const primeraCargaConCamas=!estado.grupos.length&&
+        grupos.some(g=>Number(g.camas)>0&&g.codigo);
+      const cambioFecha=fecha!==estado.fecha||rol!==estado.rol||primeraCargaConCamas;
       estado.fecha=fecha;estado.rol=rol;estado.editable=Boolean(editable);
       estado.grupos=grupos.filter(g=>Number(g.camas)>0&&g.codigo);
       document.getElementById("dtActividadActual").textContent=rol;
