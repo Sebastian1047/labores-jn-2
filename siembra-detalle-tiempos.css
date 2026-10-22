@@ -56,3 +56,23 @@
   .dt-campo.dt-obs{grid-column:auto;}
   #tablaColaboradores{min-width:660px;}
 }
+
+/* Vista grupal compacta: nunca abre fichas ni formularios individuales. */
+#tablaColaboradores .dt-abrir-estatico {cursor:default;}
+#tablaColaboradores .dt-mini-tiempo {
+  display:block;font-size:.72rem;line-height:1.5;color:#376349;font-weight:650;
+}
+.dt-ficha-lectura {padding-top:4px;}
+.dt-resumen-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 15px;margin:0;}
+.dt-resumen-grid>div {border:1px solid #d8e8dc;background:#f6faf7;border-radius:8px;padding:9px 11px;min-width:0;}
+.dt-resumen-grid dt {color:#52745d;font-size:.73rem;font-weight:700;}
+.dt-resumen-grid dd {margin:4px 0 0;color:#1c4b32;font-size:.9rem;font-weight:800;overflow-wrap:anywhere;}
+.dt-resumen-grid .dt-dato-observaciones {grid-column:1/-1;}
+.dt-acciones-lectura {display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px;}
+.dt-editar,.dt-cancelar {
+  padding:9px 16px;border:1px solid #318458;background:#e3f4e9;color:#195b38;
+  border-radius:8px;cursor:pointer;font:inherit;font-weight:800;
+}
+.dt-editar:disabled {cursor:not-allowed;opacity:.55;}
+.dt-cancelar {margin-bottom:12px;background:#fff;color:#376349;}
+@media(max-width:640px){.dt-resumen-grid{grid-template-columns:1fr;}.dt-resumen-grid .dt-dato-observaciones{grid-column:auto;}}

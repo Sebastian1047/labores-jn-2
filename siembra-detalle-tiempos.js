@@ -28,7 +28,7 @@
   const formato = (min) => TiemposLaboresJN.formatearHoras(min);
   const estado = {
     modo:"grupal", fecha:"", editable:true, grupos:[], seleccionados:new Set(),
-    guardados:new Map(), expandido:null, version:0, ocupado:false
+    guardados:new Map(), expandido:null, edicion:null, version:0, ocupado:false
   };
 
   function guardadoPara(codigo) { return estado.guardados.get(String(codigo).trim()); }
@@ -56,6 +56,44 @@
     });
     valores.observaciones = registro?.observaciones || "";
     return valores;
+  }
+  function tiempoVisibleMin(registro) {
+    const base=Number(registro?.horasLaboralesMin)||0;
+    const extras=minutosGuardados(registro,"horasExtraMin");
+    const descuentos=DESCUENTOS.reduce((total,campo)=>total+minutosGuardados(registro,campo),0);
+    return Math.max(0,base+extras-descuentos);
+  }
+  function tiempoEfectivoMin(registro) {
+    const guardado=Number(registro?.tiempoRealMin);
+    return Number.isFinite(guardado)&&registro?.tiempoRealMin!=null
+      ? Math.max(0,guardado) : tiempoVisibleMin(registro);
+  }
+  function resumenCorto(registro) {
+    if(!registro)return "";
+    return '<span class="dt-mini-tiempo">'+
+      'Programado: '+formato(tiempoVisibleMin(registro))+' h · '+
+      'Horas extra: '+formato(minutosGuardados(registro,"horasExtraMin"))+' h · '+
+      'Efectivo: '+formato(tiempoEfectivoMin(registro))+' h</span>';
+  }
+  function resumenLectura(registro,codigo) {
+    const filas=CAMPOS.map(([campo,etiqueta])=>{
+      const minutos=campo==="horasLaboralesMin"
+        ? tiempoVisibleMin(registro) : minutosGuardados(registro,campo);
+      return '<div><dt>'+escapar(etiqueta)+'</dt><dd>'+
+        escapar(formato(minutos))+' h</dd></div>';
+    }).join("");
+    const bloqueado=registro.syncStatus==="Sincronizado";
+    return '<div class="dt-ficha-lectura" aria-label="Tiempos guardados">'+
+      '<dl class="dt-resumen-grid">'+filas+
+      '<div><dt>Tiempo efectivo</dt><dd>'+escapar(formato(tiempoEfectivoMin(registro)))+' h</dd></div>'+
+      '<div class="dt-dato-observaciones"><dt>Observaciones</dt><dd>'+
+      escapar(registro.observaciones||"Sin observaciones")+'</dd></div></dl>'+
+      '<div class="dt-acciones-lectura">'+
+      '<button type="button" class="dt-editar" data-dt-editar="'+escapar(codigo)+'" '+
+      (!estado.editable||bloqueado?'disabled ':'')+'>'+
+      'Editar</button>'+
+      (bloqueado?'<span class="hint">Registro sincronizado: no admite cambios.</span>':'')+
+      '</div></div>';
   }
   function camposFormulario(valores, tipo) {
     return '<div class="dt-grid">' + CAMPOS.map(([campo,etiqueta]) =>
@@ -161,6 +199,7 @@
     if(tipo==="grupal"&&seleccionablesGrupales().length<2)return;
     estado.modo=tipo;
     estado.expandido=null;
+    estado.edicion=null;
     estado.seleccionados=new Set(tipo==="grupal"?seleccionablesGrupales():[]);
     document.getElementById("tiemposSiembraCampo").hidden=tipo==="individual";
     mensaje("");
@@ -196,31 +235,43 @@
       tabla.innerHTML='<tr><td colspan="5" class="dt-vacio">No hay colaboradores con esquejes mayores que cero para estas fechas. Registra siembras primero.</td></tr>';
       return;
     }
-    const resultado=[];
+    const resultado=[],individual=estado.modo==="individual";
     for(const g of estado.grupos){
       const id=String(g.codigo),guardado=guardadoPara(id);
-      const bloqueado=estado.modo==="grupal"&&Boolean(guardado);
+      const bloqueado=!individual&&Boolean(guardado);
       const checked=estado.seleccionados.has(id)&&!bloqueado;
-      const expandido=estado.expandido===id &&
-        (estado.modo!=="individual"||checked);
-      const atenuado=estado.modo==="individual"&&estado.seleccionados.size>0&&!checked;
+      const expandido=individual&&estado.expandido===id&&checked;
+      const atenuado=individual&&estado.seleccionados.size>0&&!checked;
+      const identidad='<span class="dt-identidad"><span class="dt-nombre">'+escapar(g.colaborador)+'</span>'+
+        '<span class="dt-estado-tiempo '+(guardado?'dt-guardado':'dt-pendiente')+'">'+
+        (guardado?'Guardado':'Pendiente')+'</span></span>'+
+        '<small>'+escapar(id)+'</small>'+resumenCorto(guardado);
+      const cabecera=individual
+        ? '<button type="button" class="dt-abrir" data-dt-abrir="'+escapar(id)+
+          '" aria-expanded="'+expandido+'">'+identidad+
+          '<span class="dt-chevron">'+(expandido?'▴ Ocultar tiempos':guardado?'▾ Ver datos':'▾ Registrar tiempos')+
+          '</span></button>'
+        : '<div class="dt-abrir dt-abrir-estatico">'+identidad+'</div>';
       resultado.push('<tr class="dt-fila'+(atenuado?' dt-atenuado':'')+'">'+
         '<td><input type="checkbox" data-dt-persona="'+escapar(id)+'" aria-label="Seleccionar '+escapar(g.colaborador)+
-          '" '+(checked?'checked ':'')+(!estado.editable||bloqueado?'disabled ':'')+(bloqueado?'title="Ya tiene tiempos guardados. Para modificar utiliza Tiempo individual." ':'')+'></td>'+
-        '<td><button type="button" class="dt-abrir" data-dt-abrir="'+escapar(id)+'" aria-expanded="'+expandido+'" '+(bloqueado?'disabled title="Para modificar, selecciona Tiempo individual"':'')+'>'+
-          '<span class="dt-identidad"><span class="dt-nombre">'+escapar(g.colaborador)+'</span>'+
-          '<span class="dt-estado-tiempo '+(guardado?'dt-guardado':'dt-pendiente')+'">'+
-          (guardado?'Guardado':'Pendiente')+'</span></span><small>'+escapar(id)+
-          '</small><span class="dt-chevron">'+(expandido?'▴ Ocultar tiempos':'▾ Ver tiempos')+'</span></button></td>'+
+        '" '+(checked?'checked ':'')+(!estado.editable||bloqueado?'disabled ':'')+
+        (bloqueado?'title="Ya tiene tiempos guardados. Para modificar utiliza Tiempo individual." ':'')+'></td>'+
+        '<td>'+cabecera+'</td>'+
         '<td>'+Number(g.esquejes).toLocaleString("es-CO")+'</td>'+
         '<td>'+((Number(g.horas)||0)>0?g.horas.toFixed(2)+' h':'—')+'</td>'+
         '<td>'+((Number(g.horas)||0)>0?(g.esquejes/g.horas).toFixed(2):'—')+'</td></tr>');
       if(expandido){
+        const editando=Boolean(guardado)&&estado.edicion===id;
+        const cuerpo=guardado&&!editando
+          ? resumenLectura(guardado,id)
+          : ((editando?'<button type="button" class="dt-cancelar" data-dt-cancelar="'+escapar(id)+'">Cancelar edición</button>':'')+
+             '<form class="dt-form-inline" data-dt-form-persona="'+escapar(id)+'">'+
+             camposFormulario(valoresPara(id),"individual")+'</form>');
         resultado.push('<tr class="dt-desplegado"><td colspan="5"><div class="dt-detalle-persona">'+
           '<strong>Tiempos de '+escapar(g.colaborador)+'</strong>'+
-          '<p class="hint">'+(guardado?'Edita los tiempos existentes si necesitas corregirlos.':'Aún no hay tiempos guardados para esta persona.')+'</p>'+
-          '<form class="dt-form-inline" data-dt-form-persona="'+escapar(id)+'">'+
-          camposFormulario(valoresPara(id),"individual")+'</form></div></td></tr>');
+          '<p class="hint">'+(!guardado?'Completa el formulario para guardar sus tiempos por primera vez.':
+            editando?'Modifica los campos y guarda los cambios.':'Consulta los tiempos guardados. Pulsa Editar para modificarlos.')+
+          '</p>'+cuerpo+'</div></td></tr>');
       }
     }
     tabla.innerHTML=resultado.join("");
@@ -265,8 +316,9 @@
         estado.guardados.set(String(persona.codigo),fila);
         if(origen==="grupal")estado.seleccionados.delete(String(persona.codigo));
       }
+      estado.edicion=null;
       mensaje("Tiempos "+(existentes.length?"actualizados":"guardados")+" para "+
-        personas.length+" colaborador(es). Pulsa cualquier nombre para consultar o modificar sus tiempos.");
+        personas.length+" colaborador(es). Para modificar un registro guardado, usa Tiempo individual y pulsa Editar.");
       pintarTabla();
       await window.SiembraDetalleRecargar?.();
     }finally{estado.ocupado=false;pintarResumen();}
@@ -282,6 +334,7 @@
     }
     const id=input.dataset.dtPersona;
     if(estado.modo==="individual"){
+      estado.edicion=null;
       estado.seleccionados.clear();
       estado.expandido=input.checked?id:null;
       if(input.checked)estado.seleccionados.add(id);
@@ -303,10 +356,30 @@
     pintarResumen();
   });
   tabla.addEventListener("click",(event)=>{
+    const editar=event.target.closest("[data-dt-editar]");
+    if(editar){
+      const id=editar.dataset.dtEditar,registro=guardadoPara(id);
+      if(estado.modo!=="individual"||!estado.editable||!registro||
+         registro.syncStatus==="Sincronizado")return;
+      estado.seleccionados=new Set([id]);
+      estado.expandido=id;
+      estado.edicion=id;
+      pintarTabla();
+      pintarResumen();
+      return;
+    }
+    const cancelar=event.target.closest("[data-dt-cancelar]");
+    if(cancelar){
+      estado.edicion=null;
+      pintarTabla();
+      pintarResumen();
+      return;
+    }
     const btn=event.target.closest("[data-dt-abrir]");
     if(!btn)return;
     const id=btn.dataset.dtAbrir;
-    if(estado.modo==="grupal"&&guardadoPara(id))return;
+    if(estado.modo!=="individual")return;
+    estado.edicion=null;
     if(estado.modo==="individual"){
       const abrir=estado.expandido!==id;
       estado.seleccionados=new Set(abrir?[id]:[]);
@@ -326,7 +399,11 @@
     if(!form)return;
     event.preventDefault();
     const persona=estado.grupos.find(g=>String(g.codigo)===form.dataset.dtFormPersona);
-    if(!persona)return;
+    if(!persona||estado.modo!=="individual")return;
+    if(guardadoPara(persona.codigo)&&estado.edicion!==String(persona.codigo)){
+      mensaje("Para modificar tiempos guardados, pulsa Editar.",true);
+      return;
+    }
     try{await guardarPara([persona],form,"individual");}
     catch(error){mensaje(error.message,true);}
   });
@@ -350,6 +427,7 @@
       estado.grupos=grupos.filter(g=>Number(g.esquejes)>0&&g.codigo);
       if(cambioFecha){
         estado.expandido=null;
+        estado.edicion=null;
         estado.guardados=new Map(); // Evitar estados de la fecha anterior durante la carga.
         estado.seleccionados=new Set(estado.modo==="grupal"?
           seleccionablesGrupales():[]);
@@ -358,6 +436,7 @@
         const ids=new Set(estado.grupos.map(g=>String(g.codigo)));
         for(const id of estado.seleccionados)if(!ids.has(id))estado.seleccionados.delete(id);
         if(estado.expandido&&!ids.has(estado.expandido))estado.expandido=null;
+        if(estado.edicion&&!ids.has(estado.edicion))estado.edicion=null;
         if(estado.modo==="grupal"){
           for(const id of estado.seleccionados)if(guardadoPara(id))estado.seleccionados.delete(id);
         }
