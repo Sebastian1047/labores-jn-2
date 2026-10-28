@@ -14,6 +14,18 @@ const criteriosPreparacionCamas = [
   { id: 10, nombre: "Instalación de Mangueras de Goteo" },
 ];
 
+// Agrupación visual exclusiva de Calidad Preparación de Camas.
+// Se mantienen los IDs originales para conservar las evaluaciones y su sincronización.
+const GRUPOS_PREPARACION_CAMAS = [
+  { titulo: "Limpieza y nivelación del terreno", ids: [2, 4] },
+  { titulo: "Enmiendas y durmientes", ids: [3, 5] },
+  { titulo: "Profundidad de la preparación", ids: [6] },
+  { titulo: "Riego", ids: [7] },
+  { titulo: "Instalación de la malla", ids: [9] },
+  { titulo: "Instalación de mangueras de goteo", ids: [10] },
+  { titulo: "Aseo", ids: [8] },
+];
+
 const criteriosDesbotonPompon = [
   { id: 1, nombre: "Tallos con Botón Principal", nota: "tolerancia: 3 plantas con boton" },
   { id: 2, nombre: "Tallos con Tocón Largo", nota: "tocon 1 cm max" },
@@ -538,7 +550,7 @@ function renderCriterios() {
   }
 
   lista.classList.add("calidad-criterios-numericos");
-  lista.innerHTML = criteriosCalidad.map((item) => {
+  const tarjetas = criteriosCalidad.map((item) => {
     if (esItemConformeCalidad(item)) {
       return `<section class="calidad-item-fallos calidad-item-conforme">
         <label class="calidad-conforme-selector">
@@ -568,7 +580,47 @@ function renderCriterios() {
     return `<section class="calidad-item-fallos calidad-item-fallos-simple">
       ${campoFallosCalidad(item)}
     </section>`;
-  }).join("");
+  });
+
+  if (esFormularioPreparacionCamas) {
+    // Solo cambia la presentación: los mismos checkboxes y data-item-id
+    // continúan siendo usados por obtenerFallosDetalleCalidad y guardarCalidad.
+    const tarjetasPorId = new Map(criteriosCalidad.map((item, indice) =>
+      [Number(item.id), tarjetas[indice]]));
+    const agrupados = new Set();
+    const grupos = GRUPOS_PREPARACION_CAMAS.map((grupo, indice) => {
+      const ids = grupo.ids.filter(id => tarjetasPorId.has(id));
+      ids.forEach(id => agrupados.add(id));
+      return `<section class="calidad-preparacion-grupo" data-cantidad="${ids.length}"
+        aria-labelledby="calidad-preparacion-titulo-${indice + 1}">
+        <div class="calidad-preparacion-encabezado">
+          <span class="calidad-preparacion-numero" aria-hidden="true">${indice + 1}</span>
+          <h3 class="calidad-preparacion-titulo" id="calidad-preparacion-titulo-${indice + 1}">
+            ${escaparHtmlCalidad(grupo.titulo)}
+          </h3>
+        </div>
+        <div class="calidad-preparacion-items">
+          ${ids.map(id => tarjetasPorId.get(id)).join("")}
+        </div>
+      </section>`;
+    });
+    // Si se agrega un criterio nuevo en el futuro, no desaparece por
+    // carecer de grupo: se muestra en una sección adicional.
+    const sinGrupo = criteriosCalidad
+      .filter(item => !agrupados.has(Number(item.id)))
+      .map(item => tarjetasPorId.get(Number(item.id)));
+    if (sinGrupo.length) {
+      grupos.push(`<section class="calidad-preparacion-grupo" data-cantidad="${sinGrupo.length}">
+        <div class="calidad-preparacion-encabezado">
+          <h3 class="calidad-preparacion-titulo">Otros criterios</h3>
+        </div>
+        <div class="calidad-preparacion-items">${sinGrupo.join("")}</div>
+      </section>`);
+    }
+    lista.innerHTML = grupos.join("");
+  } else {
+    lista.innerHTML = tarjetas.join("");
+  }
   configurarConformeCalidad();
 }
 

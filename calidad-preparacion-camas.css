@@ -1,0 +1,54 @@
+/* Agrupación exclusiva de los criterios de Calidad Preparación de Camas. */
+#criteriosLista .calidad-preparacion-grupo {
+  padding: 16px;
+  border: 1px solid #c9dfd1;
+  border-radius: 16px;
+  background: #f7fbf8;
+  box-shadow: 0 4px 12px rgba(24, 92, 58, .06);
+}
+#criteriosLista .calidad-preparacion-grupo:nth-child(even) {
+  background: #f0f7f2;
+}
+.calidad-preparacion-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.calidad-preparacion-numero {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: #187a4d;
+  color: #fff;
+  font-weight: 800;
+  font-size: .95rem;
+}
+.calidad-preparacion-titulo {
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 800;
+  color: #164c32;
+}
+.calidad-preparacion-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.calidad-preparacion-grupo[data-cantidad="1"] .calidad-preparacion-items {
+  grid-template-columns: minmax(0, 1fr);
+}
+#criteriosLista .calidad-preparacion-items > .calidad-item-fallos {
+  margin: 0;
+  min-width: 0;
+  box-shadow: none;
+  border-left-width: 4px;
+}
+@media (max-width: 760px) {
+  #criteriosLista .calidad-preparacion-grupo { padding: 12px; }
+  .calidad-preparacion-items { grid-template-columns: minmax(0, 1fr); }
+  .calidad-preparacion-titulo { font-size: .94rem; }
+}
