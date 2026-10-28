@@ -80,3 +80,22 @@
   .pc-persona {justify-content:space-between;}
   .pc-persona-nombre {flex:1;}
 }
+
+/* Preparación conforme es una opción general, sin personal ni buscador propios. */
+#criteriosLista .pc-preparacion-conforme {
+  overflow: hidden;
+  padding: 0 0 12px;
+  border-left-color: #287c52;
+  background: #eaf5ed;
+}
+#criteriosLista .pc-preparacion-conforme .calidad-item-x-row {
+  background: #e4f2e8;
+}
+#criteriosLista .pc-preparacion-conforme .pc-explicacion {
+  padding: 0 14px;
+  margin: 0;
+}
+#criteriosLista .pc-preparacion-conforme:has([data-pc-conforme]:checked) {
+  border-color: #1d8754;
+  box-shadow: 0 0 0 2px rgba(29,135,84,.15);
+}

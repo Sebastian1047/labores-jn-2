@@ -3,6 +3,7 @@
 (function () {
   "use strict";
   const CANTIDAD_GRUPOS = 7;
+  const GRUPOS_CON_PERSONAL = 6; // Aseo (índice 6) solo refleja los grupos anteriores.
   const usuario = (() => {
     try { return JSON.parse(sessionStorage.getItem("labores_usuario") || "null")?.username || "local"; }
     catch { return "local"; }
@@ -11,7 +12,7 @@
   const fecha = [hoy.getFullYear(), String(hoy.getMonth()+1).padStart(2,"0"), String(hoy.getDate()).padStart(2,"0")].join("-");
   const CLAVE = "laboresJN:preparacion:personal:v1:" + usuario + ":" + fecha;
   const CLAVE_PRUEBAS = "laboresJN:preparacion:evaluacionesPrueba:v1:" + usuario;
-  const demo = Array.from({length:CANTIDAD_GRUPOS}, (_, i) =>
+  const demo = Array.from({length:GRUPOS_CON_PERSONAL}, (_, i) =>
     Array.from({length:2}, (_, j) => ({
       codigo: "PRUEBA-PC-" + (i+1) + "-" + (j+1),
       nombre: "COLABORADOR PRUEBA " + (i*2+j+1),
@@ -24,8 +25,10 @@
     prueba: Boolean(persona.prueba)
   });
   function normalizarGuardado(valor) {
-    if (!Array.isArray(valor) || valor.length !== CANTIDAD_GRUPOS) return null;
-    return valor.map(lista => Array.isArray(lista)
+    // Compatible con listas antiguas de siete posiciones: descartar las
+    // asignaciones independientes de Aseo sin modificar los seis grupos reales.
+    if (!Array.isArray(valor) || valor.length < GRUPOS_CON_PERSONAL) return null;
+    return valor.slice(0,GRUPOS_CON_PERSONAL).map(lista => Array.isArray(lista)
       ? [...new Map(lista.map(limpio).filter(p => p.codigo && p.nombre)
         .map(p => [p.codigo,p])).values()]
       : []);
@@ -50,7 +53,9 @@
     catch (e) { console.warn("No se pudo conservar la lista de colaboradores.",e); }
   }
   function integrantesDe(index) {
-    if (index !== 6) return [...personal[index]];
+    if (index >= 0 && index < GRUPOS_CON_PERSONAL) return [...personal[index]];
+    if (index !== 6) return [];
+    // Aseo es solo la unión de los seis grupos; un trabajador repetido cuenta una vez.
     const unicos = new Map();
     personal.forEach(lista => lista.forEach(persona => {
       if (!unicos.has(persona.codigo)) unicos.set(persona.codigo, persona);
@@ -64,10 +69,14 @@
         '<span class="pc-persona-nombre">' + escapar(p.nombre) +
         ' <small>(' + escapar(p.codigo) + ')</small></span>' +
         (p.prueba ? '<span class="pc-etiqueta-prueba">Prueba</span>' : '') +
-        '<button type="button" class="pc-quitar" data-pc-quitar="' + index +
-        '" data-pc-codigo="' + escapar(p.codigo) +
-        '" aria-label="Quitar a ' + escapar(p.nombre) + ' de la evaluación" title="Quitar de la evaluación">×</button></span>').join("")
-      : '<p class="pc-sin-personal">No hay personas en este grupo. Búscalas para agregarlas.</p>';
+        (index === 6 ? '' :
+          '<button type="button" class="pc-quitar" data-pc-quitar="' + index +
+          '" data-pc-codigo="' + escapar(p.codigo) +
+          '" aria-label="Quitar a ' + escapar(p.nombre) + ' de la evaluación" title="Quitar de la evaluación">×</button>') +
+        '</span>').join("")
+      : '<p class="pc-sin-personal">' + (index === 6
+        ? 'Sin colaboradores en Aseo. Agrega personas en los grupos anteriores.'
+        : 'No hay personas en este grupo. Búscalas para agregarlas.') + '</p>';
   }
   function htmlGrupo(index) {
     const total = integrantesDe(index).length;
@@ -75,12 +84,13 @@
       '<div class="pc-equipo-cabecera"><strong>Colaboradores del grupo</strong>' +
       '<span class="pc-total" data-pc-total="' + index + '">' + total +
       (total === 1 ? ' persona' : ' personas') + '</span></div>' +
-      (index === 6 ? '<p class="pc-explicacion">Aseo reúne automáticamente a los colaboradores de los siete grupos. Si quitas a alguien aquí, se retira de toda esta evaluación.</p>' : '') +
+      (index === 6 ? '<p class="pc-explicacion">Esta lista se actualiza automáticamente con las personas de los seis grupos anteriores. Para agregar o quitar una persona, hazlo en su grupo de origen.</p>' : '') +
       '<div class="pc-personas" data-pc-personas="' + index + '">' + etiquetas(index) + '</div>' +
-      '<label class="pc-buscar-etiqueta" for="pc-buscar-' + index + '">Agregar colaborador</label>' +
-      '<input class="pc-buscador" id="pc-buscar-' + index + '" type="search" data-pc-buscar="' + index +
-      '" placeholder="Buscar por nombre o código…" autocomplete="off" aria-label="Buscar colaborador para este grupo" />' +
-      '<div class="pc-resultados" data-pc-resultados="' + index + '" role="listbox" hidden></div>' +
+      (index === 6 ? '' :
+        '<label class="pc-buscar-etiqueta" for="pc-buscar-' + index + '">Agregar colaborador</label>' +
+        '<input class="pc-buscador" id="pc-buscar-' + index + '" type="search" data-pc-buscar="' + index +
+        '" placeholder="Buscar por nombre o código…" autocomplete="off" aria-label="Buscar colaborador para este grupo" />' +
+        '<div class="pc-resultados" data-pc-resultados="' + index + '" role="listbox" hidden></div>') +
       '</div>';
   }
   function actualizar() {
@@ -95,18 +105,13 @@
     }
   }
   function quitar(index,codigo) {
-    if (index === 6) {
-      personal.forEach((lista,i) => {
-        personal[i] = lista.filter(p => p.codigo !== codigo);
-      });
-    } else {
-      personal[index] = personal[index].filter(p => p.codigo !== codigo);
-    }
+    if (!Number.isInteger(index) || index < 0 || index >= GRUPOS_CON_PERSONAL) return;
+    personal[index] = personal[index].filter(p => p.codigo !== codigo);
     guardarPersonal();
-    actualizar();
+    actualizar(); // Aseo se recalcula automáticamente.
   }
   function agregar(index, persona) {
-    if (index < 0 || index >= CANTIDAD_GRUPOS) return;
+    if (!Number.isInteger(index) || index < 0 || index >= GRUPOS_CON_PERSONAL) return;
     const nuevo = limpio(persona);
     if (!nuevo.codigo || !nuevo.nombre || nuevo.prueba) return;
     if (!personal[index].some(p => p.codigo === nuevo.codigo)) {
@@ -120,6 +125,7 @@
     if (resultados) { resultados.hidden = true; resultados.innerHTML = ""; }
   }
   function buscar(index, texto) {
+    if (!Number.isInteger(index) || index < 0 || index >= GRUPOS_CON_PERSONAL) return;
     const destino = document.querySelector('[data-pc-resultados="' + index + '"]');
     if (!destino) return;
     const q = normal(texto);
@@ -157,6 +163,19 @@
       const input = evento.target.closest("[data-pc-buscar]");
       if (input) buscar(Number(input.dataset.pcBuscar),input.value);
     });
+    // Preparación conforme excluye todos los incumplimientos, y viceversa.
+    lista.addEventListener("change", (evento) => {
+      const checkbox = evento.target;
+      if (!checkbox.matches(".calidad-item-x-input")) return;
+      const conforme = lista.querySelector("[data-pc-conforme]");
+      if (!conforme) return;
+      if (checkbox === conforme && conforme.checked) {
+        lista.querySelectorAll(".calidad-item-x-input:not([data-pc-conforme])")
+          .forEach(input => { input.checked = false; });
+      } else if (checkbox !== conforme && checkbox.checked) {
+        conforme.checked = false;
+      }
+    });
     lista.addEventListener("keydown", (evento) => {
       const input = evento.target.closest("[data-pc-buscar]");
       if (!input) return;
@@ -191,12 +210,17 @@
       codigos.add(p.codigo); return true;
     });
   }
+  function estaPreparacionConforme() {
+    return Boolean(document.querySelector("#criteriosLista [data-pc-conforme]:checked"));
+  }
   function obtenerEvaluaciones() {
+    const conforme = estaPreparacionConforme();
     const porPersona = new Map();
     for (let i=0;i<CANTIDAD_GRUPOS;i++) {
       const caja = document.querySelector('.calidad-preparacion-grupo[data-grupo="' + i + '"]');
       if (!caja) continue;
-      const fallos = [...caja.querySelectorAll(".calidad-item-x-input:checked")].map(input => ({
+      const fallos = (conforme ? [] :
+        [...caja.querySelectorAll(".calidad-item-x-input:checked")]).map(input => ({
         idItem: Number(input.dataset.itemId),
         item: input.dataset.itemNombre || "",
         subitem: "",
@@ -206,7 +230,7 @@
       for (const persona of integrantesDe(i)) {
         let dato = porPersona.get(persona.codigo);
         if (!dato) {
-          dato = { ...persona, grupos: [], fallosDetalle: [], incumplimientos: [] };
+          dato = { ...persona, grupos: [], fallosDetalle: [], incumplimientos: [], preparacionConforme: conforme };
           porPersona.set(persona.codigo,dato);
         }
         dato.grupos.push(i+1);
@@ -224,7 +248,8 @@
     if (!evaluaciones.length) return;
     const nuevas = evaluaciones.map(p => ({
       fecha: fechaEvaluacion, codigo: p.codigo, nombre: p.nombre,
-      grupos: p.grupos, incumplimientos: p.incumplimientos,
+      grupos: p.grupos, preparacionConforme: Boolean(p.preparacionConforme),
+      incumplimientos: p.incumplimientos,
       fallosDetalle: p.fallosDetalle, esPrueba: true
     }));
     try {
@@ -235,7 +260,7 @@
   }
   window.PreparacionCamasGrupos = {
     htmlGrupo, configurarEventos, setCatalogo,
-    obtenerEvaluaciones, guardarPruebas,
+    obtenerEvaluaciones, guardarPruebas, estaPreparacionConforme,
     // Utilidades de lectura para verificar la agrupación sin registros reales.
     integrantesDe
   };

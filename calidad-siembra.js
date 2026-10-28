@@ -618,7 +618,16 @@ function renderCriterios() {
         <div class="calidad-preparacion-items">${sinGrupo.join("")}</div>
       </section>`);
     }
-    lista.innerHTML = grupos.join("");
+    const preparadoConforme = `<section class="calidad-item-fallos calidad-item-x pc-preparacion-conforme">
+      <label class="calidad-item-x-row">
+        <span class="calidad-item-x-label">Preparación conforme</span>
+        <input class="calidad-item-x-input" type="checkbox" data-pc-conforme
+          aria-label="Marcar preparación conforme para todos los colaboradores" />
+        <span class="calidad-item-x-box" aria-hidden="true">×</span>
+      </label>
+      <p class="pc-explicacion">Se aplica a todos los colaboradores de los seis grupos. Al marcarlo se deseleccionan los demás criterios.</p>
+    </section>`;
+    lista.innerHTML = preparadoConforme + grupos.join("");
   } else {
     lista.innerHTML = tarjetas.join("");
   }
@@ -750,7 +759,7 @@ async function guardarCalidadPreparacionGrupos() {
       if (siguiente > 30) throw new Error(persona.nombre + " ya alcanzó el máximo de 30 revisiones semanales.");
       planes.push({persona,revision:siguiente});
     }
-    if (!personas.some(p => p.incumplimientos.length)) {
+    if (!personas.some(p => p.incumplimientos.length) && !control.estaPreparacionConforme()) {
       const confirmado = await confirmarEvaluacionConforme();
       if (!confirmado) return;
     }
@@ -773,8 +782,9 @@ async function guardarCalidadPreparacionGrupos() {
         incumplimientos: persona.incumplimientos,
         fallosDetalle: persona.fallosDetalle,
         gruposPreparacion: persona.grupos,
+        preparacionConforme: Boolean(persona.preparacionConforme),
         observaciones,
-        conformeSeleccionado: persona.incumplimientos.length === 0
+        conformeSeleccionado: Boolean(persona.preparacionConforme) || persona.incumplimientos.length === 0
       });
       guardados++;
     }
