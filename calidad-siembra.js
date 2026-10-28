@@ -591,7 +591,7 @@ function renderCriterios() {
     const grupos = GRUPOS_PREPARACION_CAMAS.map((grupo, indice) => {
       const ids = grupo.ids.filter(id => tarjetasPorId.has(id));
       ids.forEach(id => agrupados.add(id));
-      return `<section class="calidad-preparacion-grupo" data-cantidad="${ids.length}"
+      return `<section class="calidad-preparacion-grupo" data-grupo="${indice}" data-cantidad="${ids.length}"
         aria-labelledby="calidad-preparacion-titulo-${indice + 1}">
         <div class="calidad-preparacion-encabezado">
           <span class="calidad-preparacion-numero" aria-hidden="true">${indice + 1}</span>
@@ -602,6 +602,7 @@ function renderCriterios() {
         <div class="calidad-preparacion-items">
           ${ids.map(id => tarjetasPorId.get(id)).join("")}
         </div>
+        ${window.PreparacionCamasGrupos?.htmlGrupo(indice) || ""}
       </section>`;
     });
     // Si se agrega un criterio nuevo en el futuro, no desaparece por
@@ -699,6 +700,7 @@ async function cargarCatalogoCalidadLocal() {
   }
   renderCriterios();
   sembradores = catalogo.colaboradores.filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
+  if (esFormularioPreparacionCamas) window.PreparacionCamasGrupos?.setCatalogo(sembradores);
   renderSembradores();
 }
 
@@ -722,7 +724,82 @@ async function checkApiCalidad() {
   }
 }
 
+
+async function guardarCalidadPreparacionGrupos() {
+  if (guardandoCalidad) return;
+  const control = window.PreparacionCamasGrupos;
+  if (!control) return estadoCalidad("error", "No se pudo iniciar la selección de grupos.");
+  const personas = control.obtenerEvaluaciones();
+  if (!personas.length) return estadoCalidad("warning", "Agrega colaboradores a los grupos antes de evaluar.");
+  const reales = personas.filter(p => !p.prueba);
+  const pruebas = personas.filter(p => p.prueba);
+  if (reales.length && !semanaActual) {
+    return estadoCalidad("error", "Para guardar colaboradores reales necesitas el calendario semanal descargado.");
+  }
+  const porCodigo = new Map(sembradores.map(item => [String(item.codigo ?? item.docid ?? item.id), item]));
+  const planes = [];
+  try {
+    // Validar todas las revisiones reales antes de escribir cualquier evaluación.
+    for (const persona of reales) {
+      const catalogo = porCodigo.get(persona.codigo);
+      if (!catalogo) throw new Error("El colaborador " + persona.nombre + " ya no está en el catálogo activo.");
+      const revisionActual = Number(catalogo.semanaRevision) === Number(semanaActual.semana)
+        ? Number(catalogo.revision) || 0 : 0;
+      const mayorLocal = await SyncEngine.obtenerMayorRevisionCalidadLocal(persona.codigo, semanaActual.semana);
+      const siguiente = Math.max(revisionActual,mayorLocal) + 1;
+      if (siguiente > 30) throw new Error(persona.nombre + " ya alcanzó el máximo de 30 revisiones semanales.");
+      planes.push({persona,revision:siguiente});
+    }
+    if (!personas.some(p => p.incumplimientos.length)) {
+      const confirmado = await confirmarEvaluacionConforme();
+      if (!confirmado) return;
+    }
+    if (reales.length && !window.confirm(
+      "Se guardarán " + reales.length + " evaluaciones REALES (una por persona) y " +
+      pruebas.length + " evaluaciones de PRUEBA solo en este navegador. ¿Continuar?"
+    )) return;
+    guardandoCalidad = true;
+    $calidad("guardarCalidadBtn").disabled = true;
+    const fecha = fechaLocalCalidad();
+    const observaciones = $calidad("calidadObservaciones")?.value.trim() || "";
+    let guardados = 0;
+    for (const {persona,revision} of planes) {
+      await SyncEngine.guardarEvaluacionCalidadLocal({
+        fecha,
+        semana: semanaActual.semana,
+        asegurador: sesionCalidad.username || sesionCalidad.codigo || "",
+        colaborador: persona.codigo,
+        revision,
+        incumplimientos: persona.incumplimientos,
+        fallosDetalle: persona.fallosDetalle,
+        gruposPreparacion: persona.grupos,
+        observaciones,
+        conformeSeleccionado: persona.incumplimientos.length === 0
+      });
+      guardados++;
+    }
+    control.guardarPruebas(pruebas,fecha);
+    document.querySelectorAll("#criteriosLista .calidad-item-x-input:checked")
+      .forEach(input => { input.checked = false; });
+    if ($calidad("calidadObservaciones")) $calidad("calidadObservaciones").value = "";
+    estadoCalidad("ok",guardados + " evaluación(es) reales guardadas localmente y " +
+      pruebas.length + " de prueba registradas solo en este navegador. " +
+      (guardados ? "Las reales quedan pendientes de sincronizar." : "Los datos de prueba nunca se envían al servidor."));
+    if (guardados) {
+      await actualizarPendientesCalidad();
+      void ejecutarSincronizacionCalidad().catch(() => {});
+    }
+  } catch (error) {
+    estadoCalidad("error","No se completó el registro por grupos: " + error.message +
+      ". Revisa las evaluaciones pendientes antes de reintentar.");
+  } finally {
+    guardandoCalidad = false;
+    $calidad("guardarCalidadBtn").disabled = false;
+  }
+}
+
 async function guardarCalidad() {
+  if (esFormularioPreparacionCamas) return guardarCalidadPreparacionGrupos();
   if (guardandoCalidad) return;
   if (esFormularioDesbotonMallasUnificado && vistaCalidadDesbotonMallas === "mallas" && criteriosCalidad.length === 0) {
     return estadoCalidad("warning", "Los criterios de calidad de Mallas aún no están configurados.");
@@ -787,6 +864,7 @@ document.addEventListener("click", (event) => {
 $calidad("guardarCalidadBtn").addEventListener("click", guardarCalidad);
 $calidad("sincronizarCalidadBtn").addEventListener("click", sincronizarCalidad);
 renderCriterios();
+if (esFormularioPreparacionCamas) window.PreparacionCamasGrupos?.configurarEventos();
 window.addEventListener("online", () => {
   $calidad("calidadEstado").textContent = "En línea";
   $calidad("calidadEstado").classList.remove("warn");

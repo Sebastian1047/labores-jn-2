@@ -7,7 +7,7 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./calidad-preparacion-camas.css?v=1.0.144" />
+    <link rel="stylesheet" href="./calidad-preparacion-camas.css?v=1.0.145" />
   </head>
   <body>
     <main class="app-shell">
@@ -35,23 +35,24 @@
 
           <div class="exit-row" style="grid-template-columns: 1fr 1fr;">
             <div><span class="scan-label">Semana</span><p class="hint" id="semanaActual" style="margin: 6px 0 0;">Cargando calendario…</p></div>
-            <div><span class="scan-label">Revisión</span><p class="hint" id="sembradorRevision" style="margin: 6px 0 0;">Selecciona un colaborador</p></div>
+            <div><span class="scan-label">Modalidad</span><p class="hint" style="margin: 6px 0 0;">Evaluación por grupos de trabajo</p></div>
+            <p id="sembradorRevision" hidden></p>
           </div>
 
-          <div>
+          <div hidden>
             <span class="scan-label">Colaborador</span>
             <input id="sembradorBuscar" type="text" placeholder="Buscar colaborador por nombre o código…" />
             <div id="sembradorLista" class="pending-list" style="max-height: 180px; margin-top: 8px;"></div>
           </div>
 
-          <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+          <div class="exit-row" hidden style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
             <div><span class="scan-label">Nombre</span><p class="hint" id="sembradorNombre" style="margin: 6px 0 0;">Sin colaborador seleccionado</p></div>
             <div><span class="scan-label">Código</span><p class="hint" id="sembradorCodigo" style="margin: 6px 0 0;">—</p></div>
           </div>
 
           <div>
             <span class="scan-label">Criterios de calidad</span>
-            <p class="hint" style="margin: 6px 0 10px;">Marca con X los ítems que presenten incumplimiento. Si no marcas ninguno, la evaluación se considera conforme.</p>
+            <p class="hint" style="margin: 6px 0 10px;">Marca con X los ítems incumplidos de cada grupo. Cada persona recibirá la evaluación de su grupo y de Aseo. Usa la X junto al nombre para retirar a quien no esté presente.</p>
             <div id="criteriosLista" class="calidad-criterios calidad-criterios-numericos"></div>
           </div>
 
@@ -62,10 +63,10 @@
           </div>
 
           <div class="action-row" style="margin-top: 16px;">
-            <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluación</button>
+            <button id="guardarCalidadBtn" class="success-btn" type="button">Guardar evaluaciones por colaborador</button>
           </div>
           <section class="result-card" aria-live="polite">
-            <div class="result-status" id="calidadResultado"><span class="dot"></span><strong id="calidadMensaje">Selecciona un colaborador para iniciar una evaluación.</strong></div>
+            <div class="result-status" id="calidadResultado"><span class="dot"></span><strong id="calidadMensaje">Los colaboradores de prueba ya están agrupados. Puedes retirarlos o agregar trabajadores reales con el buscador.</strong></div>
           </section>
           <section id="calidadPendientesDetalle" class="result-card" hidden>
             <h3 style="margin-top:0">Evaluaciones pendientes de sincronizar</h3>
@@ -88,7 +89,8 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra.js?v=1.0.144"></script>
+    <script src="./calidad-preparacion-camas-grupos.js?v=1.0.145"></script>
+    <script src="./calidad-siembra.js?v=1.0.145"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
