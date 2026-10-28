@@ -632,6 +632,7 @@ function renderCriterios() {
     lista.innerHTML = tarjetas.join("");
   }
   configurarConformeCalidad();
+  if (esFormularioPreparacionCamas) window.PreparacionCamasGrupos?.actualizarAseoSeleccion();
 }
 
 function limpiarFormularioCalidad() {
@@ -738,6 +739,10 @@ async function guardarCalidadPreparacionGrupos() {
   if (guardandoCalidad) return;
   const control = window.PreparacionCamasGrupos;
   if (!control) return estadoCalidad("error", "No se pudo iniciar la selección de grupos.");
+  if (control.aseoPendienteSeleccion()) {
+    return estadoCalidad("warning",
+      "Marcaste el ítem Aseo. Selecciona al menos una persona que incumplió o desmarca Aseo si todos están conformes.");
+  }
   const personas = control.obtenerEvaluaciones();
   if (!personas.length) return estadoCalidad("warning", "Agrega colaboradores a los grupos antes de evaluar.");
   const reales = personas.filter(p => !p.prueba);
@@ -791,6 +796,7 @@ async function guardarCalidadPreparacionGrupos() {
     control.guardarPruebas(pruebas,fecha);
     document.querySelectorAll("#criteriosLista .calidad-item-x-input:checked")
       .forEach(input => { input.checked = false; });
+    control.limpiarSeleccionAseo();
     if ($calidad("calidadObservaciones")) $calidad("calidadObservaciones").value = "";
     estadoCalidad("ok",guardados + " evaluación(es) reales guardadas localmente y " +
       pruebas.length + " de prueba registradas solo en este navegador. " +

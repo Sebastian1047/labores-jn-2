@@ -43,6 +43,37 @@
   const personal = restaurar();
   let catalogo = [];
   let configurado = false;
+  // Los fallos de Aseo se asignan por persona, no a todo el equipo.
+  const seleccionAseo = new Set();
+  function estaAseoMarcado() {
+    return Boolean(document.querySelector(
+      '.calidad-preparacion-grupo[data-grupo="6"] .calidad-item-x-input:checked'
+    )) && !estaPreparacionConforme();
+  }
+  function depurarSeleccionAseo() {
+    const presentes = new Set(integrantesDe(6).map(persona => persona.codigo));
+    for (const codigo of seleccionAseo)
+      if (!presentes.has(codigo)) seleccionAseo.delete(codigo);
+  }
+  function actualizarAseoSeleccion() {
+    depurarSeleccionAseo();
+    const activo = estaAseoMarcado();
+    document.querySelectorAll("[data-pc-aseo-persona]").forEach(input => {
+      input.disabled = !activo;
+      input.checked = activo && seleccionAseo.has(input.dataset.pcAseoPersona);
+    });
+    const mensaje = document.querySelector("[data-pc-aseo-instruccion]");
+    if (mensaje) mensaje.textContent = activo
+      ? "Selecciona las personas que incumplieron Aseo; las demás quedan conformes."
+      : "Todas las personas están conformes en Aseo. Marca el ítem Aseo para habilitar las casillas.";
+  }
+  function limpiarSeleccionAseo() {
+    seleccionAseo.clear();
+    actualizarAseoSeleccion();
+  }
+  function aseoPendienteSeleccion() {
+    return estaAseoMarcado() && !integrantesDe(6).some(persona => seleccionAseo.has(persona.codigo));
+  }
   const escapar = (s) => String(s ?? "").replace(/&/g,"&amp;")
     .replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -64,16 +95,27 @@
   }
   function etiquetas(index) {
     const integrantes = integrantesDe(index);
+    const habilitado = index === 6 && estaAseoMarcado();
     return integrantes.length
-      ? integrantes.map(p => '<span class="pc-persona' + (p.prueba ? ' pc-prueba' : '') + '">' +
-        '<span class="pc-persona-nombre">' + escapar(p.nombre) +
-        ' <small>(' + escapar(p.codigo) + ')</small></span>' +
-        (p.prueba ? '<span class="pc-etiqueta-prueba">Prueba</span>' : '') +
-        (index === 6 ? '' :
-          '<button type="button" class="pc-quitar" data-pc-quitar="' + index +
-          '" data-pc-codigo="' + escapar(p.codigo) +
-          '" aria-label="Quitar a ' + escapar(p.nombre) + ' de la evaluación" title="Quitar de la evaluación">×</button>') +
-        '</span>').join("")
+      ? integrantes.map(p => {
+        const nombre = escapar(p.nombre), codigo = escapar(p.codigo);
+        const inicio = index === 6
+          ? '<label class="pc-persona pc-persona-aseo' +
+            (p.prueba ? ' pc-prueba' : '') + '">' +
+            '<input type="checkbox" class="pc-aseo-checkbox" data-pc-aseo-persona="' +
+            codigo + '" aria-label="Aseo incumplido por ' + nombre + '"' +
+            (habilitado ? '' : ' disabled') +
+            (habilitado && seleccionAseo.has(p.codigo) ? ' checked' : '') + ' />'
+          : '<span class="pc-persona' + (p.prueba ? ' pc-prueba' : '') + '">';
+        return inicio + '<span class="pc-persona-nombre">' + nombre +
+          ' <small>(' + codigo + ')</small></span>' +
+          (p.prueba ? '<span class="pc-etiqueta-prueba">Prueba</span>' : '') +
+          (index === 6 ? '' :
+            '<button type="button" class="pc-quitar" data-pc-quitar="' + index +
+            '" data-pc-codigo="' + codigo + '" aria-label="Quitar a ' + nombre +
+            ' de la evaluación" title="Quitar de la evaluación">×</button>') +
+          (index === 6 ? '</label>' : '</span>');
+      }).join("")
       : '<p class="pc-sin-personal">' + (index === 6
         ? 'Sin colaboradores en Aseo. Agrega personas en los grupos anteriores.'
         : 'No hay personas en este grupo. Búscalas para agregarlas.') + '</p>';
@@ -84,7 +126,11 @@
       '<div class="pc-equipo-cabecera"><strong>Colaboradores del grupo</strong>' +
       '<span class="pc-total" data-pc-total="' + index + '">' + total +
       (total === 1 ? ' persona' : ' personas') + '</span></div>' +
-      (index === 6 ? '<p class="pc-explicacion">Esta lista se actualiza automáticamente con las personas de los seis grupos anteriores. Para agregar o quitar una persona, hazlo en su grupo de origen.</p>' : '') +
+      (index === 6 ? '<p class="pc-explicacion">Las personas se incorporan automáticamente desde los otros seis grupos; no se agregan ni se retiran aquí.</p>' +
+        '<p class="pc-aseo-instruccion" data-pc-aseo-instruccion>' +
+        (estaAseoMarcado() ? 'Selecciona las personas que incumplieron Aseo; las demás quedan conformes.' :
+          'Todas las personas están conformes en Aseo. Marca el ítem Aseo para habilitar las casillas.') +
+        '</p>' : '') +
       '<div class="pc-personas" data-pc-personas="' + index + '">' + etiquetas(index) + '</div>' +
       (index === 6 ? '' :
         '<label class="pc-buscar-etiqueta" for="pc-buscar-' + index + '">Agregar colaborador</label>' +
@@ -94,6 +140,7 @@
       '</div>';
   }
   function actualizar() {
+    depurarSeleccionAseo();
     for (let i=0;i<CANTIDAD_GRUPOS;i++) {
       const caja = document.querySelector('[data-pc-personas="' + i + '"]');
       const total = document.querySelector('[data-pc-total="' + i + '"]');
@@ -103,6 +150,7 @@
         total.textContent = n + (n === 1 ? " persona" : " personas");
       }
     }
+    actualizarAseoSeleccion();
   }
   function quitar(index,codigo) {
     if (!Number.isInteger(index) || index < 0 || index >= GRUPOS_CON_PERSONAL) return;
@@ -163,18 +211,31 @@
       const input = evento.target.closest("[data-pc-buscar]");
       if (input) buscar(Number(input.dataset.pcBuscar),input.value);
     });
-    // Preparación conforme excluye todos los incumplimientos, y viceversa.
+    // Preparación conforme excluye todos los incumplimientos, también los de Aseo.
     lista.addEventListener("change", (evento) => {
       const checkbox = evento.target;
+      if (checkbox.matches("[data-pc-aseo-persona]")) {
+        if (!estaAseoMarcado()) {
+          checkbox.checked = false;
+        } else if (checkbox.checked) {
+          seleccionAseo.add(checkbox.dataset.pcAseoPersona);
+        } else {
+          seleccionAseo.delete(checkbox.dataset.pcAseoPersona);
+        }
+        return;
+      }
       if (!checkbox.matches(".calidad-item-x-input")) return;
       const conforme = lista.querySelector("[data-pc-conforme]");
       if (!conforme) return;
       if (checkbox === conforme && conforme.checked) {
         lista.querySelectorAll(".calidad-item-x-input:not([data-pc-conforme])")
           .forEach(input => { input.checked = false; });
+        seleccionAseo.clear();
       } else if (checkbox !== conforme && checkbox.checked) {
         conforme.checked = false;
       }
+      if (!estaAseoMarcado()) seleccionAseo.clear();
+      actualizarAseoSeleccion();
     });
     lista.addEventListener("keydown", (evento) => {
       const input = evento.target.closest("[data-pc-buscar]");
@@ -235,6 +296,8 @@
         }
         dato.grupos.push(i+1);
         fallos.forEach(fallo => {
+          // Aseo sólo incumple en los colaboradores marcados en su casilla.
+          if (i === 6 && !seleccionAseo.has(persona.codigo)) return;
           if (!dato.incumplimientos.includes(fallo.idItem)) {
             dato.incumplimientos.push(fallo.idItem);
             dato.fallosDetalle.push({...fallo});
@@ -261,6 +324,7 @@
   window.PreparacionCamasGrupos = {
     htmlGrupo, configurarEventos, setCatalogo,
     obtenerEvaluaciones, guardarPruebas, estaPreparacionConforme,
+    actualizarAseoSeleccion, limpiarSeleccionAseo, aseoPendienteSeleccion,
     // Utilidades de lectura para verificar la agrupación sin registros reales.
     integrantesDe
   };
