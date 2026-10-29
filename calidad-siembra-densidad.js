@@ -192,14 +192,23 @@
     } catch(e) { console.warn("Datos de prueba no disponibles",e); }
     return base.map(r=>{
       const cambio=guardados[r.bloque+"|"+r.cama]||{};
+      const reporte=String(cambio.reporte??r.reporte);
+      const aseguradas=String(cambio.aseguradas??r.aseguradas);
+      const estado=clasificar(reporte,aseguradas).estado;
       return {...r,fecha:dia,fechaInicio:r.fechaInicio||dia,
-        fechaFin:r.fechaFin??dia,revisiones:r.detalles?.length??0,esPrueba:true,
-        reporte:String(cambio.reporte??r.reporte),
-        aseguradas:String(cambio.aseguradas??r.aseguradas)};
-    });
+        fechaFin:estado==="Pendiente"?"":(r.fechaFin||dia),
+        estado,revisiones:r.detalles?.length??0,esPrueba:true,
+        reporte,aseguradas};
+    }).filter(r=>vista.value==="pendientes"
+      ? r.estado==="Pendiente"
+      : (r.estado==="Conforme"||r.estado==="Inconforme"));
   }
   function guardarCambiosPrueba(dia) {
-    const datos={};
+    let datos={};
+    try{
+      const anteriores=JSON.parse(localStorage.getItem(DEMO_PREFIX+dia)||"{}");
+      if(anteriores&&typeof anteriores==="object"&&!Array.isArray(anteriores))datos=anteriores;
+    }catch(error){console.warn("No se pudo leer el historial de prueba",error);}
     registros.filter(r=>r.esPrueba && r.fecha===dia).forEach(r=>{
       datos[r.bloque+"|"+r.cama]={reporte:r.reporte,aseguradas:r.aseguradas};
     });
@@ -256,7 +265,11 @@
     }
   }
   async function guardarFila(registro) {
-    if(registro.esPrueba){guardarCambiosPrueba(registro.fecha);return;}
+    if(registro.esPrueba){
+      guardarCambiosPrueba(registro.fecha);
+      void cargar(); // Mover de Pendientes a Terminadas al completar los números.
+      return;
+    }
     const resultado=clasificar(registro.reporte,registro.aseguradas);
     if(resultado.estado==="Revisar números")
       throw new Error("Verifica los números digitados.");
