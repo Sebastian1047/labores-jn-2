@@ -1,4 +1,4 @@
-// Calidad Siembra Campo / Seguimiento Densidad.
+// Calidad Siembra Campo / Seguimiento Conteo de Líneas.
 // Tabla por fecha, bloque y cama. Se alimenta de siembras sincronizadas y
 // registros de Rendimiento locales; los conteos se guardan localmente en meta.
 (function () {
