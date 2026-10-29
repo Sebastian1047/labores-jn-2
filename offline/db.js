@@ -306,6 +306,32 @@ const OfflineDb = {
       };
     });
   },
+  // Si el servidor reasigna el número de revisión por un conflicto 409,
+  // actualizar también la referencia trazable del ciclo, usando CorrelationId.
+  async actualizarReferenciaCiclo(evaluacion) {
+    if(!evaluacion?.cicloSiembraId||!evaluacion?.correlationId)return;
+    const db=await getDb();
+    const key="calidadSiembraConteoCiclo:v2:"+evaluacion.cicloSiembraId;
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction("meta","readwrite"),store=tx.objectStore("meta");
+      let changed=false;
+      tx.onerror=()=>reject(tx.error||new Error("No se pudo actualizar la referencia de revisión"));
+      tx.onabort=()=>reject(tx.error||new Error("Actualización cancelada"));
+      tx.oncomplete=()=>resolve(changed);
+      store.get(key).onsuccess=e=>{
+        const row=e.target.result;
+        if(!row)return;
+        const ciclo=row.value,revisiones=Array.isArray(ciclo?.revisiones)?ciclo.revisiones:[];
+        const pos=revisiones.findIndex(x=>x.correlationId===evaluacion.correlationId);
+        if(pos<0)return;
+        revisiones[pos]={...revisiones[pos],
+          revision:evaluacion.revision,semana:evaluacion.semana,
+          fecha:String(evaluacion.fecha).slice(0,10)};
+        store.put({key,value:{...ciclo,revisiones}});
+        changed=true;
+      };
+    });
+  },
   // Cierre/corrección atómica: se conserva la semana original de cada
   // revisión y solamente se materializa el resultado del ítem de conteo.
   async cerrarCalidadCiclo(id,datos) {
