@@ -77,7 +77,7 @@
   function actualizarResumen() {
     const terminadas = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Conforme").length;
     const inconformes = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Inconforme").length;
-    mensaje.textContent = (modoPrueba ? "DATOS DE PRUEBA · " : "") + registros.length + " cama(s) para " + fecha.value +
+    mensaje.textContent = (modoPrueba ? "DATOS DE PRUEBA · " : "") + registros.length + " ciclo(s) consultado(s). Hasta " + fecha.value +
       " · " + terminadas + " conforme(s) · " + inconformes +
       " inconforme(s) · " + (registros.length-terminadas-inconformes) + " pendiente(s).";
   }
@@ -86,8 +86,14 @@
       '<tr data-densidad-indice="' + i + '">' +
       '<td>' + escapar(r.bloque) + (r.esPrueba ? ' <span class="cs-tag-prueba">Prueba</span>' : '') +
       '</td><td>' + escapar(r.cama) +
-       '<small style="display:block;opacity:.72">Del '+escapar(r.fechaInicio)+' al '+escapar(r.fechaFin)+
-       (r.revisiones?' · '+r.revisiones+' revisión(es)':'')+'</small></td>' +
+       '<small style="display:block;opacity:.72">Inicio: '+escapar(r.fechaInicio)+
+       ' · '+(r.fechaFin?'Cierre: '+escapar(r.fechaFin):'Aún en siembra')+'</small>'+
+       (r.detalles?.length?'<details style="margin-top:5px;text-align:left"><summary>'+
+       r.detalles.length+' revisiones · ver fechas y semanas</summary>'+
+       '<div style="max-height:155px;overflow:auto;line-height:1.55;font-size:.77rem">'+
+       r.detalles.map(x=>escapar(x.fecha)+' · S'+escapar(x.semana)+
+         ' · Rev. '+escapar(x.revision)+' · '+escapar(x.colaborador)).join('<hr style="margin:2px 0;border:0;border-top:1px solid #ddd">')+
+       '</div></details>':'')+'</td>' +
       '<td class="cs-personas">' + r.personas.map(p=>'<span>' +
         escapar(p.nombre) + (p.codigo ? ' <small>(' + escapar(p.codigo) + ')</small>' : '') +
         '</span>').join("") + '</td>' +
@@ -99,7 +105,7 @@
         escapar(r.bloque) + ' cama ' + escapar(r.cama) + '" value="' + escapar(r.aseguradas) + '"></td>' +
       '<td data-densidad-diferencia>—</td><td><span data-densidad-estado class="cs-resultado cs-pendiente">Pendiente</span></td></tr>'
     ).join("") :
-      '<tr><td colspan="7" class="cs-sin-registros">No hay siembras registradas para esta fecha. Puedes cambiar la fecha o registrar siembras primero.</td></tr>';
+      '<tr><td colspan="7" class="cs-sin-registros">No hay ciclos pendientes ni terminados en el período seleccionado. Al guardar la primera revisión de una cama se crea su seguimiento automáticamente.</td></tr>';
     cuerpo.querySelectorAll("[data-densidad-indice]").forEach(tr=>{
       const dato=registros[Number(tr.dataset.densidadIndice)];
       mostrarCalculo(tr,dato);
@@ -107,86 +113,42 @@
     actualizarResumen();
   }
   async function fuentesLocales(dia) {
-    const inicio=desde.value;
-    if(!inicio||inicio>dia)throw Error("La fecha inicial debe ser anterior o igual al cierre.");
-    const [siembras,rendimiento,empleados,calidad,evaluaciones,ciclos] = await Promise.all([
-      OfflineDb.getAll("siembras"),OfflineDb.getAll("siembraRendimientoRegistros"),
-      OfflineDb.getAll("empleados"),OfflineDb.getAll("calidadColaboradores"),
-      OfflineDb.getAll("calidadEvaluaciones"),ciclosGuardados()
+    const [ciclos,empleados,calidad] = await Promise.all([
+      ciclosGuardados(),OfflineDb.getAll("empleados"),OfflineDb.getAll("calidadColaboradores")
     ]);
     const nombres=new Map();
     [...empleados,...calidad].forEach(p=>{
       const id=String(p.codigo??p.docid??p.id??"").trim();
       if(id)nombres.set(id,etiqueta(p)||id);
     });
-    const grupos=new Map();
-    const abiertos=new Map();
-    // Un ciclo ya cerrado no debe volver a mezclarse con una siembra nueva
-    // de la misma cama. Solo se abre para edición en su propia fecha de cierre.
-    for(const ciclo of ciclos){
-      const [desdeC,hastaC]=fechasCiclo(ciclo);
-      const k=claveCama(ciclo);
-      if(!desdeC||!hastaC||desdeC>hastaC)continue;
-      if(hastaC===dia&&diaEnRango(desdeC,inicio,dia)){
-        let existentes=abiertos.get(k)||[];
-        existentes.push(ciclo);abiertos.set(k,existentes);
-        grupos.set("ciclo:"+ciclo.id,{
-          ...ciclo,fecha:dia,fechaInicio:desdeC,fechaFin:hastaC,
-          personas:Array.isArray(ciclo.personas)?[...ciclo.personas]:[],
-          ids:new Set((ciclo.personas||[]).map(x=>String(x.codigo))),
-          revisiones:0,esCiclo:true,
-          reporte:String(ciclo.reporte??""),aseguradas:String(ciclo.aseguradas??"")
-        });
-      }
-    }
-    for(const r of [...siembras,...rendimiento,...evaluaciones]){
-      const fechaRegistro=String(r.fecha||"").slice(0,10);
-      if(!diaEnRango(fechaRegistro,inicio,dia)||r.bloque==null||r.cama==null||
-         !String(r.bloque).trim()||!String(r.cama).trim())continue;
-      const k=codigo(r.bloque)+"|"+codigo(r.cama);
-      const covers=ciclos.filter(c=>{
-        const [desdeC,hastaC]=fechasCiclo(c);
-        return claveCama(c)===k&&diaEnRango(fechaRegistro,desdeC,hastaC);
-      });
-      if(covers.length>1)continue; // ciclos superpuestos: no atribuir automáticamente.
-      const match=covers[0];
-      if(match&&match.fechaFin!==dia)continue;
-      const key=match?"ciclo:"+match.id:"nueva:"+k;
-      let group=grupos.get(key);
-      if(!group){
-        group={fecha:dia,fechaInicio:fechaRegistro,fechaFin:dia,
-          bloque:String(r.bloque).trim(),cama:String(r.cama).trim(),
-          personas:[],ids:new Set(),revisiones:0,reporte:"",aseguradas:""};
-        grupos.set(key,group);
-      }
-      if(!group.esCiclo&&fechaRegistro<group.fechaInicio)group.fechaInicio=fechaRegistro;
-      const id=String(r.empleado??r.colaborador??r.sembrador??"").trim();
-      if(id&&!group.ids.has(id)){
-        group.ids.add(id);
-        const nombre=String(r.empleadoNombre??r.colaboradorNombre??r.sembradorNombre??"").trim()||
-          nombres.get(id)||id;
-        group.personas.push({codigo:id,nombre});
-      }
-      if(r.revision!=null&&String(r.revision)!=="")group.revisiones++;
-    }
-    const filas=[...grupos.values()].map(r=>{
-      delete r.ids;
-      r.personas.sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
-      return r;
+    // Las camas PENDIENTES se muestran siempre, sin límite de fechas.
+    // El intervalo solo filtra los ciclos que ya terminaron.
+    const inicio=desde.value,fin=dia;
+    const filas=ciclos.filter(c=>
+      c.id&&c.bloque!=null&&c.cama!=null&&
+      (c.estado==="Pendiente"&&!c.fechaFin||
+       (c.fechaFin&&c.fechaFin>=inicio&&c.fechaFin<=fin))
+    ).map(c=>{
+      const detalles=(Array.isArray(c.revisiones)?c.revisiones:[]).map(x=>({
+        correlationId:x.correlationId,fecha:String(x.fecha||"").slice(0,10),
+        semana:x.semana,anio:x.anio,revision:x.revision,
+        colaborador:String(x.colaborador??"")
+      })).sort((a,b)=>a.fecha.localeCompare(b.fecha)||
+        Number(a.revision)-Number(b.revision));
+      const personas=[...new Set(detalles.map(x=>x.colaborador).filter(Boolean))]
+        .map(codigo=>({codigo,nombre:nombres.get(codigo)||codigo}));
+      // Compatibilidad con seguimientos cerrados de la versión anterior.
+      if(!personas.length&&Array.isArray(c.personas))
+        personas.push(...c.personas);
+      return {...c,fecha:fin,personas,detalles,
+        revisiones:detalles.length,esCiclo:true,
+        fechaInicio:c.fechaInicio||detalles[0]?.fecha||"",
+        fechaFin:c.fechaFin||"",
+        reporte:String(c.reporte??""),aseguradas:String(c.aseguradas??"")};
     });
-    filas.sort((a,b)=>a.bloque.localeCompare(b.bloque,"es",{numeric:true})||
-      a.cama.localeCompare(b.cama,"es",{numeric:true})||
-      a.fechaInicio.localeCompare(b.fechaInicio,"es"));
-    for(const r of filas){
-      if(r.esCiclo)continue;
-      // Solo compatibilidad con el registro anterior del mismo día,
-      // nunca lo atribuimos automáticamente a otra semana.
-      if(r.fechaInicio===r.fechaFin){
-        const saved=await OfflineDb.getMeta(clave(r));
-        if(saved){r.reporte=String(saved.reporte??"");
-          r.aseguradas=String(saved.aseguradas??"");}
-      }
-    }
+    filas.sort((a,b)=>(a.estado==="Pendiente"?0:1)-(b.estado==="Pendiente"?0:1)||
+      a.bloque.localeCompare(b.bloque,"es",{numeric:true})||
+      a.cama.localeCompare(b.cama,"es",{numeric:true}));
     return filas;
   }
 
@@ -229,7 +191,7 @@
     alternar.setAttribute("aria-pressed",String(modoPrueba));
     alternar.classList.toggle("cs-modo-prueba",modoPrueba);
     aviso.hidden=!modoPrueba;restaurar.hidden=!modoPrueba;
-    consultar.textContent=modoPrueba?"Recargar ejemplos":"Actualizar siembras";
+    consultar.textContent=modoPrueba?"Recargar ejemplos":"Actualizar seguimiento";
   }
   function alternarModo(valor) {
     modoPrueba=Boolean(valor);
@@ -273,32 +235,21 @@
   }
   async function guardarFila(registro) {
     if(registro.esPrueba){guardarCambiosPrueba(registro.fecha);return;}
-    const estado=clasificar(registro.reporte,registro.aseguradas);
-    if(estado.estado==="Revisar números")return;
-    // No cerrar un ciclo nuevo sin las dos mediciones.
-    if(estado.estado==="Pendiente"&&!registro.esCiclo)return;
-    const inicio=registro.fechaInicio,fin=fecha.value;
-    if(!inicio||inicio>fin)throw Error("El inicio no puede ser posterior al cierre.");
-    const anteriores=await ciclosGuardados();
-    const conflicto=anteriores.find(c=>{
-      if(c.id===registro.id||claveCama(c)!==claveCama(registro))return false;
-      const [a,b]=fechasCiclo(c);
-      return inicio<=b&&a<=fin;
+    const resultado=clasificar(registro.reporte,registro.aseguradas);
+    if(resultado.estado==="Revisar números")
+      throw new Error("Verifica los números digitados.");
+    // El ciclo continúa pendiente hasta registrar ambos números.
+    if(resultado.estado==="Pendiente")return;
+    if(!registro.id)throw new Error("Esta cama no tiene un ciclo identificado. No se pueden afectar revisiones sin una vinculación segura.");
+    const cerrado=await OfflineDb.cerrarCalidadCiclo(registro.id,{
+      reporte:registro.reporte,aseguradas:registro.aseguradas,
+      fechaConteo:registro.fechaFin||fecha.value
     });
-    if(conflicto)throw Error("Esta cama ya tiene un ciclo entre "+conflicto.fechaInicio+
-      " y "+conflicto.fechaFin+". Ajusta la fecha inicial para no mezclar siembras.");
-    const ciclo={
-      id:registro.id||generarId(),bloque:registro.bloque,cama:registro.cama,
-      fechaInicio:inicio,fechaFin:fin,fechaConteo:fin,
-      personas:registro.personas,reporte:registro.reporte,aseguradas:registro.aseguradas,
-      diferencia:estado.diferencia,estado:estado.estado,
-      updatedAt:new Date().toISOString()
-    };
-    await OfflineDb.setMeta(CICLO_PREFIX+ciclo.id,ciclo);
-    registro.id=ciclo.id;registro.esCiclo=true;registro.fechaInicio=inicio;
-    registro.fechaFin=fin;
-    mensaje.textContent="Conteo guardado para el ciclo "+inicio+" al "+fin+
-      ". Sus revisiones de ambas semanas utilizarán este resultado al consultar el informe.";
+    registro.estado=cerrado.estado;
+    registro.fechaFin=cerrado.fechaFin;
+    registro.diferencia=cerrado.diferencia;
+    mensaje.textContent="Conteo "+cerrado.estado.toLowerCase()+" guardado. Se actualizaron "+
+      (cerrado.revisiones||[]).length+" revisiones vinculadas de sus respectivas semanas.";
     notificar();
   }
   cuerpo.addEventListener("input",event=>{
