@@ -74,6 +74,8 @@ async function obtenerEvaluaciones() {
       const [oldKey,server]=match;
       merged.set(oldKey,{...server,bloque:server.bloque??e.bloque,
        cama:server.cama??e.cama,
+       cicloSiembraId:server.cicloSiembraId??e.cicloSiembraId,
+       conteoLineasEstado:server.conteoLineasEstado??e.conteoLineasEstado,
        colaboradorNombre:server.colaboradorNombre??e.colaboradorNombre});
     }else merged.set(key,e);
   }
@@ -109,7 +111,7 @@ async function cargarConteosGuardados(){
    const key=String(row.key??""),r=row.value;
    if(!r)continue;
    if(key.startsWith(CONTEO_CICLO_PREFIX)){
-    if(r.id&&r.fechaInicio&&r.fechaFin&&r.fechaInicio<=r.fechaFin&&
+    if(r.id&&r.fechaInicio&&(!r.fechaFin||r.fechaInicio<=r.fechaFin)&&
        codificarCama(r.bloque)&&codificarCama(r.cama)){
       out.ciclos.push(r);
     }
@@ -123,6 +125,13 @@ async function cargarConteosGuardados(){
 }
 function vincularConteo(e,conteos){
  const fecha=String(e.fecha??"").slice(0,10);
+ // Vínculo de origen: no depende de la fecha ni del número de revisión.
+ // Si la cama sigue pendiente, el informe permanece provisional.
+ if(e.cicloSiembraId){
+  const ciclo=(conteos.ciclos||[]).find(c=>c.id===e.cicloSiembraId);
+  return {...e,__conteoClave:"ciclo:"+e.cicloSiembraId,
+   __conteoEstado:ciclo?estadoConteo(ciclo):"Pendiente"};
+ }
  const base=claveCama(fecha,e.bloque,e.cama);
  const ciclos=(conteos.ciclos||[]).filter(c=>
   codificarCama(c.bloque)===codificarCama(e.bloque)&&
