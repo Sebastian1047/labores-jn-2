@@ -31,14 +31,110 @@ function obtenerEvaluacionesLocales() {
   }
 }
 
+// Se conservan los datos del servidor y se completan los identificadores
+// Bloque/Cama desde la copia local. La API de calidad actual no envía esos
+// campos; jamás inventamos la asociación cuando no existe.
+function claveRevision(e) {
+  const codigo = String(e.sembrador ?? e.colaborador ?? "").trim();
+  const semana = String(e.semana ?? "");
+  const fecha = String(e.fecha ?? "").slice(0,10);
+  const revision = String(e.revision ?? "");
+  return e.correlationId ? "id:"+e.correlationId :
+    "revision:"+codigo+"|"+semana+"|"+revision+"|"+fecha;
+}
 async function obtenerEvaluaciones() {
+  let recibidas=null;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/calidad/informe`, { cache: "no-store" });
+    const response = await fetch(`${API_BASE_URL}/api/calidad/informe`, {cache:"no-store"});
     if (!response.ok) throw new Error("No se pudo consultar el informe en la base");
-    return await response.json();
-  } catch {
-    return obtenerEvaluacionesLocales();
+    const datos = await response.json();
+    if (!Array.isArray(datos)) throw new Error("Formato de evaluaciones inválido");
+    recibidas=datos;
+  }catch{
+    recibidas=obtenerEvaluacionesLocales();
   }
+  let locales=[];
+  try {
+    locales=(await OfflineDb.getAll("calidadEvaluaciones")).filter(
+      e=>e&&e.bloque!=null&&e.cama!=null&&String(e.bloque).trim()&&String(e.cama).trim()
+    );
+  }catch(error){console.warn("Sin evaluaciones locales adicionales:",error);}
+  const merged=new Map();
+  for(const e of recibidas) {
+    if(e&&typeof e==="object")merged.set(claveRevision(e),e);
+  }
+  for(const e of locales){
+    const key=claveRevision(e);
+    // Buscar también por revisión si la API no devuelve correlationId.
+    const match=[...merged.entries()].find(([k,v])=>
+      k===key || (String(v.colaborador??v.sembrador??"")===String(e.colaborador??e.sembrador??"") &&
+      Number(v.semana)===Number(e.semana) && Number(v.revision)===Number(e.revision) &&
+      String(v.fecha??"").slice(0,10)===String(e.fecha??"").slice(0,10)));
+    if(match){
+      const [oldKey,server]=match;
+      merged.set(oldKey,{...server,bloque:server.bloque??e.bloque,
+       cama:server.cama??e.cama,
+       colaboradorNombre:server.colaboradorNombre??e.colaboradorNombre});
+    }else merged.set(key,e);
+  }
+  return [...merged.values()];
+}
+
+
+// Conteo de Líneas es una evaluación por cama, NO una revisión manual.
+// La clave vigente en Labores JN es fecha | bloque | cama.
+// No se asocian fechas distintas automáticamente: una cama puede reutilizarse.
+const CONTEO_META_PREFIX="calidadSiembraDensidad:v1:";
+const codificarCama=v=>{
+ const s=String(v??"").trim().toUpperCase();
+ return /^\d+$/.test(s)?String(Number(s)):s;
+};
+function claveCama(fecha,bloque,cama){
+ const d=String(fecha??"").slice(0,10),b=codificarCama(bloque),c=codificarCama(cama);
+ return /^\d{4}-\d{2}-\d{2}$/.test(d)&&b&&c?d+"|"+b+"|"+c:"";
+}
+function estadoConteo(info) {
+ if(!info)return "Pendiente";
+ const report=String(info.reporte??""),checked=String(info.aseguradas??"");
+ if(!/^\d+$/.test(report)||!/^\d+$/.test(checked)||
+    !Number.isSafeInteger(Number(report))||!Number.isSafeInteger(Number(checked)))return "Pendiente";
+ return Math.abs(Number(checked)-Number(report))>=3?"Inconforme":"Conforme";
+}
+async function cargarConteosGuardados(){
+ const out=new Map();
+ try {
+  const meta=await OfflineDb.getAll("meta");
+  for(const row of meta){
+   if(!String(row.key??"").startsWith(CONTEO_META_PREFIX))continue;
+   const r=row.value;
+   if(!r)continue;
+   const k=claveCama(r.fecha,r.bloque,r.cama);
+   if(k)out.set(k,estadoConteo(r));
+  }
+ }catch(error){console.warn("No se pudieron consultar conteos de líneas:",error);}
+ return out;
+}
+function vincularConteo(e,conteos){
+ const key=claveCama(e.fecha,e.bloque,e.cama);
+ return {...e,__conteoClave:key,__conteoEstado:conteos.get(key)||"Pendiente"};
+}
+function conteoCamasPersona(registros){
+ const camas=new Map();
+ for(const r of registros){
+  if(!r.__conteoClave)continue;
+  camas.set(r.__conteoClave,r.__conteoEstado);
+ }
+ const completadas=[...camas.values()].filter(x=>x==="Conforme"||x==="Inconforme");
+ const conformes=completadas.filter(x=>x==="Conforme").length;
+ return {conformes,completadas:completadas.length,pendientes: camas.size-completadas.length};
+}
+function revisionConforme(e){
+ return e.__conteoEstado==="Conforme"&&
+  !(e.incumplimientos||[]).some(x=>{
+   const id=Number(x&&typeof x==="object"?x.idItem??x.id:x);
+   // El ítem 13 no se puede registrar manualmente en nuevas revisiones.
+   return Number.isFinite(id)&&id!==13;
+  });
 }
 
 function normalizarEvaluacion(evaluacion) {
@@ -81,11 +177,10 @@ function porcentaje(numerador, denominador) {
   return `${Math.round(valor)}%`;
 }
 
-function tieneIncumplimiento(evaluacion, idItem) {
-  return (evaluacion.incumplimientos || []).some((item) => {
-    if (typeof item === "object") return Number(item.idItem) === idItem;
-    return Number(item) === idItem;
-  });
+function tieneIncumplimiento(evaluacion,idItem){
+  if(idItem===13)return evaluacion.__conteoEstado==="Inconforme";
+  return (evaluacion.incumplimientos||[]).some(item=>
+   Number(item&&typeof item==="object"?item.idItem??item.id:item)===idItem);
 }
 
 function datosPeriodo(evaluaciones) {
@@ -118,8 +213,10 @@ function poblarFiltros(periodos) {
 }
 
 function resumenGrupal(registros) {
-  const conformes = registros.filter((evaluacion) => !(evaluacion.incumplimientos || []).length).length;
-  return { muestras: registros.length, conformes, porcentaje: registros.length ? 100 * conformes / registros.length : null };
+  const terminadas=registros.filter(e=>e.__conteoEstado==="Conforme"||e.__conteoEstado==="Inconforme");
+  const conformes=terminadas.filter(revisionConforme).length;
+  return {muestras:terminadas.length,conformes,pendientes:registros.length-terminadas.length,
+    porcentaje:terminadas.length?100*conformes/terminadas.length:null};
 }
 
 function renderGrafica(periodos) {
@@ -133,9 +230,9 @@ function renderGrafica(periodos) {
 }
 
 async function renderInforme() {
-  const evaluaciones = obtenerEvaluaciones();
+  const [evaluaciones,conteos] = await Promise.all([obtenerEvaluaciones(),cargarConteosGuardados()]);
   await cargarNombresColaboradoresLocales();
-  const datos = (await evaluaciones).map(normalizarEvaluacion);
+  const datos = evaluaciones.map(normalizarEvaluacion).map(e=>vincularConteo(e,conteos));
   const periodos = datosPeriodo(datos);
   if (!periodos.length) {
     periodoSelect.innerHTML = '<option value="">Sin evaluaciones guardadas</option>';
@@ -176,11 +273,16 @@ async function renderInforme() {
   const filas = [...porSembrador.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")).map((sembrador) => {
     const muestras = sembrador.registros.length;
     const porItem = ITEMS_INFORME.map(([id]) => {
+      if(id===13){
+        const camas=conteoCamasPersona(sembrador.registros);
+        return porcentaje(camas.conformes,camas.completadas);
+      }
       const fallos = sembrador.registros.filter((evaluacion) => tieneIncumplimiento(evaluacion, id)).length;
       return porcentaje(muestras - fallos, muestras);
     });
-    const conformes = sembrador.registros.filter((evaluacion) => !(evaluacion.incumplimientos || []).length).length;
-    return `<tr><td class="namecell">${escaparHtml(sembrador.nombre)}</td>${porItem.map((valor) => `<td>${valor}</td>`).join("")}<td>${porcentaje(conformes, muestras)}</td></tr>`;
+    const final=resumenGrupal(sembrador.registros);
+    const resultado=porcentaje(final.conformes,final.muestras)+(final.pendientes?" *":"");
+    return `<tr><td class="namecell">${escaparHtml(sembrador.nombre)}</td>${porItem.map(valor=>`<td>${valor}</td>`).join("")}<td>${resultado}</td></tr>`;
   }).join("");
 
   informeContenido.innerHTML = `
@@ -201,6 +303,8 @@ async function renderInforme() {
         </div>
       </div>
       <h3 class="table-title">RESULTADOS CONFORMIDAD INDIVIDUAL SEMANA ${periodo.semana} · ${periodo.anio}</h3>
+      <p class="hint">Conteo de Líneas: porcentaje por camas terminadas. Conformidad total: porcentaje por revisiones con conteo finalizado. Una cama inconforme hace inconformes todas las revisiones asociadas a esa cama, fecha y bloque.</p>
+      ${resumen.pendientes?`<p class="hint" style="color:#8e5613"><strong>Informe provisional:</strong> ${resumen.pendientes} de ${periodo.registros.length} revisiones aún esperan el conteo de su cama o no tienen identificador de cama. Los porcentajes totales marcados con * son provisionales; no se consideran revisiones conformes hasta completar el conteo.</p>`:""}
       <div class="table-scroll"><table class="conformity-table"><thead><tr>
         <th>NOMBRE DEL COLABORADOR</th>${ITEMS_INFORME.map(([, nombre]) => `<th>${nombre}</th>`).join("")}<th>CONFORMIDAD TOTAL</th>
       </tr></thead><tbody>${filas}</tbody></table></div>
@@ -208,7 +312,7 @@ async function renderInforme() {
         <table class="mini-table"><thead><tr><th>SEMANA</th><th>CONFORMIDAD GRUPAL</th></tr></thead>
           <tbody>${periodosFiltrados.slice(-4).map((semana) => {
             const resumenSemana = resumenGrupal(semana.registros);
-            return `<tr><td>SEMANA ${semana.semana}</td><td><b>${porcentaje(resumenSemana.conformes, resumenSemana.muestras)}</b></td></tr>`;
+            return `<tr><td>SEMANA ${semana.semana}</td><td><b>${porcentaje(resumenSemana.conformes,resumenSemana.muestras)}${resumenSemana.pendientes?" *":""}</b></td></tr>`;
           }).join("")}</tbody>
         </table>
         <div class="print-chart"><h3>METEORO · CONFORMIDAD GRUPAL (SEMANAL)</h3>${renderGrafica(periodosFiltrados)}</div>
@@ -224,3 +328,4 @@ semanaSelect.addEventListener("change", renderInforme);
 document.querySelector("#imprimirBtn").addEventListener("click", () => window.print());
 document.querySelector("#pdfBtn").addEventListener("click", () => window.print());
 renderInforme();
+window.addEventListener("focus",()=>{void renderInforme();});
