@@ -679,7 +679,11 @@ async function guardarEvaluacionCalidadLocal(evaluacion) {
     syncStatus: "Pendiente",
     updatedAt: new Date().toISOString(),
   };
-  await OfflineDb.put("calidadEvaluaciones", registro);
+  // Siembra Campo: crear/actualizar el ciclo PENDIENTE en la misma
+  // transacción que almacena la revisión. No afecta a los otros módulos.
+  if(registro.bloque&&registro.cama)
+    return OfflineDb.guardarCalidadConCiclo(registro);
+  await OfflineDb.put("calidadEvaluaciones",registro);
   return registro;
 }
 
