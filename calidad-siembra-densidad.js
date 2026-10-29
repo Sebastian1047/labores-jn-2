@@ -154,11 +154,12 @@
       const key=match?"ciclo:"+match.id:"nueva:"+k;
       let group=grupos.get(key);
       if(!group){
-        group={fecha:dia,fechaInicio:inicio,fechaFin:dia,
+        group={fecha:dia,fechaInicio:fechaRegistro,fechaFin:dia,
           bloque:String(r.bloque).trim(),cama:String(r.cama).trim(),
           personas:[],ids:new Set(),revisiones:0,reporte:"",aseguradas:""};
         grupos.set(key,group);
       }
+      if(!group.esCiclo&&fechaRegistro<group.fechaInicio)group.fechaInicio=fechaRegistro;
       const id=String(r.empleado??r.colaborador??r.sembrador??"").trim();
       if(id&&!group.ids.has(id)){
         group.ids.add(id);
@@ -274,7 +275,9 @@
     if(registro.esPrueba){guardarCambiosPrueba(registro.fecha);return;}
     const estado=clasificar(registro.reporte,registro.aseguradas);
     if(estado.estado==="Revisar números")return;
-    const inicio=registro.esCiclo?registro.fechaInicio:desde.value,fin=fecha.value;
+    // No cerrar un ciclo nuevo sin las dos mediciones.
+    if(estado.estado==="Pendiente"&&!registro.esCiclo)return;
+    const inicio=registro.fechaInicio,fin=fecha.value;
     if(!inicio||inicio>fin)throw Error("El inicio no puede ser posterior al cierre.");
     const anteriores=await ciclosGuardados();
     const conflicto=anteriores.find(c=>{
