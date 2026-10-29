@@ -9,9 +9,14 @@
   const consultar = document.getElementById("consultarSeguimientoDensidad");
   const cuerpo = document.getElementById("seguimientoDensidadFilas");
   const mensaje = document.getElementById("seguimientoDensidadMensaje");
-  if (!abrir || !panel || !fecha || !consultar || !cuerpo || !mensaje) return;
+  const alternar = document.getElementById("cambiarModoPruebaLineas");
+  const restaurar = document.getElementById("restaurarDatosPruebaLineas");
+  const aviso = document.getElementById("avisoDatosPruebaLineas");
+  if (!abrir || !panel || !fecha || !consultar || !cuerpo || !mensaje || !alternar || !restaurar || !aviso) return;
 
   const STORE_PREFIX = "calidadSiembraDensidad:v1:";
+  const DEMO_PREFIX = "calidadSiembraConteoLineas:datosDePrueba:v1:";
+  let modoPrueba = new URLSearchParams(window.location.search).get("pruebas") === "1";
   let registros = [];
   let carga = 0;
   let cargando = false;
@@ -54,14 +59,15 @@
   function actualizarResumen() {
     const terminadas = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Conforme").length;
     const inconformes = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Inconforme").length;
-    mensaje.textContent = registros.length + " cama(s) para " + fecha.value +
+    mensaje.textContent = (modoPrueba ? "DATOS DE PRUEBA · " : "") + registros.length + " cama(s) para " + fecha.value +
       " · " + terminadas + " conforme(s) · " + inconformes +
       " inconforme(s) · " + (registros.length-terminadas-inconformes) + " pendiente(s).";
   }
   function pintar() {
     cuerpo.innerHTML = registros.length ? registros.map((r,i) =>
       '<tr data-densidad-indice="' + i + '">' +
-      '<td>' + escapar(r.bloque) + '</td><td>' + escapar(r.cama) + '</td>' +
+      '<td>' + escapar(r.bloque) + (r.esPrueba ? ' <span class="cs-tag-prueba">Prueba</span>' : '') +
+      '</td><td>' + escapar(r.cama) + '</td>' +
       '<td class="cs-personas">' + r.personas.map(p=>'<span>' +
         escapar(p.nombre) + (p.codigo ? ' <small>(' + escapar(p.codigo) + ')</small>' : '') +
         '</span>').join("") + '</td>' +
@@ -129,16 +135,69 @@
     }));
     return filas;
   }
+
+  // Ejemplos ficticios: almacenamiento separado por fecha y sin sincronización.
+  function ejemplos(dia) {
+    const personas=(...ids)=>ids.map(n=>({
+      codigo:"PRUEBA-L"+String(n).padStart(2,"0"),
+      nombre:"COLABORADOR PRUEBA "+String(n).padStart(2,"0")
+    }));
+    const base=[
+      {bloque:"PRUEBA-01",cama:"001",personas:personas(1,2),reporte:"20",aseguradas:"20"},
+      {bloque:"PRUEBA-01",cama:"002",personas:personas(3),reporte:"18",aseguradas:"20"},
+      {bloque:"PRUEBA-02",cama:"003",personas:personas(4,5),reporte:"16",aseguradas:"13"},
+      {bloque:"PRUEBA-02",cama:"004",personas:personas(6),reporte:"10",aseguradas:"14"},
+      {bloque:"PRUEBA-03",cama:"005",personas:personas(7,8),reporte:"12",aseguradas:"11"},
+      {bloque:"PRUEBA-03",cama:"006",personas:personas(9),reporte:"15",aseguradas:""},
+      {bloque:"PRUEBA-04",cama:"007",personas:personas(10,11),reporte:"7",aseguradas:"10"}
+    ];
+    let guardados={};
+    try {
+      const valor=JSON.parse(localStorage.getItem(DEMO_PREFIX+dia)||"{}");
+      if (valor && typeof valor==="object" && !Array.isArray(valor)) guardados=valor;
+    } catch(e) { console.warn("Datos de prueba no disponibles",e); }
+    return base.map(r=>{
+      const cambio=guardados[r.bloque+"|"+r.cama]||{};
+      return {...r,fecha:dia,esPrueba:true,
+        reporte:String(cambio.reporte??r.reporte),
+        aseguradas:String(cambio.aseguradas??r.aseguradas)};
+    });
+  }
+  function guardarCambiosPrueba(dia) {
+    const datos={};
+    registros.filter(r=>r.esPrueba && r.fecha===dia).forEach(r=>{
+      datos[r.bloque+"|"+r.cama]={reporte:r.reporte,aseguradas:r.aseguradas};
+    });
+    localStorage.setItem(DEMO_PREFIX+dia,JSON.stringify(datos));
+  }
+  function actualizarModo() {
+    alternar.textContent=modoPrueba?"Volver a registros reales":"Ver datos de prueba";
+    alternar.setAttribute("aria-pressed",String(modoPrueba));
+    alternar.classList.toggle("cs-modo-prueba",modoPrueba);
+    aviso.hidden=!modoPrueba;restaurar.hidden=!modoPrueba;
+    consultar.textContent=modoPrueba?"Recargar ejemplos":"Actualizar siembras";
+  }
+  function alternarModo(valor) {
+    modoPrueba=Boolean(valor);
+    const url=new URL(window.location.href);
+    if(modoPrueba)url.searchParams.set("pruebas","1");
+    else url.searchParams.delete("pruebas");
+    window.history.replaceState(null,"",url);
+    panel.hidden=false;abrir.classList.add("active");
+    abrir.setAttribute("aria-expanded","true");
+    actualizarModo();void cargar();
+  }
+
   async function cargar({sincronizar=false}={}) {
     const solicitud=++carga,dia=fecha.value;
     if (!dia) {mensaje.textContent="Selecciona una fecha válida.";return;}
     cargando=true;consultar.disabled=true;
     mensaje.textContent="Cargando siembras del " + dia + "…";
     try {
-      registros=await fuentesLocales(dia);
+      registros=modoPrueba?ejemplos(dia):await fuentesLocales(dia);
       if (solicitud!==carga)return;
       pintar();
-      if (sincronizar) {
+      if (sincronizar && !modoPrueba) {
         try {
           await SyncEngine.sincronizarSiembrasDesdeServidor({fechaInicio:dia,fechaFinal:dia});
           if (solicitud!==carga)return;
@@ -157,6 +216,7 @@
     }
   }
   async function guardarFila(registro) {
+    if(registro.esPrueba){guardarCambiosPrueba(registro.fecha);return;}
     const resultado=clasificar(registro.reporte,registro.aseguradas);
     if(resultado.estado==="Revisar números")return;
     const fechaGuardado=new Date().toISOString();
@@ -193,7 +253,18 @@
     if(visible)void cargar();
   });
   consultar.addEventListener("click",()=>void cargar({sincronizar:true}));
+  alternar.addEventListener("click",()=>alternarModo(!modoPrueba));
+  restaurar.addEventListener("click",()=>{
+    try{localStorage.removeItem(DEMO_PREFIX+fecha.value);}
+    catch(e){mensaje.textContent="No se pudieron restablecer los ejemplos: "+e.message;return;}
+    void cargar();
+  });
   fecha.addEventListener("change",()=>void cargar());
   fecha.value=hoy();
-  window.CalidadSiembraDensidad={clasificar,cargar};
+  actualizarModo();
+  if(modoPrueba){
+    panel.hidden=false;abrir.classList.add("active");
+    abrir.setAttribute("aria-expanded","true");void cargar();
+  }
+  window.CalidadSiembraDensidad={clasificar,cargar,ejemplos};
 })();

@@ -27,3 +27,9 @@
 .cs-calidad-ubicacion label {display:grid;gap:5px;font-weight:750;color:#25533b;}
 .cs-calidad-ubicacion input {width:100%;min-height:42px;}
 @media(max-width:580px){.cs-calidad-ubicacion{grid-template-columns:1fr;}.cs-densidad-controles{align-items:stretch;}}
+
+/* Tabla con ejemplos, independiente de los registros reales. */
+.cs-aviso-prueba{margin:10px 0;padding:10px 12px;border:1px solid #d9bf8b;border-radius:10px;background:#fff9ed;color:#78571d;font-size:.85rem;}
+.cs-aviso-prueba[hidden],#restaurarDatosPruebaLineas[hidden]{display:none;}
+.cs-tag-prueba{display:inline-block;margin:3px 0 0;padding:2px 6px;background:#fff0d7;color:#80571c;border-radius:5px;font-size:.68rem;font-weight:800;}
+#cambiarModoPruebaLineas.cs-modo-prueba{background:#fff0d7;color:#80571c;border-color:#dabd79;}
