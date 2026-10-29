@@ -7,13 +7,14 @@
   const panel = document.getElementById("seguimientoDensidadPanel");
   const fecha = document.getElementById("seguimientoDensidadFecha");
   const desde = document.getElementById("seguimientoDensidadDesde");
+  const vista = document.getElementById("seguimientoDensidadVista");
   const consultar = document.getElementById("consultarSeguimientoDensidad");
   const cuerpo = document.getElementById("seguimientoDensidadFilas");
   const mensaje = document.getElementById("seguimientoDensidadMensaje");
   const alternar = document.getElementById("cambiarModoPruebaLineas");
   const restaurar = document.getElementById("restaurarDatosPruebaLineas");
   const aviso = document.getElementById("avisoDatosPruebaLineas");
-  if (!abrir || !panel || !fecha || !desde || !consultar || !cuerpo || !mensaje || !alternar || !restaurar || !aviso) return;
+  if (!abrir || !panel || !fecha || !desde || !vista || !consultar || !cuerpo || !mensaje || !alternar || !restaurar || !aviso) return;
 
   const STORE_PREFIX = "calidadSiembraDensidad:v1:";
   const CICLO_PREFIX = "calidadSiembraConteoCiclo:v2:";
@@ -75,11 +76,13 @@
     return calculo;
   }
   function actualizarResumen() {
-    const terminadas = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Conforme").length;
+    const conformes = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Conforme").length;
     const inconformes = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Inconforme").length;
-    mensaje.textContent = (modoPrueba ? "DATOS DE PRUEBA · " : "") + registros.length + " ciclo(s) consultado(s). Hasta " + fecha.value +
-      " · " + terminadas + " conforme(s) · " + inconformes +
-      " inconforme(s) · " + (registros.length-terminadas-inconformes) + " pendiente(s).";
+    const prefix = modoPrueba ? "DATOS DE PRUEBA · " : "";
+    mensaje.textContent = vista.value==="pendientes"
+      ? prefix + registros.length + " cama(s) pendiente(s). Las camas de semanas anteriores permanecen aquí hasta finalizar el conteo."
+      : prefix + registros.length + " cama(s) terminada(s) · "+ conformes +
+        " conforme(s) · "+ inconformes + " inconforme(s). Historial conservado por ciclo.";
   }
   function pintar() {
     cuerpo.innerHTML = registros.length ? registros.map((r,i) =>
@@ -98,14 +101,19 @@
         escapar(p.nombre) + (p.codigo ? ' <small>(' + escapar(p.codigo) + ')</small>' : '') +
         '</span>').join("") + '</td>' +
       '<td><input type="number" min="0" step="1" inputmode="numeric" ' +
+        (r.estado && r.estado!=="Pendiente" ? ' disabled title="Seguimiento terminado" ' : '') +
         'data-densidad-campo="reporte" aria-label="Líneas reportadas, bloque ' +
         escapar(r.bloque) + ' cama ' + escapar(r.cama) + '" value="' + escapar(r.reporte) + '"></td>' +
       '<td><input type="number" min="0" step="1" inputmode="numeric" ' +
+        (r.estado && r.estado!=="Pendiente" ? ' disabled title="Seguimiento terminado" ' : '') +
         'data-densidad-campo="aseguradas" aria-label="Líneas aseguradas, bloque ' +
         escapar(r.bloque) + ' cama ' + escapar(r.cama) + '" value="' + escapar(r.aseguradas) + '"></td>' +
       '<td data-densidad-diferencia>—</td><td><span data-densidad-estado class="cs-resultado cs-pendiente">Pendiente</span></td></tr>'
     ).join("") :
-      '<tr><td colspan="7" class="cs-sin-registros">No hay ciclos pendientes ni terminados en el período seleccionado. Al guardar la primera revisión de una cama se crea su seguimiento automáticamente.</td></tr>';
+      '<tr><td colspan="7" class="cs-sin-registros">' +
+      (vista.value==="pendientes" ? "No hay camas pendientes. Al guardar una revisión de Siembra Campo se creará o actualizará el seguimiento." :
+        "No hay camas terminadas en el período seleccionado. Las pendientes siguen disponibles en la otra vista.") +
+      '</td></tr>';
     cuerpo.querySelectorAll("[data-densidad-indice]").forEach(tr=>{
       const dato=registros[Number(tr.dataset.densidadIndice)];
       mostrarCalculo(tr,dato);
@@ -121,14 +129,15 @@
       const id=String(p.codigo??p.docid??p.id??"").trim();
       if(id)nombres.set(id,etiqueta(p)||id);
     });
-    // Las camas PENDIENTES se muestran siempre, sin límite de fechas.
-    // El intervalo solo filtra los ciclos que ya terminaron.
+    // Los pendientes pasan de semana sin límite de fecha. Los terminados
+    // únicamente aparecen en su historial y nunca se duplican en Pendientes.
     const inicio=desde.value,fin=dia;
-    const filas=ciclos.filter(c=>
-      c.id&&c.bloque!=null&&c.cama!=null&&
-      (c.estado==="Pendiente"&&!c.fechaFin||
-       (c.fechaFin&&c.fechaFin>=inicio&&c.fechaFin<=fin))
-    ).map(c=>{
+    const visibles=ciclos.filter(c=>c.id&&c.bloque!=null&&c.cama!=null&&
+      (vista.value==="pendientes"
+        ? c.estado==="Pendiente"&&!c.fechaFin
+        : (c.estado==="Conforme"||c.estado==="Inconforme")&&
+          c.fechaFin>=inicio&&c.fechaFin<=fin));
+    const filas=visibles.map(c=>{
       const detalles=(Array.isArray(c.revisiones)?c.revisiones:[]).map(x=>({
         correlationId:x.correlationId,fecha:String(x.fecha||"").slice(0,10),
         semana:x.semana,anio:x.anio,revision:x.revision,
@@ -146,9 +155,9 @@
         fechaFin:c.fechaFin||"",
         reporte:String(c.reporte??""),aseguradas:String(c.aseguradas??"")};
     });
-    filas.sort((a,b)=>(a.estado==="Pendiente"?0:1)-(b.estado==="Pendiente"?0:1)||
-      a.bloque.localeCompare(b.bloque,"es",{numeric:true})||
-      a.cama.localeCompare(b.cama,"es",{numeric:true}));
+    filas.sort((a,b)=>a.bloque.localeCompare(b.bloque,"es",{numeric:true})||
+      a.cama.localeCompare(b.cama,"es",{numeric:true})||
+      a.fechaInicio.localeCompare(b.fechaInicio));
     return filas;
   }
 
@@ -197,6 +206,9 @@
     localStorage.setItem(DEMO_PREFIX+dia,JSON.stringify(datos));
   }
   function actualizarModo() {
+    document.querySelectorAll("[data-densidad-solo-terminadas]").forEach(label=>{
+      label.hidden=vista.value!=="terminadas";
+    });
     alternar.textContent=modoPrueba?"Volver a registros reales":"Ver datos de prueba";
     alternar.setAttribute("aria-pressed",String(modoPrueba));
     alternar.classList.toggle("cs-modo-prueba",modoPrueba);
@@ -216,8 +228,8 @@
 
   async function cargar({sincronizar=false}={}) {
     const solicitud=++carga,dia=fecha.value;
-    if(!dia||!desde.value||desde.value>dia){
-      mensaje.textContent="Selecciona un intervalo válido: inicio anterior o igual al cierre.";return;
+    if(vista.value==="terminadas"&&(!dia||!desde.value||desde.value>dia)){
+      mensaje.textContent="Selecciona un intervalo válido para el historial de terminadas.";return;
     }
     cargando=true;consultar.disabled=true;
     mensaje.textContent="Consultando seguimientos pendientes y terminados…";
@@ -248,18 +260,25 @@
     const resultado=clasificar(registro.reporte,registro.aseguradas);
     if(resultado.estado==="Revisar números")
       throw new Error("Verifica los números digitados.");
-    // El ciclo continúa pendiente hasta registrar ambos números.
-    if(resultado.estado==="Pendiente")return;
     if(!registro.id)throw new Error("Esta cama no tiene un ciclo identificado. No se pueden afectar revisiones sin una vinculación segura.");
+    if(registro.estado!=="Pendiente"||registro.fechaFin)
+      throw new Error("Esta cama ya está cerrada. Consulta su resultado en el historial.");
+    if(resultado.estado==="Pendiente"){
+      // Un avance parcial se conserva incluso si se continúa la siguiente semana.
+      await OfflineDb.guardarConteoPendiente(registro.id,{
+        reporte:registro.reporte,aseguradas:registro.aseguradas
+      });
+      return;
+    }
     const cerrado=await OfflineDb.cerrarCalidadCiclo(registro.id,{
       reporte:registro.reporte,aseguradas:registro.aseguradas,
-      fechaConteo:registro.fechaFin||fecha.value
+      fechaConteo:SyncEngine.fechaLocalISO()
     });
     registro.estado=cerrado.estado;
     registro.fechaFin=cerrado.fechaFin;
     registro.diferencia=cerrado.diferencia;
     mensaje.textContent="Conteo "+cerrado.estado.toLowerCase()+" guardado. Se actualizaron "+
-      (cerrado.revisiones||[]).length+" revisiones vinculadas de sus respectivas semanas.";
+      (cerrado.revisiones||[]).length+" revisiones vinculadas de sus respectivas semanas. La cama pasó al historial.";
     notificar();
     void cargar();
   }
@@ -290,6 +309,7 @@
     if(visible)void cargar();
   });
   consultar.addEventListener("click",()=>void cargar());
+  vista.addEventListener("change",()=>{actualizarModo();void cargar();});
   alternar.addEventListener("click",()=>alternarModo(!modoPrueba));
   restaurar.addEventListener("click",()=>{
     try{localStorage.removeItem(DEMO_PREFIX+fecha.value);}
@@ -310,5 +330,8 @@
     panel.hidden=false;abrir.classList.add("active");
     abrir.setAttribute("aria-expanded","true");void cargar();
   }
-  window.CalidadSiembraDensidad={clasificar,cargar,ejemplos};
+  async function actualizarSiAbierto(){
+    if(!panel.hidden&&!modoPrueba)await cargar();
+  }
+  window.CalidadSiembraDensidad={clasificar,cargar,ejemplos,actualizarSiAbierto};
 })();

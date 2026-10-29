@@ -896,6 +896,10 @@ async function guardarCalidad() {
       observaciones: $calidad("calidadObservaciones")?.value.trim() || ""
     };
     await SyncEngine.guardarEvaluacionCalidadLocal(evaluacion);
+    if(esFormularioSiembraCampo) {
+      void window.CalidadSiembraDensidad?.actualizarSiAbierto().catch(error=>
+        console.warn("No se pudo refrescar el seguimiento",error));
+    }
 
     // El registro ya existe en IndexedDB: la persona puede continuar de inmediato.
     estadoCalidad("ok", `Revisión #${revisionGuardada} de ${nombreColaborador} guardada localmente. Sincronizando en segundo plano.`);

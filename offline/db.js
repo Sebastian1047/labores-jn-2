@@ -332,6 +332,34 @@ const OfflineDb = {
       };
     });
   },
+  // Al tener un solo campo digitado, conservar el avance sin terminar el ciclo.
+  async guardarConteoPendiente(id,datos) {
+    if(!id)throw new Error("Falta el identificador del seguimiento.");
+    const reporte=String(datos?.reporte??"");
+    const aseguradas=String(datos?.aseguradas??"");
+    const valido=v=>v===""||(/^\d+$/.test(v)&&Number.isSafeInteger(Number(v)));
+    if(!valido(reporte)||!valido(aseguradas))
+      throw new Error("Las líneas deben ser números enteros no negativos.");
+    if(reporte!==""&&aseguradas!=="")
+      throw new Error("El resultado completo debe cerrar el seguimiento.");
+    const db=await getDb();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction("meta","readwrite"),store=tx.objectStore("meta");
+      const key="calidadSiembraConteoCiclo:v2:"+id;
+      let guardado;
+      tx.onerror=()=>reject(tx.error||new Error("No se pudo guardar el conteo pendiente."));
+      tx.onabort=()=>reject(tx.error||new Error("No se pudo completar el guardado del avance."));
+      tx.oncomplete=()=>resolve(guardado);
+      store.get(key).onsuccess=e=>{
+        const row=e.target.result,actual=row?.value;
+        if(!actual||actual.estado!=="Pendiente"||actual.fechaFin){
+          tx.abort();return;
+        }
+        guardado={...actual,reporte,aseguradas,updatedAt:new Date().toISOString()};
+        store.put({key,value:guardado});
+      };
+    });
+  },
   // Cierre/corrección atómica: se conserva la semana original de cada
   // revisión y solamente se materializa el resultado del ítem de conteo.
   async cerrarCalidadCiclo(id,datos) {
@@ -359,6 +387,8 @@ const OfflineDb = {
         try{
           const ciclo=e.target.result?.value;
           if(!ciclo)throw new Error("No existe el seguimiento de esta cama.");
+          if(ciclo.estado!=="Pendiente"||ciclo.fechaFin)
+            throw new Error("Esta cama ya fue terminada y no admite otro cierre.");
           if(fecha<ciclo.fechaInicio||
             (ciclo.fechaUltimaRevision&&fecha<ciclo.fechaUltimaRevision))
             throw new Error("No puedes cerrar una cama antes de su última revisión.");

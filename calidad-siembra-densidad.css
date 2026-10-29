@@ -33,3 +33,9 @@
 .cs-aviso-prueba[hidden],#restaurarDatosPruebaLineas[hidden]{display:none;}
 .cs-tag-prueba{display:inline-block;margin:3px 0 0;padding:2px 6px;background:#fff0d7;color:#80571c;border-radius:5px;font-size:.68rem;font-weight:800;}
 #cambiarModoPruebaLineas.cs-modo-prueba{background:#fff0d7;color:#80571c;border-color:#dabd79;}
+
+/* Separación de pendientes actuales e historial de camas terminadas. */
+.cs-densidad-controles select{min-height:40px;border-radius:8px;border:1px solid #b3cebc;
+  padding:7px 10px;max-width:100%;background:#fff;color:#194d35;}
+.cs-densidad-controles [data-densidad-solo-terminadas][hidden]{display:none;}
+.cs-densidad-tabla input:disabled{background:#f2f4f3;color:#435b4b;border-color:#d5e1da;}
