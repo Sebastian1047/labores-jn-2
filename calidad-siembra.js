@@ -641,7 +641,7 @@ function renderCriterios() {
 
 function limpiarFormularioCalidad() {
   sembradorSeleccionado = null;
-  if (esFormularioSiembraCampo) {
+  if (esFormularioSiembraCampo || esFormularioDesbotonMallasUnificado) {
     const bloque = $calidad("calidadSiembraBloque");
     const cama = $calidad("calidadSiembraCama");
     if (bloque) bloque.value = "";
@@ -722,7 +722,7 @@ async function cargarCatalogoCalidadLocal() {
   sembradores = catalogo.colaboradores.filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
   if (esFormularioPreparacionCamas) window.PreparacionCamasGrupos?.setCatalogo(sembradores);
   renderSembradores();
-  if (esFormularioSiembraCampo) {
+  if (esFormularioSiembraCampo || esFormularioDesbotonMallasUnificado) {
     // Sugerencias del maestro de camas; los campos siguen disponibles sin conexión.
     try {
       const camas = await OfflineDb.getAll("camas");
@@ -861,9 +861,10 @@ async function guardarCalidad() {
   if (!sembradorSeleccionado) return estadoCalidad("error", "Selecciona un colaborador antes de guardar.");
   if (!semanaActual) return estadoCalidad("error", "No hay semana válida descargada desde la base de datos. Conéctate y vuelve a intentar.");
   if (!siguienteRevisionCalidad || siguienteRevisionCalidad > 30) return estadoCalidad("error", "Selecciona un colaborador con revisiones disponibles.");
-  const bloqueCalidad = esFormularioSiembraCampo ? $calidad("calidadSiembraBloque")?.value.trim() : "";
-  const camaCalidad = esFormularioSiembraCampo ? $calidad("calidadSiembraCama")?.value.trim() : "";
-  if (esFormularioSiembraCampo && (!bloqueCalidad || !camaCalidad))
+  const requiereUbicacion = esFormularioSiembraCampo || esFormularioDesbotonMallasUnificado;
+  const bloqueCalidad = requiereUbicacion ? ($calidad("calidadSiembraBloque")?.value.trim() || "") : "";
+  const camaCalidad = requiereUbicacion ? ($calidad("calidadSiembraCama")?.value.trim() || "") : "";
+  if (requiereUbicacion && (!bloqueCalidad || !camaCalidad))
     return estadoCalidad("error", "Selecciona Bloque y Cama antes de guardar la evaluación.");
 
   guardandoCalidad = true;
@@ -889,7 +890,12 @@ async function guardarCalidad() {
       asegurador: sesionCalidad.username || sesionCalidad.codigo || "",
       colaborador: String(colaborador),
       revision: revisionGuardada,
-      ...(esFormularioSiembraCampo ? { bloque:bloqueCalidad, cama:camaCalidad } : {}),
+      ...(requiereUbicacion ? { bloque:bloqueCalidad, cama:camaCalidad } : {}),
+      ...(esFormularioSiembraCampo
+        ? { moduloCalidad:"siembra-campo" }
+        : esFormularioDesbotonMallasUnificado
+          ? { moduloCalidad:"desboton-mallas", tipoLaborCalidad:vistaCalidadDesbotonMallas }
+          : {}),
       incumplimientos,
       fallosDetalle,
       conformeSeleccionado,
