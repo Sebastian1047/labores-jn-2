@@ -681,7 +681,7 @@ async function guardarEvaluacionCalidadLocal(evaluacion) {
   };
   // Siembra Campo: crear/actualizar el ciclo PENDIENTE en la misma
   // transacción que almacena la revisión. No afecta a los otros módulos.
-  if(registro.bloque&&registro.cama)
+  if(registro.moduloCalidad==="siembra-campo"&&registro.bloque&&registro.cama)
     return OfflineDb.guardarCalidadConCiclo(registro);
   await OfflineDb.put("calidadEvaluaciones",registro);
   return registro;
