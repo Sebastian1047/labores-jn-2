@@ -85,6 +85,7 @@ async function obtenerEvaluaciones() {
 // La clave vigente en Labores JN es fecha | bloque | cama.
 // No se asocian fechas distintas automáticamente: una cama puede reutilizarse.
 const CONTEO_META_PREFIX="calidadSiembraDensidad:v1:";
+const CONTEO_CICLO_PREFIX="calidadSiembraConteoCiclo:v2:";
 const codificarCama=v=>{
  const s=String(v??"").trim().toUpperCase();
  return /^\d+$/.test(s)?String(Number(s)):s;
@@ -101,22 +102,38 @@ function estadoConteo(info) {
  return Math.abs(Number(checked)-Number(report))>=3?"Inconforme":"Conforme";
 }
 async function cargarConteosGuardados(){
- const out=new Map();
+ const out=new Map();out.ciclos=[];
  try {
   const meta=await OfflineDb.getAll("meta");
   for(const row of meta){
-   if(!String(row.key??"").startsWith(CONTEO_META_PREFIX))continue;
-   const r=row.value;
+   const key=String(row.key??""),r=row.value;
    if(!r)continue;
-   const k=claveCama(r.fecha,r.bloque,r.cama);
-   if(k)out.set(k,estadoConteo(r));
+   if(key.startsWith(CONTEO_CICLO_PREFIX)){
+    if(r.id&&r.fechaInicio&&r.fechaFin&&r.fechaInicio<=r.fechaFin&&
+       codificarCama(r.bloque)&&codificarCama(r.cama)){
+      out.ciclos.push(r);
+    }
+   }else if(key.startsWith(CONTEO_META_PREFIX)){
+    const cama=claveCama(r.fecha,r.bloque,r.cama);
+    if(cama)out.set(cama,estadoConteo(r));
+   }
   }
- }catch(error){console.warn("No se pudieron consultar conteos de líneas:",error);}
+ }catch(error){console.warn("No se pudieron consultar ciclos y conteos de líneas:",error);}
  return out;
 }
 function vincularConteo(e,conteos){
- const key=claveCama(e.fecha,e.bloque,e.cama);
- return {...e,__conteoClave:key,__conteoEstado:conteos.get(key)||"Pendiente"};
+ const fecha=String(e.fecha??"").slice(0,10);
+ const base=claveCama(fecha,e.bloque,e.cama);
+ const ciclos=(conteos.ciclos||[]).filter(c=>
+  codificarCama(c.bloque)===codificarCama(e.bloque)&&
+  codificarCama(c.cama)===codificarCama(e.cama)&&
+  c.fechaInicio<=fecha&&fecha<=c.fechaFin);
+ // Nunca asociar una revisión cuando hay dos ciclos solapados.
+ if(ciclos.length===1)return {...e,__conteoClave:"ciclo:"+ciclos[0].id,
+  __conteoEstado:estadoConteo(ciclos[0])};
+ if(ciclos.length>1)return {...e,__conteoClave:"",__conteoEstado:"Pendiente"};
+ return {...e,__conteoClave:base?("fecha:"+base):"",
+  __conteoEstado:conteos.get(base)||"Pendiente"};
 }
 function conteoCamasPersona(registros){
  const camas=new Map();
@@ -329,3 +346,9 @@ document.querySelector("#imprimirBtn").addEventListener("click", () => window.pr
 document.querySelector("#pdfBtn").addEventListener("click", () => window.print());
 renderInforme();
 window.addEventListener("focus",()=>{void renderInforme();});
+try{
+ const canalConteo=new BroadcastChannel("labores-jn-conteo-lineas");
+ canalConteo.addEventListener("message",event=>{
+  if(event.data?.tipo==="conteo-actualizado")void renderInforme();
+ });
+}catch(error){console.warn("Actualización entre pestañas no disponible",error);}
