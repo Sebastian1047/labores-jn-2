@@ -249,6 +249,112 @@ function reqToPromise(req) {
 }
 
 const OfflineDb = {
+  // Ciclo persistente y relación explícita con cada revisión de Calidad Siembra.
+  // Ambas escrituras se hacen en UNA transacción IndexedDB: nunca queda una
+  // revisión sin asociar si falla el registro del seguimiento.
+  async guardarCalidadConCiclo(registro) {
+    const db=await getDb();
+    const normalize=v=>{
+      const t=String(v??"").trim().toUpperCase();
+      return /^\d+$/.test(t)?String(Number(t)):t;
+    };
+    if(!registro?.correlationId||!registro?.fecha||
+      !normalize(registro.bloque)||!normalize(registro.cama))
+      throw new Error("La revisión necesita identificador, fecha, bloque y cama.");
+    const prefix="calidadSiembraConteoCiclo:v2:";
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(["meta","calidadEvaluaciones"],"readwrite");
+      const meta=tx.objectStore("meta"),quality=tx.objectStore("calidadEvaluaciones");
+      let saved,finished=false;
+      const fail=err=>{if(!finished){finished=true;reject(err)}};
+      tx.onerror=()=>fail(tx.error||new Error("No se pudo registrar la revisión y su ciclo"));
+      tx.onabort=()=>fail(tx.error||new Error("Registro del ciclo cancelado"));
+      tx.oncomplete=()=>{if(!finished){finished=true;resolve(saved)}};
+      meta.getAll().onsuccess=e=>{
+        try{
+          const pendientes=(e.target.result||[]).filter(x=>{
+            if(!String(x.key).startsWith(prefix))return false;
+            const c=x.value||{};
+            return c.estado==="Pendiente"&&!c.fechaFin&&
+              normalize(c.bloque)===normalize(registro.bloque)&&
+              normalize(c.cama)===normalize(registro.cama);
+          });
+          if(pendientes.length>1)throw new Error("Existen varios ciclos pendientes para esta cama; revisa el seguimiento.");
+          const actual=pendientes[0]?.value;
+          const now=new Date().toISOString();
+          const id=actual?.id||("ciclo-"+registro.correlationId);
+          const revision={correlationId:registro.correlationId,
+            fecha:String(registro.fecha).slice(0,10),semana:Number(registro.semana)||null,
+            anio:Number(String(registro.fecha).slice(0,4)),revision:registro.revision,
+            colaborador:String(registro.colaborador)};
+          const refs=Array.isArray(actual?.revisiones)?[...actual.revisiones]:[];
+          if(!refs.some(x=>x.correlationId===revision.correlationId))refs.push(revision);
+          const ciclo={...actual,id,bloque:String(registro.bloque).trim(),
+            cama:String(registro.cama).trim(),estado:"Pendiente",
+            fechaInicio:actual?.fechaInicio&&actual.fechaInicio<revision.fecha?actual.fechaInicio:revision.fecha,
+            fechaUltimaRevision:actual?.fechaUltimaRevision&&actual.fechaUltimaRevision>revision.fecha?
+              actual.fechaUltimaRevision:revision.fecha,
+            fechaFin:null,fechaConteo:null,revisiones:refs,
+            creadoEn:actual?.creadoEn||now,updatedAt:now,
+            syncStatus:"Solo local"};
+          saved={...registro,cicloSiembraId:id,conteoLineasEstado:"Pendiente"};
+          meta.put({key:prefix+id,value:ciclo});
+          quality.put(saved);
+        }catch(err){
+          fail(err);tx.abort();
+        }
+      };
+    });
+  },
+  // Cierre/corrección atómica: se conserva la semana original de cada
+  // revisión y solamente se materializa el resultado del ítem de conteo.
+  async cerrarCalidadCiclo(id,datos) {
+    if(!id)throw new Error("Falta el identificador del ciclo");
+    const db=await getDb(),prefix="calidadSiembraConteoCiclo:v2:";
+    const reporte=Number(datos?.reporte),aseguradas=Number(datos?.aseguradas);
+    if(!/^\d+$/.test(String(datos?.reporte??""))||
+       !/^\d+$/.test(String(datos?.aseguradas??""))||
+       !Number.isSafeInteger(reporte)||!Number.isSafeInteger(aseguradas))
+      throw new Error("Completa los dos conteos con números enteros válidos.");
+    const fecha=String(datos?.fechaConteo??"").slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha))
+      throw new Error("Indica la fecha del conteo.");
+    const diferencia=aseguradas-reporte;
+    const estado=Math.abs(diferencia)>=3?"Inconforme":"Conforme";
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(["meta","calidadEvaluaciones"],"readwrite");
+      const meta=tx.objectStore("meta"),quality=tx.objectStore("calidadEvaluaciones");
+      let resultado,finished=false;
+      const fail=e=>{if(!finished){finished=true;reject(e)}};
+      tx.onerror=()=>fail(tx.error||new Error("No se pudo cerrar el ciclo"));
+      tx.onabort=()=>fail(tx.error||new Error("Cierre cancelado"));
+      tx.oncomplete=()=>{if(!finished){finished=true;resolve(resultado)}};
+      meta.get(prefix+id).onsuccess=e=>{
+        try{
+          const ciclo=e.target.result?.value;
+          if(!ciclo)throw new Error("No existe el seguimiento de esta cama.");
+          if(fecha<ciclo.fechaInicio||
+            (ciclo.fechaUltimaRevision&&fecha<ciclo.fechaUltimaRevision))
+            throw new Error("No puedes cerrar una cama antes de su última revisión.");
+          const refs=Array.isArray(ciclo.revisiones)?ciclo.revisiones:[];
+          const next={...ciclo,fechaFin:fecha,fechaConteo:fecha,
+            estado,reporte:String(reporte),aseguradas:String(aseguradas),
+            diferencia,updatedAt:new Date().toISOString(),syncStatus:"Solo local"};
+          meta.put({key:prefix+id,value:next});
+          // El ID, y no la fecha ni el número de cama, determina los vínculos.
+          for(const ref of refs){
+            const req=quality.get(ref.correlationId);
+            req.onsuccess=()=>{
+              const row=req.result;
+              if(row&&row.cicloSiembraId===id)
+                quality.put({...row,conteoLineasEstado:estado});
+            };
+          }
+          resultado=next;
+        }catch(err){fail(err);tx.abort()}
+      };
+    });
+  },
   async put(storeName, value) {
     const db = await getDb();
     return reqToPromise(txStore(db, storeName, "readwrite").put(value));
