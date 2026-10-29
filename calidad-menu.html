@@ -33,6 +33,26 @@
       .quality-role-tab:not(.active):hover {
         background: #eaf5ef;
       }
+      .cs-calidad-ubicacion {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 12px;
+        margin-top: 16px;
+        padding: 14px;
+        border: 1px solid rgba(24,122,77,.15);
+        border-radius: 12px;
+        background: #f6faf7;
+      }
+      .cs-calidad-ubicacion label {
+        display: grid;
+        gap: 6px;
+        font-weight: 750;
+        color: #25533b;
+      }
+      .cs-calidad-ubicacion input { width: 100%; min-height: 42px; }
+      @media (max-width: 580px) {
+        .cs-calidad-ubicacion { grid-template-columns: 1fr; }
+      }
       .calidad-item-nota {
         display: block;
         margin-top: 5px;
