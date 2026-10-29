@@ -66,6 +66,13 @@
     if (mensaje) mensaje.textContent = activo
       ? "Selecciona las personas que incumplieron Aseo; las demás quedan conformes."
       : "Todas las personas están conformes en Aseo. Marca el ítem Aseo para habilitar las casillas.";
+    const alcance = document.querySelector("[data-pc-conforme-alcance]");
+    if (alcance) {
+      const cantidad = integrantesDe(6).length;
+      alcance.textContent = estaPreparacionConforme()
+        ? "Evaluación conforme para " + cantidad + " colaborador(es), en cada uno de sus grupos y en Aseo."
+        : "Si la marcas, todos los criterios de cada colaborador de los seis grupos y Aseo quedarán conformes.";
+    }
   }
   function limpiarSeleccionAseo() {
     seleccionAseo.clear();
@@ -280,27 +287,40 @@
     for (let i=0;i<CANTIDAD_GRUPOS;i++) {
       const caja = document.querySelector('.calidad-preparacion-grupo[data-grupo="' + i + '"]');
       if (!caja) continue;
-      const fallos = (conforme ? [] :
-        [...caja.querySelectorAll(".calidad-item-x-input:checked")]).map(input => ({
-        idItem: Number(input.dataset.itemId),
-        item: input.dataset.itemNombre || "",
-        subitem: "",
-        cantidad: 1,
-        marcadoX: true
-      }));
+      // Registrar tanto los ítems conformes como los incumplidos de cada grupo.
+      // Un ítem marcado de Aseo incumple solamente para las personas seleccionadas.
+      const criterios = [...caja.querySelectorAll(".calidad-item-x-input[data-item-id]")];
+      const nombreGrupo = caja.querySelector(".calidad-preparacion-titulo")?.textContent.trim() ||
+        "Grupo " + (i + 1);
       for (const persona of integrantesDe(i)) {
         let dato = porPersona.get(persona.codigo);
         if (!dato) {
-          dato = { ...persona, grupos: [], fallosDetalle: [], incumplimientos: [], preparacionConforme: conforme };
+          dato = { ...persona, grupos: [], evaluacionesGrupo: [],
+            fallosDetalle: [], incumplimientos: [], preparacionConforme: conforme };
           porPersona.set(persona.codigo,dato);
         }
+        const resultados = criterios.map(input => {
+          const idItem = Number(input.dataset.itemId);
+          const incumple = !conforme && input.checked &&
+            (i !== 6 || seleccionAseo.has(persona.codigo));
+          return {
+            idItem, item: input.dataset.itemNombre || "",
+            conforme: !incumple
+          };
+        });
         dato.grupos.push(i+1);
-        fallos.forEach(fallo => {
-          // Aseo sólo incumple en los colaboradores marcados en su casilla.
-          if (i === 6 && !seleccionAseo.has(persona.codigo)) return;
-          if (!dato.incumplimientos.includes(fallo.idItem)) {
-            dato.incumplimientos.push(fallo.idItem);
-            dato.fallosDetalle.push({...fallo});
+        dato.evaluacionesGrupo.push({
+          grupo: i+1, nombre: nombreGrupo,
+          conforme: resultados.every(item => item.conforme),
+          criterios: resultados
+        });
+        resultados.filter(item => !item.conforme).forEach(item => {
+          if (!dato.incumplimientos.includes(item.idItem)) {
+            dato.incumplimientos.push(item.idItem);
+            dato.fallosDetalle.push({
+              idItem: item.idItem, item: item.item,
+              subitem: "", cantidad: 1, marcadoX: true
+            });
           }
         });
       }
@@ -312,6 +332,7 @@
     const nuevas = evaluaciones.map(p => ({
       fecha: fechaEvaluacion, codigo: p.codigo, nombre: p.nombre,
       grupos: p.grupos, preparacionConforme: Boolean(p.preparacionConforme),
+      evaluacionesGrupo: p.evaluacionesGrupo,
       incumplimientos: p.incumplimientos,
       fallosDetalle: p.fallosDetalle, esPrueba: true
     }));

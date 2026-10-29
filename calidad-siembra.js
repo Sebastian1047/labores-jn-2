@@ -625,7 +625,7 @@ function renderCriterios() {
           aria-label="Marcar preparación conforme para todos los colaboradores" />
         <span class="calidad-item-x-box" aria-hidden="true">×</span>
       </label>
-      <p class="pc-explicacion">Se aplica a todos los colaboradores de los seis grupos. Al marcarlo se deseleccionan los demás criterios.</p>
+      <p class="pc-explicacion" data-pc-conforme-alcance>Si la marcas, todos los criterios de cada colaborador de los seis grupos y Aseo quedarán conformes.</p>
     </section>`;
     lista.innerHTML = preparadoConforme + grupos.join("");
   } else {
@@ -787,6 +787,7 @@ async function guardarCalidadPreparacionGrupos() {
         incumplimientos: persona.incumplimientos,
         fallosDetalle: persona.fallosDetalle,
         gruposPreparacion: persona.grupos,
+        evaluacionesGrupo: persona.evaluacionesGrupo,
         preparacionConforme: Boolean(persona.preparacionConforme),
         observaciones,
         conformeSeleccionado: Boolean(persona.preparacionConforme) || persona.incumplimientos.length === 0

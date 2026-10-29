@@ -116,3 +116,19 @@
 @media(max-width:640px) {
   .pc-equipo[data-pc-grupo="6"] .pc-personas {grid-template-columns:minmax(0,1fr);}
 }
+
+/* Resaltar que Preparación conforme se aplica a cada colaborador, no a un grupo abstracto. */
+#criteriosLista:has([data-pc-conforme]:checked) .pc-persona::after {
+  content: "✓ Conforme";
+  margin-left: auto;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #dff3e5;
+  color: #21613c;
+  font-size: .7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+#criteriosLista:has([data-pc-conforme]:checked) .pc-persona {
+  border-color: #87c69b;
+}
