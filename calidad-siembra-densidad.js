@@ -158,8 +158,17 @@
       codigo:"PRUEBA-L"+String(n).padStart(2,"0"),
       nombre:"COLABORADOR PRUEBA "+String(n).padStart(2,"0")
     }));
+    const ejemploSemanaCruzada=[
+      {fecha:"2026-10-23",semana:43,revision:1,colaborador:"PRUEBA-L01"},
+      {fecha:"2026-10-23",semana:43,revision:2,colaborador:"PRUEBA-L01"},
+      {fecha:"2026-10-26",semana:44,revision:1,colaborador:"PRUEBA-L01"},
+      {fecha:"2026-10-26",semana:44,revision:2,colaborador:"PRUEBA-L02"},
+      {fecha:"2026-10-26",semana:44,revision:3,colaborador:"PRUEBA-L02"}
+    ];
     const base=[
-      {bloque:"PRUEBA-01",cama:"001",personas:personas(1,2),reporte:"20",aseguradas:"20"},
+      {bloque:"PRUEBA-01",cama:"001",personas:personas(1,2),
+       fechaInicio:"2026-10-23",fechaFin:"",detalles:ejemploSemanaCruzada,
+       reporte:"20",aseguradas:""},
       {bloque:"PRUEBA-01",cama:"002",personas:personas(3),reporte:"18",aseguradas:"20"},
       {bloque:"PRUEBA-02",cama:"003",personas:personas(4,5),reporte:"16",aseguradas:"13"},
       {bloque:"PRUEBA-02",cama:"004",personas:personas(6),reporte:"10",aseguradas:"14"},
@@ -174,7 +183,8 @@
     } catch(e) { console.warn("Datos de prueba no disponibles",e); }
     return base.map(r=>{
       const cambio=guardados[r.bloque+"|"+r.cama]||{};
-      return {...r,fecha:dia,fechaInicio:dia,fechaFin:dia,revisiones:0,esPrueba:true,
+      return {...r,fecha:dia,fechaInicio:r.fechaInicio||dia,
+        fechaFin:r.fechaFin??dia,revisiones:r.detalles?.length??0,esPrueba:true,
         reporte:String(cambio.reporte??r.reporte),
         aseguradas:String(cambio.aseguradas??r.aseguradas)};
     });
@@ -210,7 +220,7 @@
       mensaje.textContent="Selecciona un intervalo válido: inicio anterior o igual al cierre.";return;
     }
     cargando=true;consultar.disabled=true;
-    mensaje.textContent="Cargando siembras del " + dia + "…";
+    mensaje.textContent="Consultando seguimientos pendientes y terminados…";
     try {
       registros=modoPrueba?ejemplos(dia):await fuentesLocales(dia);
       if (solicitud!==carga)return;
@@ -251,6 +261,7 @@
     mensaje.textContent="Conteo "+cerrado.estado.toLowerCase()+" guardado. Se actualizaron "+
       (cerrado.revisiones||[]).length+" revisiones vinculadas de sus respectivas semanas.";
     notificar();
+    void cargar();
   }
   cuerpo.addEventListener("input",event=>{
     const input=event.target.closest("[data-densidad-campo]");
@@ -278,7 +289,7 @@
     abrir.setAttribute("aria-expanded",String(visible));
     if(visible)void cargar();
   });
-  consultar.addEventListener("click",()=>void cargar({sincronizar:true}));
+  consultar.addEventListener("click",()=>void cargar());
   alternar.addEventListener("click",()=>alternarModo(!modoPrueba));
   restaurar.addEventListener("click",()=>{
     try{localStorage.removeItem(DEMO_PREFIX+fecha.value);}
