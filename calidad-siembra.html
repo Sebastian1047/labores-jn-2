@@ -7,7 +7,7 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./calidad-siembra-densidad.css?v=1.0.153" />
+    <link rel="stylesheet" href="./calidad-siembra-densidad.css?v=1.0.154" />
   </head>
   <body>
     <main class="app-shell">
@@ -33,10 +33,12 @@
           <section id="seguimientoDensidadPanel" class="cs-densidad-panel" hidden>
             <h2>Seguimiento conteo de líneas — Siembra Campo</h2>
             <p id="avisoDatosPruebaLineas" class="cs-aviso-prueba" hidden><strong>Modo prueba:</strong> bloques, camas y sembradores ficticios. Ningún ejemplo se envía al servidor.</p>
-            <p class="hint">Consulta las camas y sus sembradores. La diferencia es líneas aseguradas menos líneas reportadas.
-              Una diferencia entre −2 y +2 es conforme; con 3 o más de diferencia absoluta es inconforme.</p>
+            <p class="hint">El conteo se realiza <strong>al terminar la siembra de la cama</strong>. Selecciona desde la primera fecha de revisión hasta la fecha de cierre, aunque sean semanas diferentes. El resultado se aplica retrospectivamente a todas las revisiones de ese ciclo. Delimita bien las fechas si reutilizaron la misma cama. Una diferencia entre −2 y +2 es conforme; con 3 o más de diferencia absoluta es inconforme.</p>
             <div class="cs-densidad-controles">
-              <label>Fecha de siembra
+              <label>Desde (primera revisión de la cama)
+                <input id="seguimientoDensidadDesde" type="date" required />
+              </label>
+              <label>Hasta (día de cierre y conteo)
                 <input id="seguimientoDensidadFecha" type="date" required />
               </label>
               <button id="consultarSeguimientoDensidad" type="button" class="success-btn">Actualizar siembras</button>
@@ -124,8 +126,8 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra-densidad.js?v=1.0.153"></script>
-    <script src="./calidad-siembra.js?v=1.0.153"></script>
+    <script src="./calidad-siembra-densidad.js?v=1.0.154"></script>
+    <script src="./calidad-siembra.js?v=1.0.154"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
