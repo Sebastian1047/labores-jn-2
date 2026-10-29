@@ -637,6 +637,12 @@ function renderCriterios() {
 
 function limpiarFormularioCalidad() {
   sembradorSeleccionado = null;
+  if (esFormularioSiembraCampo) {
+    const bloque = $calidad("calidadSiembraBloque");
+    const cama = $calidad("calidadSiembraCama");
+    if (bloque) bloque.value = "";
+    if (cama) cama.value = "";
+  }
   const observaciones = $calidad("calidadObservaciones");
   if (observaciones) observaciones.value = "";
   siguienteRevisionCalidad = null;
@@ -712,6 +718,33 @@ async function cargarCatalogoCalidadLocal() {
   sembradores = catalogo.colaboradores.filter((x) => x.activo !== false && x.retirado !== 1 && x.retirado !== true);
   if (esFormularioPreparacionCamas) window.PreparacionCamasGrupos?.setCatalogo(sembradores);
   renderSembradores();
+  if (esFormularioSiembraCampo) {
+    // Sugerencias del maestro de camas; los campos siguen disponibles sin conexión.
+    try {
+      const camas = await OfflineDb.getAll("camas");
+      const listaBloques = $calidad("calidadSiembraBloques");
+      if (listaBloques) listaBloques.replaceChildren(
+        ...[...new Set(camas.map(c=>String(c.bloque||"").trim()).filter(Boolean))]
+          .sort((a,b)=>a.localeCompare(b,"es",{numeric:true}))
+          .map(v=>new Option("",v))
+      );
+      const inputBloque = $calidad("calidadSiembraBloque");
+      const inputCama = $calidad("calidadSiembraCama");
+      if (inputBloque && inputCama) {
+        const actualizarCamas = () => {
+          const listaCamas = $calidad("calidadSiembraCamas");
+          if (listaCamas) listaCamas.replaceChildren(
+            ...[...new Set(camas.filter(c=>String(c.bloque||"").trim()===inputBloque.value.trim())
+              .map(c=>String(c.cama||"").trim()).filter(Boolean))]
+              .sort((a,b)=>a.localeCompare(b,"es",{numeric:true}))
+              .map(v=>new Option("",v))
+          );
+        };
+        inputBloque.addEventListener("input", actualizarCamas);
+        actualizarCamas();
+      }
+    } catch (e) { console.warn("No fue posible cargar sugerencias de camas.",e); }
+  }
 }
 
 async function checkApiCalidad() {
@@ -824,6 +857,10 @@ async function guardarCalidad() {
   if (!sembradorSeleccionado) return estadoCalidad("error", "Selecciona un colaborador antes de guardar.");
   if (!semanaActual) return estadoCalidad("error", "No hay semana válida descargada desde la base de datos. Conéctate y vuelve a intentar.");
   if (!siguienteRevisionCalidad || siguienteRevisionCalidad > 30) return estadoCalidad("error", "Selecciona un colaborador con revisiones disponibles.");
+  const bloqueCalidad = esFormularioSiembraCampo ? $calidad("calidadSiembraBloque")?.value.trim() : "";
+  const camaCalidad = esFormularioSiembraCampo ? $calidad("calidadSiembraCama")?.value.trim() : "";
+  if (esFormularioSiembraCampo && (!bloqueCalidad || !camaCalidad))
+    return estadoCalidad("error", "Selecciona Bloque y Cama antes de guardar la evaluación.");
 
   guardandoCalidad = true;
   $calidad("guardarCalidadBtn").disabled = true;
@@ -848,6 +885,7 @@ async function guardarCalidad() {
       asegurador: sesionCalidad.username || sesionCalidad.codigo || "",
       colaborador: String(colaborador),
       revision: revisionGuardada,
+      ...(esFormularioSiembraCampo ? { bloque:bloqueCalidad, cama:camaCalidad } : {}),
       incumplimientos,
       fallosDetalle,
       conformeSeleccionado,

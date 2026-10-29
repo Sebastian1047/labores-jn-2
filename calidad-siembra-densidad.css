@@ -1,0 +1,29 @@
+/* Calidad Siembra Campo: seguimiento de densidad por cama. */
+.cs-densidad-abrir {margin-bottom:16px;border-radius:10px;border:1px solid #a5cbb0;
+  background:#e9f5ed;color:#1b5939;padding:11px 16px;font:inherit;font-weight:800;cursor:pointer;}
+.cs-densidad-abrir.active,.cs-densidad-abrir:hover {background:#187a4d;color:#fff;}
+.cs-densidad-panel {margin:0 0 20px;padding:17px;border:1px solid #badac5;border-radius:15px;background:#f3faf5;}
+.cs-densidad-panel[hidden] {display:none !important;}
+.cs-densidad-panel h2 {font-size:1.18rem;margin:0 0 6px;color:#174f32;}
+.cs-densidad-controles {display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:13px 0;}
+.cs-densidad-controles label {display:grid;gap:5px;font-weight:700;color:#25533b;}
+.cs-densidad-controles input {min-height:40px;}
+.cs-densidad-tabla-scroll {overflow-x:auto;border:1px solid #d1e3d8;border-radius:11px;background:#fff;}
+.cs-densidad-tabla {width:100%;min-width:760px;border-collapse:collapse;text-align:left;font-size:.86rem;}
+.cs-densidad-tabla th {padding:12px 10px;background:#e8f5ed;color:#174730;white-space:nowrap;border-bottom:1px solid #c7ddce;}
+.cs-densidad-tabla td {padding:10px;border-bottom:1px solid #e2eae5;vertical-align:middle;}
+.cs-densidad-tabla tr:last-child td {border-bottom:0;}
+.cs-densidad-tabla .cs-personas span {display:block;margin:2px 0;}
+.cs-densidad-tabla .cs-personas small {color:#697d70;}
+.cs-densidad-tabla td input {display:block;width:116px;min-height:40px;margin:0;padding:7px 9px;border:1px solid #abcbb9;
+  border-radius:8px;text-align:center;font:inherit;font-weight:750;}
+.cs-densidad-tabla [data-densidad-diferencia] {font-weight:900;text-align:center;}
+.cs-resultado {display:inline-block;white-space:nowrap;border-radius:999px;padding:5px 10px;font-weight:800;font-size:.78rem;}
+.cs-conforme {color:#16623a;background:#def5e7;}
+.cs-inconforme {color:#9a2b20;background:#ffebea;}
+.cs-pendiente {color:#686f6a;background:#eff1ef;}
+.cs-sin-registros {text-align:center;color:#65756a;padding:22px !important;}
+.cs-calidad-ubicacion {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px;}
+.cs-calidad-ubicacion label {display:grid;gap:5px;font-weight:750;color:#25533b;}
+.cs-calidad-ubicacion input {width:100%;min-height:42px;}
+@media(max-width:580px){.cs-calidad-ubicacion{grid-template-columns:1fr;}.cs-densidad-controles{align-items:stretch;}}

@@ -7,6 +7,7 @@
     <link rel="manifest" href="./manifest.json" />
     <meta name="theme-color" content="#187a4d" />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./calidad-siembra-densidad.css?v=1.0.150" />
   </head>
   <body>
     <main class="app-shell">
@@ -27,6 +28,27 @@
 
       <section class="workspace" style="grid-template-columns: minmax(0, 1fr);">
         <article class="scanner-panel">
+          <button id="abrirSeguimientoDensidad" class="cs-densidad-abrir" type="button"
+            aria-expanded="false" aria-controls="seguimientoDensidadPanel">📏 Seguimiento densidad</button>
+          <section id="seguimientoDensidadPanel" class="cs-densidad-panel" hidden>
+            <h2>Seguimiento densidad — Siembra Campo</h2>
+            <p class="hint">Consulta las camas y sus sembradores. La diferencia es líneas aseguradas menos líneas reportadas.
+              Una diferencia entre −2 y +2 es conforme; con 3 o más de diferencia absoluta es inconforme.</p>
+            <div class="cs-densidad-controles">
+              <label>Fecha de siembra
+                <input id="seguimientoDensidadFecha" type="date" required />
+              </label>
+              <button id="consultarSeguimientoDensidad" type="button" class="success-btn">Actualizar siembras</button>
+            </div>
+            <div class="cs-densidad-tabla-scroll">
+              <table class="cs-densidad-tabla">
+                <thead><tr><th>Bloque</th><th>Cama</th><th>Persona(s) que sembraron</th>
+                  <th>Líneas reporte</th><th>Líneas aseguradas</th><th>Diferencia</th><th>Resultado</th></tr></thead>
+                <tbody id="seguimientoDensidadFilas"><tr><td colspan="7">Selecciona una fecha para consultar.</td></tr></tbody>
+              </table>
+            </div>
+            <p id="seguimientoDensidadMensaje" class="hint" aria-live="polite"></p>
+          </section>
           <div>
             <span class="scan-label">Evaluador</span>
             <p class="hint" id="evaluadorNombre" style="margin: 6px 0 0;">Usuario actual</p>
@@ -46,6 +68,17 @@
           <div class="exit-row" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
             <div><span class="scan-label">Nombre</span><p class="hint" id="sembradorNombre" style="margin: 6px 0 0;">Sin colaborador seleccionado</p></div>
             <div><span class="scan-label">Código</span><p class="hint" id="sembradorCodigo" style="margin: 6px 0 0;">—</p></div>
+          </div>
+
+          <div class="cs-calidad-ubicacion">
+            <label>Bloque
+              <input id="calidadSiembraBloque" type="text" list="calidadSiembraBloques" autocomplete="off" placeholder="Bloque evaluado" required />
+              <datalist id="calidadSiembraBloques"></datalist>
+            </label>
+            <label>Cama
+              <input id="calidadSiembraCama" type="text" list="calidadSiembraCamas" autocomplete="off" placeholder="Cama evaluada" required />
+              <datalist id="calidadSiembraCamas"></datalist>
+            </label>
           </div>
 
           <div>
@@ -87,7 +120,8 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra.js?v=1.0.85"></script>
+    <script src="./calidad-siembra-densidad.js?v=1.0.150"></script>
+    <script src="./calidad-siembra.js?v=1.0.150"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
