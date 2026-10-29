@@ -550,7 +550,11 @@ function renderCriterios() {
   }
 
   lista.classList.add("calidad-criterios-numericos");
-  const tarjetas = criteriosCalidad.map((item) => {
+  // Conteo de líneas (ítem 13) se califica únicamente al cerrar la cama.
+  // No permitir que una X manual duplique el conteo del seguimiento.
+  const tarjetas = criteriosCalidad
+    .filter(item=>!(esFormularioSiembraCampo&&Number(item.id)===13))
+    .map((item) => {
     if (esItemConformeCalidad(item)) {
       return `<section class="calidad-item-fallos calidad-item-conforme">
         <label class="calidad-conforme-selector">
