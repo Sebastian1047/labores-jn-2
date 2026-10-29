@@ -101,6 +101,19 @@
             </div>
           </div>
 
+          <div class="cs-calidad-ubicacion" aria-label="Ubicación de la evaluación">
+            <label>Bloque
+              <input id="calidadSiembraBloque" type="text" list="calidadSiembraBloques"
+                autocomplete="off" placeholder="Bloque evaluado" required />
+              <datalist id="calidadSiembraBloques"></datalist>
+            </label>
+            <label>Cama
+              <input id="calidadSiembraCama" type="text" list="calidadSiembraCamas"
+                autocomplete="off" placeholder="Cama evaluada" required />
+              <datalist id="calidadSiembraCamas"></datalist>
+            </label>
+          </div>
+
           <div>
             <span class="scan-label">Criterios de calidad</span>
             <p class="hint" style="margin: 6px 0 10px;">Registra la cantidad de fallos o marca con X según corresponda. Si no registras incumplimientos, la evaluación se considera conforme.</p>
@@ -147,7 +160,7 @@
     <script src="./offline/api-base.js"></script>
     <script src="./offline/db.js"></script>
     <script src="./offline/sync-engine.js"></script>
-    <script src="./calidad-siembra.js?v=1.0.102"></script>
+    <script src="./calidad-siembra.js?v=1.0.159"></script>
     <script src="./offline/register-sw.js"></script>
   </body>
 </html>
