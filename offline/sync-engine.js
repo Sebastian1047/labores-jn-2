@@ -716,6 +716,8 @@ async function sincronizarPendientesCalidad() {
         await conReintento(() => apiPostOnline("/api/calidad/evaluaciones", cuerpoEvaluacionCalidad(evaluacion)), 3);
       }
       await OfflineDb.put("calidadEvaluaciones", { ...evaluacion, syncStatus: "Sincronizado", errorMensaje: null, updatedAt: new Date().toISOString() });
+      if(evaluacion.cicloSiembraId)
+        await OfflineDb.actualizarReferenciaCiclo(evaluacion);
       await registrarRevisionCalidadConfirmada(evaluacion.colaborador, evaluacion.revision, evaluacion.semana);
       resultado.subidas++;
       resultado.subidasIds.push(evaluacion.correlationId);
