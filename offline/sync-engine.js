@@ -679,10 +679,7 @@ async function guardarEvaluacionCalidadLocal(evaluacion) {
     syncStatus: "Pendiente",
     updatedAt: new Date().toISOString(),
   };
-  // Siembra Campo: crear/actualizar el ciclo PENDIENTE en la misma
-  // transacción que almacena la revisión. No afecta a los otros módulos.
-  if(registro.moduloCalidad==="siembra-campo"&&registro.bloque&&registro.cama)
-    return OfflineDb.guardarCalidadConCiclo(registro);
+  // La tabla de conteo es independiente; guardar solo la evaluación.
   await OfflineDb.put("calidadEvaluaciones",registro);
   return registro;
 }
@@ -716,8 +713,6 @@ async function sincronizarPendientesCalidad() {
         await conReintento(() => apiPostOnline("/api/calidad/evaluaciones", cuerpoEvaluacionCalidad(evaluacion)), 3);
       }
       await OfflineDb.put("calidadEvaluaciones", { ...evaluacion, syncStatus: "Sincronizado", errorMensaje: null, updatedAt: new Date().toISOString() });
-      if(evaluacion.cicloSiembraId)
-        await OfflineDb.actualizarReferenciaCiclo(evaluacion);
       await registrarRevisionCalidadConfirmada(evaluacion.colaborador, evaluacion.revision, evaluacion.semana);
       resultado.subidas++;
       resultado.subidasIds.push(evaluacion.correlationId);
