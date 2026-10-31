@@ -22,6 +22,7 @@
   const DEMO_KEY = "calidadSiembraConteoManual:pruebas:v1";
   let modoPrueba = new URLSearchParams(window.location.search).get("pruebas") === "1";
   let filas = [],catalogo = [],cargando = false;
+  let revisionesSiembra = [],semanasCalendario = [],nombresColaboradores = new Map();
   const escapar = value => String(value ?? "").replace(/[&<>"']/g, char =>
     ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[char]));
   const comparar = (a,b) => a.localeCompare(b,"es",{numeric:true});
@@ -44,9 +45,9 @@
   function ejemplos() {
     const d=fecha.value;
     return [
-      {id:"demo-1",fecha:d,bloque:"1",cama:"101",reporte:"20",aseguradas:"20"},
-      {id:"demo-2",fecha:d,bloque:"1",cama:"102",reporte:"16",aseguradas:"19"},
-      {id:"demo-3",fecha:d,bloque:"2",cama:"201",reporte:"12",aseguradas:""}
+      {id:"demo-1",fecha:d,bloque:"1",cama:"101",reporte:"20",aseguradas:"20",sembradorCodigo:"",sembradorNombre:""},
+      {id:"demo-2",fecha:d,bloque:"1",cama:"102",reporte:"16",aseguradas:"19",sembradorCodigo:"",sembradorNombre:""},
+      {id:"demo-3",fecha:d,bloque:"2",cama:"201",reporte:"12",aseguradas:"",sembradorCodigo:"",sembradorNombre:""}
     ];
   }
   function leerPrueba() {
@@ -75,6 +76,112 @@
       visto.add(key);return true;
     });
   }
+
+  // Consulta en modo solo lectura las revisiones ya registradas; no crea,
+  // modifica ni puntúa ninguna evaluación de Calidad Siembra Campo.
+  function fechaCorta(r){return String(r.fecha??r.fechaRevision??"").slice(0,10);}
+  function fechaLocalDeTexto(texto){
+    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(texto??""));
+    if(!m)return null;
+    const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),12);
+    return Number.isFinite(d.getTime())&&d.getFullYear()===Number(m[1])&&
+      d.getMonth()===Number(m[2])-1&&d.getDate()===Number(m[3])?d:null;
+  }
+  function formatearFecha(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+
+      "-"+String(d.getDate()).padStart(2,"0");
+  }
+  function semanaDeFila(dia){
+    const calendario=semanasCalendario.find(w=>
+      dia>=String(w.fechaIni??"").slice(0,10)&&
+      dia<=String(w.fechaFin??"").slice(0,10));
+    if(calendario)return {
+      inicio:String(calendario.fechaIni).slice(0,10),fin:String(calendario.fechaFin).slice(0,10),
+      numero:Number(calendario.semana),anio:Number(calendario.ano??calendario.anio)
+    };
+    const d=fechaLocalDeTexto(dia);
+    if(!d)return null;
+    const ini=new Date(d);
+    ini.setDate(d.getDate()-d.getDay()); // Domingo a sábado (calendario de la finca).
+    const fin=new Date(ini);fin.setDate(ini.getDate()+6);
+    return {inicio:formatearFecha(ini),fin:formatearFecha(fin),numero:null,anio:null};
+  }
+  function esRevisionSiembra(r){
+    if(!r||typeof r!=="object")return false;
+    if(r.moduloCalidad)return r.moduloCalidad==="siembra-campo";
+    if(r.tipoLaborCalidad||r.gruposPreparacion||r.grupoPreparacion)return false;
+    // Antes de guardar moduloCalidad, el formulario Siembra ya registraba Bloque/Cama.
+    return Boolean(String(r.bloque??"").trim()&&String(r.cama??"").trim());
+  }
+  async function cargarRevisionesSemana(){
+    const leer=async n=>{
+      try{return await OfflineDb.getAll(n)}catch(e){console.warn("No se pudo consultar "+n,e);return []}
+    };
+    const [revisiones,empleados,colaboradores,semanas]=await Promise.all([
+      leer("calidadEvaluaciones"),leer("empleados"),leer("calidadColaboradores"),leer("semanas")
+    ]);
+    semanasCalendario=Array.isArray(semanas)?semanas:[];
+    nombresColaboradores=new Map();
+    for(const x of [...empleados,...colaboradores]){
+      const codigo=String(x.codigo??x.docid??x.codigo_origen??x.id??"").trim();
+      const nombre=String(x.nombre??x.empleadoNombre??x.colaboradorNombre??"").trim();
+      if(codigo&&nombre)nombresColaboradores.set(codigo,nombre);
+    }
+    revisionesSiembra=(Array.isArray(revisiones)?revisiones:[]).filter(esRevisionSiembra);
+    if(navigator.onLine&&typeof SyncEngine.apiGetOnline==="function"){
+      try{
+        // /api/calidad/informe contiene revisiones de Calidad Siembra.
+        const remotas=await SyncEngine.apiGetOnline("/api/calidad/informe");
+        if(Array.isArray(remotas))revisionesSiembra.push(...remotas.filter(x=>
+          x&&(!x.moduloCalidad||x.moduloCalidad==="siembra-campo")));
+      }catch(e){console.warn("Sin revisiones remotas; se usa el historial local",e)}
+    }
+  }
+  function opcionesSembrador(r){
+    const semana=semanaDeFila(r.fecha);
+    const encontrados=new Map();
+    if(semana){
+      for(const rev of revisionesSiembra){
+        const dia=fechaCorta(rev);
+        let corresponde=Boolean(dia&&dia>=semana.inicio&&dia<=semana.fin);
+        if(!dia&&semana.numero!=null){
+          const año=Number(rev.anio??rev.ano);
+          corresponde=Number(rev.semana)===semana.numero&&
+            Number.isFinite(año)&&año===semana.anio;
+        }
+        if(!corresponde)continue;
+        const codigo=String(rev.colaborador??rev.sembrador??"").trim();
+        if(!codigo)continue;
+        const nombre=String(rev.colaboradorNombre??rev.sembradorNombre??
+          nombresColaboradores.get(codigo)??"").trim()||codigo;
+        const previo=encontrados.get(codigo);
+        if(!previo||previo===codigo)encontrados.set(codigo,nombre);
+      }
+    }
+    if(modoPrueba){
+      for(const [codigo,nombre] of [["PRUEBA-01","Ana Pérez (prueba)"],
+        ["PRUEBA-02","Carlos Ruiz (prueba)"],["PRUEBA-03","María López (prueba)"]])
+        encontrados.set(codigo,nombre);
+    }
+    const actual=String(r.sembradorCodigo??"").trim();
+    const actualNombre=String(r.sembradorNombre??"").trim();
+    // Conservar visualmente una selección previamente guardada aunque en
+    // otro dispositivo aún no estén disponibles las revisiones de su semana.
+    if(actual&&!encontrados.has(actual))
+      encontrados.set(actual,actualNombre||nombresColaboradores.get(actual)||actual);
+    const ordered=[...encontrados.entries()].sort((a,b)=>comparar(a[1],b[1]));
+    const label=semana?.numero!=null?"Semana "+semana.numero+" de "+semana.anio:
+      (semana?"Del "+semana.inicio+" al "+semana.fin:"Fecha no válida");
+    return {
+      label,cantidad:ordered.length,
+      opciones:'<option value="">'+(ordered.length?"Seleccionar sembrador":"Sin revisiones esta semana")+
+        '</option>'+ordered.map(([codigo,nombre])=>
+        '<option value="'+escapar(codigo)+'"'+(codigo===actual?' selected':'')+'>'+
+          escapar(nombre)+(nombre!==codigo?' ('+escapar(codigo)+')':'')+'</option>').join(""),
+      nombres:encontrados
+    };
+  }
+
   function opcionesBloque(valor) {
     const opciones=new Map();
     catalogo.forEach(x=>opciones.set(normalizar(x.bloque),x.bloque));
@@ -134,7 +241,9 @@
       '<td><input data-seguimiento-campo="aseguradas" type="number" min="0" step="1" inputmode="numeric" '+
       'aria-label="Líneas aseguradas, fila '+(i+1)+'" value="'+escapar(r.aseguradas)+'"></td>'+
       '<td data-seguimiento-diferencia>—</td>'+
-      '<td><span data-seguimiento-estado class="cs-resultado cs-pendiente">Pendiente</span></td>'+
+      '<td><select data-seguimiento-campo="sembradorCodigo" aria-label="Nombre del sembrador, fila '+(i+1)+'">'+
+      opcionesSembrador(r).opciones+'</select>'+
+      '<small class="cs-semana-sembrador">'+escapar(opcionesSembrador(r).label)+'</small></td>'+
       '<td class="cs-manual-acciones"><small>'+escapar(r.fecha)+'</small>'+
       '<button type="button" data-seguimiento-eliminar="'+i+'" aria-label="Eliminar fila '+(i+1)+'">Eliminar</button></td></tr>'
     ).join(""):'<tr><td colspan="7" class="cs-sin-registros">'+
@@ -148,6 +257,7 @@
     if(cargando)return;
     cargando=true;actualizar.disabled=true;
     try{
+      await cargarRevisionesSemana();
       if(modoPrueba)filas=leerPrueba();
       else{
         const stored=await OfflineDb.getAll("meta");
@@ -180,7 +290,7 @@
       return;
     }
     const r={id:crearId(),fecha:fecha.value||fechaLocal(),bloque:"",cama:"",
-      reporte:"",aseguradas:"",updatedAt:""};
+      reporte:"",aseguradas:"",sembradorCodigo:"",sembradorNombre:"",updatedAt:""};
     filas.unshift(r);pintar();
     void guardarFila(r).catch(e=>{mensaje.textContent="No se pudo crear la fila: "+e.message});
   }
@@ -198,9 +308,13 @@
     const tr=input.closest("[data-seguimiento-indice]"),r=filas[Number(tr?.dataset.seguimientoIndice)];
     if(!r)return;
     const field=input.dataset.seguimientoCampo,old=r[field];
+    const oldNombre=r.sembradorNombre;
     if(field==="bloque"){
       r.bloque=input.value;r.cama="";
       pintar();
+    }else if(field==="sembradorCodigo"){
+      r.sembradorCodigo=input.value.trim();
+      r.sembradorNombre=opcionesSembrador(r).nombres.get(r.sembradorCodigo)||"";
     }else{
       r[field]=input.value.trim();
     }
@@ -209,6 +323,7 @@
       if(field==="cama")actualizarResumen();
     }catch(err){
       r[field]=old;
+      if(field==="sembradorCodigo")r.sembradorNombre=oldNombre;
       pintar();mensaje.textContent="No fue posible guardar: "+err.message;
     }
   });
