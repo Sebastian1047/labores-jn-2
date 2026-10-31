@@ -1,350 +1,256 @@
-// Calidad Siembra Campo / Seguimiento Conteo de Líneas.
-// Tabla por fecha, bloque y cama. Se alimenta de siembras sincronizadas y
-// registros de Rendimiento locales; los conteos se guardan localmente en meta.
+// Seguimiento Conteo de Líneas: registro manual independiente de Calidad Siembra.
+// No consulta revisiones, ciclos de siembra ni calificaciones. Solo su propio espacio local.
 (function () {
   "use strict";
-  const abrir = document.getElementById("abrirSeguimientoDensidad");
-  const panel = document.getElementById("seguimientoDensidadPanel");
-  const fecha = document.getElementById("seguimientoDensidadFecha");
-  const desde = document.getElementById("seguimientoDensidadDesde");
-  const vista = document.getElementById("seguimientoDensidadVista");
-  const consultar = document.getElementById("consultarSeguimientoDensidad");
-  const cuerpo = document.getElementById("seguimientoDensidadFilas");
-  const mensaje = document.getElementById("seguimientoDensidadMensaje");
-  const alternar = document.getElementById("cambiarModoPruebaLineas");
-  const restaurar = document.getElementById("restaurarDatosPruebaLineas");
-  const aviso = document.getElementById("avisoDatosPruebaLineas");
-  if (!abrir || !panel || !fecha || !desde || !vista || !consultar || !cuerpo || !mensaje || !alternar || !restaurar || !aviso) return;
+  const $ = id => document.getElementById(id);
+  const abrir = $("abrirSeguimientoDensidad");
+  const panel = $("seguimientoDensidadPanel");
+  const fecha = $("seguimientoDensidadFecha");
+  const todos = $("seguimientoDensidadTodos");
+  const agregar = $("agregarSeguimientoDensidad");
+  const actualizar = $("consultarSeguimientoDensidad");
+  const tabla = $("seguimientoDensidadFilas");
+  const mensaje = $("seguimientoDensidadMensaje");
+  const alternar = $("cambiarModoPruebaLineas");
+  const restaurar = $("restaurarDatosPruebaLineas");
+  const aviso = $("avisoDatosPruebaLineas");
+  if (![abrir,panel,fecha,todos,agregar,actualizar,tabla,mensaje,alternar,restaurar,aviso].every(Boolean)) return;
 
-  const STORE_PREFIX = "calidadSiembraDensidad:v1:";
-  const CICLO_PREFIX = "calidadSiembraConteoCiclo:v2:";
-  const CHANNEL = "labores-jn-conteo-lineas";
-  const DEMO_PREFIX = "calidadSiembraConteoLineas:datosDePrueba:v1:";
+  // Un prefijo nuevo evita que los registros antiguos vinculados a revisiones
+  // contaminen esta tabla. No se elimina ni altera ningún registro histórico.
+  const PREFIX = "calidadSiembraConteoManual:v1:";
+  const DEMO_KEY = "calidadSiembraConteoManual:pruebas:v1";
   let modoPrueba = new URLSearchParams(window.location.search).get("pruebas") === "1";
-  let registros = [];
-  let carga = 0;
-  let cargando = false;
-
-  const escapar = texto => String(texto ?? "").replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const codigo = texto => {
-    const valor = String(texto ?? "").trim().toUpperCase();
-    return /^\d+$/.test(valor) ? String(Number(valor)) : valor;
+  let filas = [],catalogo = [],cargando = false;
+  const escapar = value => String(value ?? "").replace(/[&<>"']/g, char =>
+    ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[char]));
+  const comparar = (a,b) => a.localeCompare(b,"es",{numeric:true});
+  const normalizar = value => {
+    const s = String(value ?? "").trim().toUpperCase();
+    return /^\d+$/.test(s) ? String(Number(s)) : s;
   };
-  const etiqueta = persona => String(persona.nombre ?? persona.empleadoNombre ??
-    persona.colaboradorNombre ?? persona.codigo ?? persona.empleado ?? persona.colaborador ?? "").trim();
-  const hoy = () => SyncEngine.fechaLocalISO();
-  const clave = registro => STORE_PREFIX + registro.fecha + "|" +
-    codigo(registro.bloque) + "|" + codigo(registro.cama);
-  const claveCama = registro => codigo(registro.bloque)+"|"+codigo(registro.cama);
-  const diaEnRango = (dia,inicio,fin) => dia>=inicio&&dia<=fin;
-  const fechasCiclo = c=>[String(c.fechaInicio||c.fecha||"").slice(0,10),
-    String(c.fechaFin||c.fecha||"").slice(0,10)];
-  const generarId = ()=>"ciclo-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,10);
-  const notificar = () => {
-    try{const channel=new BroadcastChannel(CHANNEL);channel.postMessage({tipo:"conteo-actualizado"});channel.close();}
-    catch(error){console.warn("No se pudo notificar el cambio a otras pestañas",error);}
-  };
-  async function ciclosGuardados(){
-    const metas=await OfflineDb.getAll("meta");
-    return metas.filter(x=>String(x.key||"").startsWith(CICLO_PREFIX)&&x.value)
-      .map(x=>x.value);
+  const fechaLocal = () => SyncEngine.fechaLocalISO();
+  const crearId = () => (typeof crypto !== "undefined" && crypto.randomUUID)
+    ? crypto.randomUUID() : "manual-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2);
+  function clasificar(reporte,aseguradas) {
+    const a = String(reporte ?? ""), b = String(aseguradas ?? "");
+    if (!a || !b) return {diferencia:null,estado:"Pendiente"};
+    if (!/^\d+$/.test(a) || !/^\d+$/.test(b) ||
+        !Number.isSafeInteger(Number(a)) || !Number.isSafeInteger(Number(b)))
+      return {diferencia:null,estado:"Revisar números"};
+    const diferencia=Number(b)-Number(a);
+    return {diferencia,estado:Math.abs(diferencia)>=3?"Inconforme":"Conforme"};
   }
-
-
-  function clasificar(reporte, aseguradas) {
-    if (reporte === "" || aseguradas === "") return { diferencia:null, estado:"Pendiente" };
-    if (!/^\d+$/.test(reporte) || !/^\d+$/.test(aseguradas) ||
-        !Number.isSafeInteger(Number(reporte)) || !Number.isSafeInteger(Number(aseguradas))) {
-      return { diferencia:null, estado:"Revisar números" };
-    }
-    const diferencia = Number(aseguradas) - Number(reporte);
-    return { diferencia, estado:Math.abs(diferencia) >= 3 ? "Inconforme" : "Conforme" };
-  }
-  function mostrarCalculo(tr, valores) {
-    const calculo = clasificar(valores.reporte, valores.aseguradas);
-    const diferencia = tr.querySelector("[data-densidad-diferencia]");
-    const estado = tr.querySelector("[data-densidad-estado]");
-    if (diferencia) diferencia.textContent = calculo.diferencia === null ? "—" :
-      (calculo.diferencia > 0 ? "+" : "") + calculo.diferencia;
-    if (estado) {
-      estado.textContent = calculo.estado;
-      estado.className = "cs-resultado " + (calculo.estado === "Conforme" ? "cs-conforme" :
-        calculo.estado === "Inconforme" ? "cs-inconforme" : "cs-pendiente");
-    }
-    return calculo;
-  }
-  function actualizarResumen() {
-    const conformes = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Conforme").length;
-    const inconformes = registros.filter(r=>clasificar(r.reporte,r.aseguradas).estado==="Inconforme").length;
-    const prefix = modoPrueba ? "DATOS DE PRUEBA · " : "";
-    mensaje.textContent = vista.value==="pendientes"
-      ? prefix + registros.length + " cama(s) pendiente(s). Las camas de semanas anteriores permanecen aquí hasta finalizar el conteo."
-      : prefix + registros.length + " cama(s) terminada(s) · "+ conformes +
-        " conforme(s) · "+ inconformes + " inconforme(s). Historial conservado por ciclo.";
-  }
-  function pintar() {
-    cuerpo.innerHTML = registros.length ? registros.map((r,i) =>
-      '<tr data-densidad-indice="' + i + '">' +
-      '<td>' + escapar(r.bloque) + (r.esPrueba ? ' <span class="cs-tag-prueba">Prueba</span>' : '') +
-      '</td><td>' + escapar(r.cama) +
-       '<small style="display:block;opacity:.72">Inicio: '+escapar(r.fechaInicio)+
-       ' · '+(r.fechaFin?'Cierre: '+escapar(r.fechaFin):'Aún en siembra')+'</small>'+
-       (r.detalles?.length?'<details style="margin-top:5px;text-align:left"><summary>'+
-       r.detalles.length+' revisiones · ver fechas y semanas</summary>'+
-       '<div style="max-height:155px;overflow:auto;line-height:1.55;font-size:.77rem">'+
-       r.detalles.map(x=>escapar(x.fecha)+' · S'+escapar(x.semana)+
-         ' · Rev. '+escapar(x.revision)+' · '+escapar(x.colaborador)).join('<hr style="margin:2px 0;border:0;border-top:1px solid #ddd">')+
-       '</div></details>':'')+'</td>' +
-      '<td class="cs-personas">' + r.personas.map(p=>'<span>' +
-        escapar(p.nombre) + (p.codigo ? ' <small>(' + escapar(p.codigo) + ')</small>' : '') +
-        '</span>').join("") + '</td>' +
-      '<td><input type="number" min="0" step="1" inputmode="numeric" ' +
-        (r.estado && r.estado!=="Pendiente" ? ' disabled title="Seguimiento terminado" ' : '') +
-        'data-densidad-campo="reporte" aria-label="Líneas reportadas, bloque ' +
-        escapar(r.bloque) + ' cama ' + escapar(r.cama) + '" value="' + escapar(r.reporte) + '"></td>' +
-      '<td><input type="number" min="0" step="1" inputmode="numeric" ' +
-        (r.estado && r.estado!=="Pendiente" ? ' disabled title="Seguimiento terminado" ' : '') +
-        'data-densidad-campo="aseguradas" aria-label="Líneas aseguradas, bloque ' +
-        escapar(r.bloque) + ' cama ' + escapar(r.cama) + '" value="' + escapar(r.aseguradas) + '"></td>' +
-      '<td data-densidad-diferencia>—</td><td><span data-densidad-estado class="cs-resultado cs-pendiente">Pendiente</span></td></tr>'
-    ).join("") :
-      '<tr><td colspan="7" class="cs-sin-registros">' +
-      (vista.value==="pendientes" ? "No hay camas pendientes. Al guardar una revisión de Siembra Campo se creará o actualizará el seguimiento." :
-        "No hay camas terminadas en el período seleccionado. Las pendientes siguen disponibles en la otra vista.") +
-      '</td></tr>';
-    cuerpo.querySelectorAll("[data-densidad-indice]").forEach(tr=>{
-      const dato=registros[Number(tr.dataset.densidadIndice)];
-      mostrarCalculo(tr,dato);
-    });
-    actualizarResumen();
-  }
-  async function fuentesLocales(dia) {
-    const [ciclos,empleados,calidad] = await Promise.all([
-      ciclosGuardados(),OfflineDb.getAll("empleados"),OfflineDb.getAll("calidadColaboradores")
-    ]);
-    const nombres=new Map();
-    [...empleados,...calidad].forEach(p=>{
-      const id=String(p.codigo??p.docid??p.id??"").trim();
-      if(id)nombres.set(id,etiqueta(p)||id);
-    });
-    // Los pendientes pasan de semana sin límite de fecha. Los terminados
-    // únicamente aparecen en su historial y nunca se duplican en Pendientes.
-    const inicio=desde.value,fin=dia;
-    const visibles=ciclos.filter(c=>c.id&&c.bloque!=null&&c.cama!=null&&
-      (vista.value==="pendientes"
-        ? c.estado==="Pendiente"&&!c.fechaFin
-        : (c.estado==="Conforme"||c.estado==="Inconforme")&&
-          c.fechaFin>=inicio&&c.fechaFin<=fin));
-    const filas=visibles.map(c=>{
-      const detalles=(Array.isArray(c.revisiones)?c.revisiones:[]).map(x=>({
-        correlationId:x.correlationId,fecha:String(x.fecha||"").slice(0,10),
-        semana:x.semana,anio:x.anio,revision:x.revision,
-        colaborador:String(x.colaborador??"")
-      })).sort((a,b)=>a.fecha.localeCompare(b.fecha)||
-        Number(a.revision)-Number(b.revision));
-      const personas=[...new Set(detalles.map(x=>x.colaborador).filter(Boolean))]
-        .map(codigo=>({codigo,nombre:nombres.get(codigo)||codigo}));
-      // Compatibilidad con seguimientos cerrados de la versión anterior.
-      if(!personas.length&&Array.isArray(c.personas))
-        personas.push(...c.personas);
-      return {...c,fecha:fin,personas,detalles,
-        revisiones:detalles.length,esCiclo:true,
-        fechaInicio:c.fechaInicio||detalles[0]?.fecha||"",
-        fechaFin:c.fechaFin||"",
-        reporte:String(c.reporte??""),aseguradas:String(c.aseguradas??"")};
-    });
-    filas.sort((a,b)=>a.bloque.localeCompare(b.bloque,"es",{numeric:true})||
-      a.cama.localeCompare(b.cama,"es",{numeric:true})||
-      a.fechaInicio.localeCompare(b.fechaInicio));
-    return filas;
-  }
-
-  // Ejemplos ficticios: almacenamiento separado por fecha y sin sincronización.
-  function ejemplos(dia) {
-    const personas=(...ids)=>ids.map(n=>({
-      codigo:"PRUEBA-L"+String(n).padStart(2,"0"),
-      nombre:"COLABORADOR PRUEBA "+String(n).padStart(2,"0")
-    }));
-    const ejemploSemanaCruzada=[
-      {fecha:"2026-10-23",semana:43,revision:1,colaborador:"PRUEBA-L01"},
-      {fecha:"2026-10-23",semana:43,revision:2,colaborador:"PRUEBA-L01"},
-      {fecha:"2026-10-26",semana:44,revision:1,colaborador:"PRUEBA-L01"},
-      {fecha:"2026-10-26",semana:44,revision:2,colaborador:"PRUEBA-L02"},
-      {fecha:"2026-10-26",semana:44,revision:3,colaborador:"PRUEBA-L02"}
+  function ejemplos() {
+    const d=fecha.value;
+    return [
+      {id:"demo-1",fecha:d,bloque:"1",cama:"101",reporte:"20",aseguradas:"20"},
+      {id:"demo-2",fecha:d,bloque:"1",cama:"102",reporte:"16",aseguradas:"19"},
+      {id:"demo-3",fecha:d,bloque:"2",cama:"201",reporte:"12",aseguradas:""}
     ];
-    const base=[
-      {bloque:"PRUEBA-01",cama:"001",personas:personas(1,2),
-       fechaInicio:"2026-10-23",fechaFin:"",detalles:ejemploSemanaCruzada,
-       reporte:"20",aseguradas:""},
-      {bloque:"PRUEBA-01",cama:"002",personas:personas(3),reporte:"18",aseguradas:"20"},
-      {bloque:"PRUEBA-02",cama:"003",personas:personas(4,5),reporte:"16",aseguradas:"13"},
-      {bloque:"PRUEBA-02",cama:"004",personas:personas(6),reporte:"10",aseguradas:"14"},
-      {bloque:"PRUEBA-03",cama:"005",personas:personas(7,8),reporte:"12",aseguradas:"11"},
-      {bloque:"PRUEBA-03",cama:"006",personas:personas(9),reporte:"15",aseguradas:""},
-      {bloque:"PRUEBA-04",cama:"007",personas:personas(10,11),reporte:"7",aseguradas:"10"}
-    ];
-    let guardados={};
+  }
+  function leerPrueba() {
     try {
-      const valor=JSON.parse(localStorage.getItem(DEMO_PREFIX+dia)||"{}");
-      if (valor && typeof valor==="object" && !Array.isArray(valor)) guardados=valor;
-    } catch(e) { console.warn("Datos de prueba no disponibles",e); }
-    return base.map(r=>{
-      const cambio=guardados[r.bloque+"|"+r.cama]||{};
-      const reporte=String(cambio.reporte??r.reporte);
-      const aseguradas=String(cambio.aseguradas??r.aseguradas);
-      const estado=clasificar(reporte,aseguradas).estado;
-      return {...r,fecha:dia,fechaInicio:r.fechaInicio||dia,
-        fechaFin:estado==="Pendiente"?"":(r.fechaFin||dia),
-        estado,revisiones:r.detalles?.length??0,esPrueba:true,
-        reporte,aseguradas};
-    }).filter(r=>vista.value==="pendientes"
-      ? r.estado==="Pendiente"
-      : (r.estado==="Conforme"||r.estado==="Inconforme"));
+      const x=JSON.parse(localStorage.getItem(DEMO_KEY)||"null");
+      return Array.isArray(x)?x:ejemplos();
+    } catch {return ejemplos();}
   }
-  function guardarCambiosPrueba(dia) {
-    let datos={};
+  function guardarPrueba() {localStorage.setItem(DEMO_KEY,JSON.stringify(filas));}
+  async function cargarCatalogo() {
+    let local=[],remoto=[];
+    try{local=await OfflineDb.getAll("camas");}catch(e){console.warn("Catálogo de camas local no disponible",e);}
     try{
-      const anteriores=JSON.parse(localStorage.getItem(DEMO_PREFIX+dia)||"{}");
-      if(anteriores&&typeof anteriores==="object"&&!Array.isArray(anteriores))datos=anteriores;
-    }catch(error){console.warn("No se pudo leer el historial de prueba",error);}
-    registros.filter(r=>r.esPrueba && r.fecha===dia).forEach(r=>{
-      datos[r.bloque+"|"+r.cama]={reporte:r.reporte,aseguradas:r.aseguradas};
+      if (navigator.onLine && SyncEngine.apiGetOnline)
+        remoto=await SyncEngine.apiGetOnline("/api/siembra/online/bloques-camas");
+    }catch(e){console.warn("Catálogo en línea no disponible, usando datos locales",e);}
+    const fuente=[...(Array.isArray(local)?local:[]),...(Array.isArray(remoto)?remoto:[])];
+    const visto=new Set();
+    catalogo=fuente.map(x=>({
+      bloque:String(x.bloque??x.Bloque??"").trim(),
+      cama:String(x.cama??x.Cama??"").trim()
+    })).filter(x=>{
+      if(!x.bloque||!x.cama)return false;
+      const key=normalizar(x.bloque)+"|"+normalizar(x.cama);
+      if(visto.has(key))return false;
+      visto.add(key);return true;
     });
-    localStorage.setItem(DEMO_PREFIX+dia,JSON.stringify(datos));
   }
-  function actualizarModo() {
-    document.querySelectorAll("[data-densidad-solo-terminadas]").forEach(label=>{
-      label.hidden=vista.value!=="terminadas";
-    });
-    alternar.textContent=modoPrueba?"Volver a registros reales":"Ver datos de prueba";
-    alternar.setAttribute("aria-pressed",String(modoPrueba));
-    alternar.classList.toggle("cs-modo-prueba",modoPrueba);
-    aviso.hidden=!modoPrueba;restaurar.hidden=!modoPrueba;
-    consultar.textContent=modoPrueba?"Recargar ejemplos":"Actualizar seguimiento";
+  function opcionesBloque(valor) {
+    const opciones=new Map();
+    catalogo.forEach(x=>opciones.set(normalizar(x.bloque),x.bloque));
+    filas.forEach(x=>{if(x.bloque)opciones.set(normalizar(x.bloque),x.bloque)});
+    if(modoPrueba) [["1","1"],["2","2"]].forEach(x=>opciones.set(x[0],x[1]));
+    const ordered=[...opciones.values()].sort(comparar);
+    return '<option value="">Seleccionar bloque</option>'+ordered.map(x=>
+      '<option value="'+escapar(x)+'"'+(normalizar(x)===normalizar(valor)?' selected':'')+'>'+
+      escapar(x)+'</option>').join("");
   }
-  function alternarModo(valor) {
-    modoPrueba=Boolean(valor);
-    const url=new URL(window.location.href);
-    if(modoPrueba)url.searchParams.set("pruebas","1");
-    else url.searchParams.delete("pruebas");
-    window.history.replaceState(null,"",url);
-    panel.hidden=false;abrir.classList.add("active");
-    abrir.setAttribute("aria-expanded","true");
-    actualizarModo();void cargar();
-  }
-
-  async function cargar({sincronizar=false}={}) {
-    const solicitud=++carga,dia=fecha.value;
-    if(vista.value==="terminadas"&&(!dia||!desde.value||desde.value>dia)){
-      mensaje.textContent="Selecciona un intervalo válido para el historial de terminadas.";return;
+  function opcionesCama(bloque,valor) {
+    const opciones=new Map();
+    catalogo.filter(x=>normalizar(x.bloque)===normalizar(bloque))
+      .forEach(x=>opciones.set(normalizar(x.cama),x.cama));
+    filas.filter(x=>normalizar(x.bloque)===normalizar(bloque)&&x.cama)
+      .forEach(x=>opciones.set(normalizar(x.cama),x.cama));
+    if(modoPrueba){
+      const demo=normalizar(bloque)==="1"?["101","102","103"]:
+        normalizar(bloque)==="2"?["201","202"]:[];
+      demo.forEach(x=>opciones.set(normalizar(x),x));
     }
-    cargando=true;consultar.disabled=true;
-    mensaje.textContent="Consultando seguimientos pendientes y terminados…";
-    try {
-      registros=modoPrueba?ejemplos(dia):await fuentesLocales(dia);
-      if (solicitud!==carga)return;
-      pintar();
-      if (sincronizar && !modoPrueba) {
-        try {
-          await SyncEngine.sincronizarSiembrasDesdeServidor({fechaInicio:dia,fechaFinal:dia});
-          if (solicitud!==carga)return;
-          registros=await fuentesLocales(dia);
-          if (solicitud!==carga)return;
-          pintar();
-        } catch (e) {
-          if (solicitud===carga)
-            mensaje.textContent+=" No se pudo actualizar desde el servidor; se muestran los registros locales.";
-        }
-      }
-    }catch(error){
-      if(solicitud===carga)mensaje.textContent="No fue posible consultar las siembras: "+error.message;
-    }finally{
-      if(solicitud===carga){cargando=false;consultar.disabled=false;}
-    }
+    const ordered=[...opciones.values()].sort(comparar);
+    return '<option value="">Seleccionar cama</option>'+ordered.map(x=>
+      '<option value="'+escapar(x)+'"'+(normalizar(x)===normalizar(valor)?' selected':'')+'>'+
+      escapar(x)+'</option>').join("");
   }
-  async function guardarFila(registro) {
-    if(registro.esPrueba){
-      guardarCambiosPrueba(registro.fecha);
-      void cargar(); // Mover de Pendientes a Terminadas al completar los números.
-      return;
+  function pintarEstado(tr,r) {
+    const result=clasificar(r.reporte,r.aseguradas);
+    const diff=tr.querySelector("[data-seguimiento-diferencia]");
+    const status=tr.querySelector("[data-seguimiento-estado]");
+    if(diff)diff.textContent=result.diferencia===null?"—":
+      (result.diferencia>0?"+":"")+result.diferencia;
+    if(status){
+      status.textContent=result.estado;
+      status.className="cs-resultado "+(result.estado==="Conforme"?"cs-conforme":
+        result.estado==="Inconforme"?"cs-inconforme":"cs-pendiente");
     }
-    const resultado=clasificar(registro.reporte,registro.aseguradas);
-    if(resultado.estado==="Revisar números")
-      throw new Error("Verifica los números digitados.");
-    if(!registro.id)throw new Error("Esta cama no tiene un ciclo identificado. No se pueden afectar revisiones sin una vinculación segura.");
-    if(registro.estado!=="Pendiente"||registro.fechaFin)
-      throw new Error("Esta cama ya está cerrada. Consulta su resultado en el historial.");
-    if(resultado.estado==="Pendiente"){
-      // Un avance parcial se conserva incluso si se continúa la siguiente semana.
-      await OfflineDb.guardarConteoPendiente(registro.id,{
-        reporte:registro.reporte,aseguradas:registro.aseguradas
-      });
-      return;
-    }
-    const cerrado=await OfflineDb.cerrarCalidadCiclo(registro.id,{
-      reporte:registro.reporte,aseguradas:registro.aseguradas,
-      fechaConteo:SyncEngine.fechaLocalISO()
-    });
-    registro.estado=cerrado.estado;
-    registro.fechaFin=cerrado.fechaFin;
-    registro.diferencia=cerrado.diferencia;
-    mensaje.textContent="Conteo "+cerrado.estado.toLowerCase()+" guardado. Se actualizaron "+
-      (cerrado.revisiones||[]).length+" revisiones vinculadas de sus respectivas semanas. La cama pasó al historial.";
-    notificar();
-    void cargar();
+    return result;
   }
-  cuerpo.addEventListener("input",event=>{
-    const input=event.target.closest("[data-densidad-campo]");
-    if(!input)return;
-    const tr=input.closest("[data-densidad-indice]");
-    const r=registros[Number(tr?.dataset.densidadIndice)];
-    if(!r)return;
-    r[input.dataset.densidadCampo]=input.value.trim();
-    mostrarCalculo(tr,r);
+  function actualizarResumen(){
+    const conformes=filas.filter(x=>clasificar(x.reporte,x.aseguradas).estado==="Conforme").length;
+    const inconformes=filas.filter(x=>clasificar(x.reporte,x.aseguradas).estado==="Inconforme").length;
+    const pendientes=filas.length-conformes-inconformes;
+    mensaje.textContent=(modoPrueba?"DATOS DE PRUEBA · ":"")+filas.length+
+      " registro(s) manual(es) · "+conformes+" conforme(s) · "+inconformes+
+      " inconforme(s) · "+pendientes+" pendiente(s). Esta tabla NO modifica las revisiones de calidad.";
+  }
+  function pintar(){
+    tabla.innerHTML=filas.length?filas.map((r,i)=>
+      '<tr data-seguimiento-indice="'+i+'">'+
+      '<td><select data-seguimiento-campo="bloque" aria-label="Bloque, fila '+(i+1)+'">'+
+      opcionesBloque(r.bloque)+'</select></td>'+
+      '<td><select data-seguimiento-campo="cama" aria-label="Cama, fila '+(i+1)+'"'+
+      (!r.bloque?' disabled':'')+'>'+opcionesCama(r.bloque,r.cama)+'</select></td>'+
+      '<td><input data-seguimiento-campo="reporte" type="number" min="0" step="1" inputmode="numeric" '+
+      'aria-label="Líneas reporte, fila '+(i+1)+'" value="'+escapar(r.reporte)+'"></td>'+
+      '<td><input data-seguimiento-campo="aseguradas" type="number" min="0" step="1" inputmode="numeric" '+
+      'aria-label="Líneas aseguradas, fila '+(i+1)+'" value="'+escapar(r.aseguradas)+'"></td>'+
+      '<td data-seguimiento-diferencia>—</td>'+
+      '<td><span data-seguimiento-estado class="cs-resultado cs-pendiente">Pendiente</span></td>'+
+      '<td class="cs-manual-acciones"><small>'+escapar(r.fecha)+'</small>'+
+      '<button type="button" data-seguimiento-eliminar="'+i+'" aria-label="Eliminar fila '+(i+1)+'">Eliminar</button></td></tr>'
+    ).join(""):'<tr><td colspan="7" class="cs-sin-registros">'+
+      'Sin registros manuales para esta fecha. Usa «Agregar fila» para seleccionar bloque y cama.'+
+      '</td></tr>';
+    tabla.querySelectorAll("[data-seguimiento-indice]").forEach(tr=>
+      pintarEstado(tr,filas[Number(tr.dataset.seguimientoIndice)]));
     actualizarResumen();
-  });
-  cuerpo.addEventListener("change",async event=>{
-    const input=event.target.closest("[data-densidad-campo]");
-    if(!input)return;
-    const tr=input.closest("[data-densidad-indice]");
-    const r=registros[Number(tr?.dataset.densidadIndice)];
+  }
+  async function cargar(){
+    if(cargando)return;
+    cargando=true;actualizar.disabled=true;
+    try{
+      if(modoPrueba)filas=leerPrueba();
+      else{
+        const stored=await OfflineDb.getAll("meta");
+        filas=stored.filter(x=>String(x.key??"").startsWith(PREFIX)&&x.value)
+          .map(x=>x.value).filter(x=>todos.checked||x.fecha===fecha.value);
+      }
+      filas.sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))||
+        String(a.bloque).localeCompare(String(b.bloque),"es",{numeric:true})||
+        String(a.cama).localeCompare(String(b.cama),"es",{numeric:true}));
+      pintar();
+    }catch(e){mensaje.textContent="No se pudo consultar el seguimiento manual: "+e.message;}
+    finally{cargando=false;actualizar.disabled=false;}
+  }
+  async function guardarFila(r){
+    const result=clasificar(r.reporte,r.aseguradas);
+    if(result.estado==="Revisar números")throw new Error("Las líneas deben ser enteros no negativos.");
+    if(r.bloque&&r.cama){
+      const iguales=filas.filter(x=>x.id!==r.id&&x.fecha===r.fecha&&
+        normalizar(x.bloque)===normalizar(r.bloque)&&
+        normalizar(x.cama)===normalizar(r.cama));
+      if(iguales.length)throw new Error("Esa cama ya tiene una fila en la fecha seleccionada.");
+    }
+    r.updatedAt=new Date().toISOString();
+    if(modoPrueba)guardarPrueba();
+    else await OfflineDb.setMeta(PREFIX+r.id,{...r});
+  }
+  function nuevo(){
+    if(!modoPrueba&&!catalogo.length){
+      mensaje.textContent="No hay bloques y camas disponibles. Actualiza el catálogo conectado o sincroniza las camas en Labores JN.";
+      return;
+    }
+    const r={id:crearId(),fecha:fecha.value||fechaLocal(),bloque:"",cama:"",
+      reporte:"",aseguradas:"",updatedAt:""};
+    filas.unshift(r);pintar();
+    void guardarFila(r).catch(e=>{mensaje.textContent="No se pudo crear la fila: "+e.message});
+  }
+  tabla.addEventListener("input",e=>{
+    const input=e.target.closest("[data-seguimiento-campo]");
+    if(!input||!["reporte","aseguradas"].includes(input.dataset.seguimientoCampo))return;
+    const tr=input.closest("[data-seguimiento-indice]"),r=filas[Number(tr?.dataset.seguimientoIndice)];
     if(!r)return;
-    try {await guardarFila(r);}
-    catch(e){mensaje.textContent="No se pudo guardar la medición local: "+e.message;}
+    r[input.dataset.seguimientoCampo]=input.value.trim();
+    pintarEstado(tr,r);actualizarResumen();
   });
+  tabla.addEventListener("change",async e=>{
+    const input=e.target.closest("[data-seguimiento-campo]");
+    if(!input)return;
+    const tr=input.closest("[data-seguimiento-indice]"),r=filas[Number(tr?.dataset.seguimientoIndice)];
+    if(!r)return;
+    const field=input.dataset.seguimientoCampo,old=r[field];
+    if(field==="bloque"){
+      r.bloque=input.value;r.cama="";
+      pintar();
+    }else{
+      r[field]=input.value.trim();
+    }
+    try{
+      await guardarFila(r);
+      if(field==="cama")actualizarResumen();
+    }catch(err){
+      r[field]=old;
+      pintar();mensaje.textContent="No fue posible guardar: "+err.message;
+    }
+  });
+  tabla.addEventListener("click",async e=>{
+    const button=e.target.closest("[data-seguimiento-eliminar]");
+    if(!button)return;
+    const r=filas[Number(button.dataset.seguimientoEliminar)];
+    if(!r||!window.confirm("¿Eliminar este registro manual de bloque y cama?"))return;
+    try{
+      if(modoPrueba){filas=filas.filter(x=>x.id!==r.id);guardarPrueba();}
+      else await OfflineDb.delete("meta",PREFIX+r.id);
+      await cargar();
+    }catch(err){mensaje.textContent="No fue posible eliminar: "+err.message;}
+  });
+  async function iniciar(){
+    fecha.value=fechaLocal();
+    await cargarCatalogo();
+    await cargar();
+  }
   abrir.addEventListener("click",()=>{
-    const visible=panel.hidden;
-    panel.hidden=!visible;
-    abrir.classList.toggle("active",visible);
-    abrir.setAttribute("aria-expanded",String(visible));
-    if(visible)void cargar();
+    const mostrar=panel.hidden;
+    panel.hidden=!mostrar;abrir.classList.toggle("active",mostrar);
+    abrir.setAttribute("aria-expanded",String(mostrar));
+    if(mostrar)void iniciar();
   });
-  consultar.addEventListener("click",()=>void cargar());
-  vista.addEventListener("change",()=>{actualizarModo();void cargar();});
-  alternar.addEventListener("click",()=>alternarModo(!modoPrueba));
+  agregar.addEventListener("click",nuevo);
+  actualizar.addEventListener("click",async()=>{await cargarCatalogo();await cargar()});
+  fecha.addEventListener("change",()=>{if(!todos.checked)void cargar()});
+  todos.addEventListener("change",()=>void cargar());
+  alternar.addEventListener("click",()=>{
+    modoPrueba=!modoPrueba;
+    alternar.textContent=modoPrueba?"Volver a registros reales":"Ver datos de prueba";
+    aviso.hidden=!modoPrueba;restaurar.hidden=!modoPrueba;
+    if(modoPrueba&&todos.checked)todos.checked=false;
+    void cargar();
+  });
   restaurar.addEventListener("click",()=>{
-    try{localStorage.removeItem(DEMO_PREFIX+fecha.value);}
-    catch(e){mensaje.textContent="No se pudieron restablecer los ejemplos: "+e.message;return;}
-    void cargar();
+    localStorage.removeItem(DEMO_KEY);void cargar();
   });
-  fecha.addEventListener("change",()=>{
-    if(desde.value>fecha.value)desde.value=fecha.value;
-    void cargar();
-  });
-  desde.addEventListener("change",()=>void cargar());
-  fecha.value=hoy();
-  const inicial=new Date(fecha.value+"T12:00:00Z");
-  inicial.setUTCDate(inicial.getUTCDate()-7);
-  desde.value=inicial.toISOString().slice(0,10);
-  actualizarModo();
-  if(modoPrueba){
-    panel.hidden=false;abrir.classList.add("active");
-    abrir.setAttribute("aria-expanded","true");void cargar();
-  }
-  async function actualizarSiAbierto(){
-    if(!panel.hidden&&!modoPrueba)await cargar();
-  }
-  window.CalidadSiembraDensidad={clasificar,cargar,ejemplos,actualizarSiAbierto};
+  alternar.textContent=modoPrueba?"Volver a registros reales":"Ver datos de prueba";
+  aviso.hidden=!modoPrueba;restaurar.hidden=!modoPrueba;
+  if(modoPrueba){panel.hidden=false;abrir.classList.add("active");void iniciar();}
+  // Sin listener sobre evaluaciones de Calidad: independencia deliberada.
+  window.CalidadSiembraDensidad={clasificar,cargar,ejemplos};
 })();
