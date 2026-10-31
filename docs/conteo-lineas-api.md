@@ -1,3 +1,5 @@
+> **OBSOLETO DESDE v1.0.160:** el seguimiento Conteo de Líneas fue desvinculado de las revisiones de Calidad Siembra Campo. Este contrato de ciclos ya NO se debe implementar. La tabla ahora es un registro manual independiente y no afecta las conformidades. Se conserva este documento únicamente como referencia histórica.
+
 # Integración central pendiente — Conteo de Líneas por ciclo
 
 Este repositorio es el **cliente web estático** de Labores JN. No contiene el código ni el despliegue del servidor `/produccion-api-jn`. El seguimiento funciona en IndexedDB local; **no afirmar que ya sincroniza entre dispositivos**.
