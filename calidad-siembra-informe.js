@@ -6,7 +6,7 @@ const ITEMS_INFORME = [
   [2, "Estado de la planta"], [3, "Distribución"],
   [4, "Densidad"], [5, "Profundidad de la planta"], [6, "Planta inclinada"],
   [7, "Ubicación de mangueras"], [8, "Selección de esqueje"], [9, "Siembra con marcador"],
-  [10, "Aseo sitio de trabajo"], [13, "Conteo de líneas"],
+  [10, "Aseo sitio de trabajo"],
 ];
 
 const periodoSelect = document.querySelector("#periodoSelect");
@@ -74,8 +74,6 @@ async function obtenerEvaluaciones() {
       const [oldKey,server]=match;
       merged.set(oldKey,{...server,bloque:server.bloque??e.bloque,
        cama:server.cama??e.cama,
-       cicloSiembraId:server.cicloSiembraId??e.cicloSiembraId,
-       conteoLineasEstado:server.conteoLineasEstado??e.conteoLineasEstado,
        colaboradorNombre:server.colaboradorNombre??e.colaboradorNombre});
     }else merged.set(key,e);
   }
@@ -83,83 +81,12 @@ async function obtenerEvaluaciones() {
 }
 
 
-// Conteo de Líneas es una evaluación por cama, NO una revisión manual.
-// La clave vigente en Labores JN es fecha | bloque | cama.
-// No se asocian fechas distintas automáticamente: una cama puede reutilizarse.
-const CONTEO_META_PREFIX="calidadSiembraDensidad:v1:";
-const CONTEO_CICLO_PREFIX="calidadSiembraConteoCiclo:v2:";
-const codificarCama=v=>{
- const s=String(v??"").trim().toUpperCase();
- return /^\d+$/.test(s)?String(Number(s)):s;
-};
-function claveCama(fecha,bloque,cama){
- const d=String(fecha??"").slice(0,10),b=codificarCama(bloque),c=codificarCama(cama);
- return /^\d{4}-\d{2}-\d{2}$/.test(d)&&b&&c?d+"|"+b+"|"+c:"";
-}
-function estadoConteo(info) {
- if(!info)return "Pendiente";
- const report=String(info.reporte??""),checked=String(info.aseguradas??"");
- if(!/^\d+$/.test(report)||!/^\d+$/.test(checked)||
-    !Number.isSafeInteger(Number(report))||!Number.isSafeInteger(Number(checked)))return "Pendiente";
- return Math.abs(Number(checked)-Number(report))>=3?"Inconforme":"Conforme";
-}
-async function cargarConteosGuardados(){
- const out=new Map();out.ciclos=[];
- try {
-  const meta=await OfflineDb.getAll("meta");
-  for(const row of meta){
-   const key=String(row.key??""),r=row.value;
-   if(!r)continue;
-   if(key.startsWith(CONTEO_CICLO_PREFIX)){
-    if(r.id&&r.fechaInicio&&(!r.fechaFin||r.fechaInicio<=r.fechaFin)&&
-       codificarCama(r.bloque)&&codificarCama(r.cama)){
-      out.ciclos.push(r);
-    }
-   }else if(key.startsWith(CONTEO_META_PREFIX)){
-    const cama=claveCama(r.fecha,r.bloque,r.cama);
-    if(cama)out.set(cama,estadoConteo(r));
-   }
-  }
- }catch(error){console.warn("No se pudieron consultar ciclos y conteos de líneas:",error);}
- return out;
-}
-function vincularConteo(e,conteos){
- const fecha=String(e.fecha??"").slice(0,10);
- // Vínculo de origen: no depende de la fecha ni del número de revisión.
- // Si la cama sigue pendiente, el informe permanece provisional.
- if(e.cicloSiembraId){
-  const ciclo=(conteos.ciclos||[]).find(c=>c.id===e.cicloSiembraId);
-  return {...e,__conteoClave:"ciclo:"+e.cicloSiembraId,
-   __conteoEstado:ciclo?estadoConteo(ciclo):"Pendiente"};
- }
- const base=claveCama(fecha,e.bloque,e.cama);
- const ciclos=(conteos.ciclos||[]).filter(c=>
-  codificarCama(c.bloque)===codificarCama(e.bloque)&&
-  codificarCama(c.cama)===codificarCama(e.cama)&&
-  c.fechaInicio<=fecha&&fecha<=c.fechaFin);
- // Nunca asociar una revisión cuando hay dos ciclos solapados.
- if(ciclos.length===1)return {...e,__conteoClave:"ciclo:"+ciclos[0].id,
-  __conteoEstado:estadoConteo(ciclos[0])};
- if(ciclos.length>1)return {...e,__conteoClave:"",__conteoEstado:"Pendiente"};
- return {...e,__conteoClave:base?("fecha:"+base):"",
-  __conteoEstado:conteos.get(base)||"Pendiente"};
-}
-function conteoCamasPersona(registros){
- const camas=new Map();
- for(const r of registros){
-  if(!r.__conteoClave)continue;
-  camas.set(r.__conteoClave,r.__conteoEstado);
- }
- const completadas=[...camas.values()].filter(x=>x==="Conforme"||x==="Inconforme");
- const conformes=completadas.filter(x=>x==="Conforme").length;
- return {conformes,completadas:completadas.length,pendientes: camas.size-completadas.length};
-}
-function revisionConforme(e){
- return e.__conteoEstado==="Conforme"&&
-  !(e.incumplimientos||[]).some(x=>{
-   const id=Number(x&&typeof x==="object"?x.idItem??x.id:x);
-   // El ítem 13 no se puede registrar manualmente en nuevas revisiones.
-   return Number.isFinite(id)&&id!==13;
+// Conteo de Líneas no forma parte de la calificación de las revisiones.
+// Ignorar el ítem 13 si está presente en históricos.
+function revisionConforme(e) {
+  return !(e.incumplimientos||[]).some(item=>{
+    const id=Number(item&&typeof item==="object"?item.idItem??item.id:item);
+    return !Number.isFinite(id)||id!==13;
   });
 }
 
@@ -204,9 +131,8 @@ function porcentaje(numerador, denominador) {
 }
 
 function tieneIncumplimiento(evaluacion,idItem){
-  if(idItem===13)return evaluacion.__conteoEstado==="Inconforme";
-  return (evaluacion.incumplimientos||[]).some(item=>
-   Number(item&&typeof item==="object"?item.idItem??item.id:item)===idItem);
+  return idItem!==13&&(evaluacion.incumplimientos||[]).some(item=>
+    Number(item&&typeof item==="object"?item.idItem??item.id:item)===idItem);
 }
 
 function datosPeriodo(evaluaciones) {
@@ -239,10 +165,9 @@ function poblarFiltros(periodos) {
 }
 
 function resumenGrupal(registros) {
-  const terminadas=registros.filter(e=>e.__conteoEstado==="Conforme"||e.__conteoEstado==="Inconforme");
-  const conformes=terminadas.filter(revisionConforme).length;
-  return {muestras:terminadas.length,conformes,pendientes:registros.length-terminadas.length,
-    porcentaje:terminadas.length?100*conformes/terminadas.length:null};
+  const conformes=registros.filter(revisionConforme).length;
+  return {muestras:registros.length,conformes,
+    porcentaje:registros.length?100*conformes/registros.length:null};
 }
 
 function renderGrafica(periodos) {
@@ -256,9 +181,9 @@ function renderGrafica(periodos) {
 }
 
 async function renderInforme() {
-  const [evaluaciones,conteos] = await Promise.all([obtenerEvaluaciones(),cargarConteosGuardados()]);
+  const evaluaciones=await obtenerEvaluaciones();
   await cargarNombresColaboradoresLocales();
-  const datos = evaluaciones.map(normalizarEvaluacion).map(e=>vincularConteo(e,conteos));
+  const datos=evaluaciones.map(normalizarEvaluacion);
   const periodos = datosPeriodo(datos);
   if (!periodos.length) {
     periodoSelect.innerHTML = '<option value="">Sin evaluaciones guardadas</option>';
@@ -298,16 +223,12 @@ async function renderInforme() {
 
   const filas = [...porSembrador.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")).map((sembrador) => {
     const muestras = sembrador.registros.length;
-    const porItem = ITEMS_INFORME.map(([id]) => {
-      if(id===13){
-        const camas=conteoCamasPersona(sembrador.registros);
-        return porcentaje(camas.conformes,camas.completadas);
-      }
-      const fallos = sembrador.registros.filter((evaluacion) => tieneIncumplimiento(evaluacion, id)).length;
-      return porcentaje(muestras - fallos, muestras);
+    const porItem=ITEMS_INFORME.map(([id])=>{
+      const fallos=sembrador.registros.filter(e=>tieneIncumplimiento(e,id)).length;
+      return porcentaje(muestras-fallos,muestras);
     });
     const final=resumenGrupal(sembrador.registros);
-    const resultado=porcentaje(final.conformes,final.muestras)+(final.pendientes?" *":"");
+    const resultado=porcentaje(final.conformes,final.muestras);
     return `<tr><td class="namecell">${escaparHtml(sembrador.nombre)}</td>${porItem.map(valor=>`<td>${valor}</td>`).join("")}<td>${resultado}</td></tr>`;
   }).join("");
 
@@ -329,8 +250,7 @@ async function renderInforme() {
         </div>
       </div>
       <h3 class="table-title">RESULTADOS CONFORMIDAD INDIVIDUAL SEMANA ${periodo.semana} · ${periodo.anio}</h3>
-      <p class="hint">Conteo de Líneas: porcentaje por camas terminadas. Conformidad total: porcentaje por revisiones con conteo finalizado. Una cama inconforme hace inconformes todas las revisiones asociadas a esa cama, fecha y bloque.</p>
-      ${resumen.pendientes?`<p class="hint" style="color:#8e5613"><strong>Informe provisional:</strong> ${resumen.pendientes} de ${periodo.registros.length} revisiones aún esperan el conteo de su cama o no tienen identificador de cama. Los porcentajes totales marcados con * son provisionales; no se consideran revisiones conformes hasta completar el conteo.</p>`:""}
+      <p class="hint">La conformidad individual y grupal se calcula exclusivamente con las revisiones de Calidad Siembra Campo. Seguimiento Conteo de Líneas es independiente y no afecta sus calificaciones.</p>
       <div class="table-scroll"><table class="conformity-table"><thead><tr>
         <th>NOMBRE DEL COLABORADOR</th>${ITEMS_INFORME.map(([, nombre]) => `<th>${nombre}</th>`).join("")}<th>CONFORMIDAD TOTAL</th>
       </tr></thead><tbody>${filas}</tbody></table></div>
@@ -338,7 +258,7 @@ async function renderInforme() {
         <table class="mini-table"><thead><tr><th>SEMANA</th><th>CONFORMIDAD GRUPAL</th></tr></thead>
           <tbody>${periodosFiltrados.slice(-4).map((semana) => {
             const resumenSemana = resumenGrupal(semana.registros);
-            return `<tr><td>SEMANA ${semana.semana}</td><td><b>${porcentaje(resumenSemana.conformes,resumenSemana.muestras)}${resumenSemana.pendientes?" *":""}</b></td></tr>`;
+            return `<tr><td>SEMANA ${semana.semana}</td><td><b>${porcentaje(resumenSemana.conformes,resumenSemana.muestras)}</b></td></tr>`;
           }).join("")}</tbody>
         </table>
         <div class="print-chart"><h3>METEORO · CONFORMIDAD GRUPAL (SEMANAL)</h3>${renderGrafica(periodosFiltrados)}</div>
@@ -355,9 +275,3 @@ document.querySelector("#imprimirBtn").addEventListener("click", () => window.pr
 document.querySelector("#pdfBtn").addEventListener("click", () => window.print());
 renderInforme();
 window.addEventListener("focus",()=>{void renderInforme();});
-try{
- const canalConteo=new BroadcastChannel("labores-jn-conteo-lineas");
- canalConteo.addEventListener("message",event=>{
-  if(event.data?.tipo==="conteo-actualizado")void renderInforme();
- });
-}catch(error){console.warn("Actualización entre pestañas no disponible",error);}
