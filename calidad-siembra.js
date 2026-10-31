@@ -550,8 +550,7 @@ function renderCriterios() {
   }
 
   lista.classList.add("calidad-criterios-numericos");
-  // Conteo de líneas (ítem 13) se califica únicamente al cerrar la cama.
-  // No permitir que una X manual duplique el conteo del seguimiento.
+  // Conteo de Líneas es una tabla manual independiente y no califica revisiones.
   const tarjetas = criteriosCalidad
     .filter(item=>!(esFormularioSiembraCampo&&Number(item.id)===13))
     .map((item) => {
@@ -902,10 +901,6 @@ async function guardarCalidad() {
       observaciones: $calidad("calidadObservaciones")?.value.trim() || ""
     };
     await SyncEngine.guardarEvaluacionCalidadLocal(evaluacion);
-    if(esFormularioSiembraCampo) {
-      void window.CalidadSiembraDensidad?.actualizarSiAbierto().catch(error=>
-        console.warn("No se pudo refrescar el seguimiento",error));
-    }
 
     // El registro ya existe en IndexedDB: la persona puede continuar de inmediato.
     estadoCalidad("ok", `Revisión #${revisionGuardada} de ${nombreColaborador} guardada localmente. Sincronizando en segundo plano.`);
