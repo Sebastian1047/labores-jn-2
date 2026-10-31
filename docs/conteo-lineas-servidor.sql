@@ -1,3 +1,7 @@
+-- OBSOLETO DESDE v1.0.160: NO EJECUTAR. La tabla Conteo de Líneas es
+-- manual e independiente; no debe enlazarse a revisiones ni a conformidades.
+-- Se conserva este script únicamente como referencia histórica.
+
 -- CONTRATO PROPUESTO PARA EL BACKEND EXISTENTE /produccion-api-jn
 -- SQL Server: ejecutar únicamente tras revisión por el administrador de base de datos.
 -- Este script NO se ha aplicado a ninguna base empresarial.
