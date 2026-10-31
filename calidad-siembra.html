@@ -31,32 +31,25 @@
           <button id="abrirSeguimientoDensidad" class="cs-densidad-abrir" type="button"
             aria-expanded="false" aria-controls="seguimientoDensidadPanel">📏 Seguimiento conteo de líneas</button>
           <section id="seguimientoDensidadPanel" class="cs-densidad-panel" hidden>
-            <h2>Seguimiento conteo de líneas — Siembra Campo</h2>
-            <p class="hint" style="margin:6px 0 10px">Los seguimientos están guardados en la base local de este navegador. Para compartirlos entre equipos falta habilitar la API del servidor.</p>
-            <p id="avisoDatosPruebaLineas" class="cs-aviso-prueba" hidden><strong>Modo prueba:</strong> bloques, camas y sembradores ficticios. Ningún ejemplo se envía al servidor.</p>
-            <p class="hint">Cada cama mantiene <strong>un solo seguimiento pendiente</strong> aunque acumule revisiones de distintas fechas o semanas. Los conteos parcialmente digitados se conservan. Cuando ambos conteos están listos, sale de Pendientes y pasa al historial de Terminadas. La diferencia absoluta de 0 a 2 es conforme; 3 o más es inconforme.</p>
+            <h2>Seguimiento conteo de líneas — Registro independiente</h2>
+            <p class="hint">Esta tabla se llena manualmente y <strong>no está vinculada con las revisiones de Calidad Siembra Campo</strong>. Selecciona Bloque y Cama en cada fila, escribe las líneas reportadas y aseguradas; la diferencia y el resultado se calculan automáticamente.</p>
+            <p class="hint">Los registros se guardan localmente en este navegador. Los datos antiguos del seguimiento permanecen conservados, separados de esta tabla.</p>
+            <p id="avisoDatosPruebaLineas" class="cs-aviso-prueba" hidden><strong>Modo prueba:</strong> filas ficticias que no afectan los registros reales.</p>
             <div class="cs-densidad-controles">
-              <label>Vista de seguimiento
-                <select id="seguimientoDensidadVista" aria-label="Vista de seguimiento">
-                  <option value="pendientes">Camas pendientes</option>
-                  <option value="terminadas">Historial de camas terminadas</option>
-                </select>
+              <label>Fecha del registro
+                <input id="seguimientoDensidadFecha" type="date" required>
               </label>
-              <label data-densidad-solo-terminadas hidden>Terminadas desde
-                <input id="seguimientoDensidadDesde" type="date" required />
-              </label>
-              <label data-densidad-solo-terminadas hidden>Terminadas hasta
-                <input id="seguimientoDensidadFecha" type="date" required />
-              </label>
-              <button id="consultarSeguimientoDensidad" type="button" class="success-btn">Actualizar seguimiento</button>
-              <button id="cambiarModoPruebaLineas" type="button" class="ghost-btn" aria-pressed="false">Ver datos de prueba</button>
+              <label class="cs-manual-todos"><input id="seguimientoDensidadTodos" type="checkbox"> Ver todas las fechas</label>
+              <button id="agregarSeguimientoDensidad" type="button" class="success-btn">+ Agregar fila</button>
+              <button id="consultarSeguimientoDensidad" type="button" class="ghost-btn">Actualizar tabla</button>
+              <button id="cambiarModoPruebaLineas" type="button" class="ghost-btn">Ver datos de prueba</button>
               <button id="restaurarDatosPruebaLineas" type="button" class="ghost-btn" hidden>Restablecer ejemplos</button>
             </div>
             <div class="cs-densidad-tabla-scroll">
               <table class="cs-densidad-tabla">
-                <thead><tr><th>Bloque</th><th>Cama y revisiones vinculadas</th><th>Persona(s) que sembraron</th>
-                  <th>Líneas reporte</th><th>Líneas aseguradas</th><th>Diferencia</th><th>Resultado</th></tr></thead>
-                <tbody id="seguimientoDensidadFilas"><tr><td colspan="7">Cargando camas pendientes…</td></tr></tbody>
+                <thead><tr><th>Bloque</th><th>Cama</th><th>Líneas reporte</th>
+                  <th>Líneas aseguradas</th><th>Diferencia</th><th>Resultado</th><th>Acciones / fecha</th></tr></thead>
+                <tbody id="seguimientoDensidadFilas"><tr><td colspan="7">Abre el seguimiento para consultar o registrar datos.</td></tr></tbody>
               </table>
             </div>
             <p id="seguimientoDensidadMensaje" class="hint" aria-live="polite"></p>
@@ -96,7 +89,7 @@
           <div>
             <span class="scan-label">Criterios de calidad</span>
             <p class="hint" style="margin: 6px 0 10px;">Registra la cantidad de fallos encontrados. Si todos quedan en 0, la evaluación se considera conforme.</p>
-            <p class="hint" style="margin:8px 0 12px;color:#28583e"><strong>Conteo de Líneas:</strong> su conformidad se determina en «Seguimiento conteo de líneas» al finalizar cada cama. El resultado se aplica a todas las revisiones registradas para esa cama; no se marca manualmente en este formulario.</p>
+            <p class="hint" style="margin:8px 0 12px;color:#28583e">El Seguimiento Conteo de Líneas es independiente y no modifica las calificaciones de este formulario.</p>
             <div id="criteriosLista" class="calidad-criterios calidad-criterios-numericos"></div>
           </div>
 
