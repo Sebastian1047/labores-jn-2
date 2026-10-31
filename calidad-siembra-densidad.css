@@ -67,3 +67,13 @@
 }
 .cs-manual-acciones button:hover{background:#ffebea}
 @media(max-width:580px){.cs-densidad-panel{padding:12px}.cs-densidad-controles button{width:100%}}
+
+/* Sembradores disponibles según las revisiones de la semana de cada fila. */
+.cs-densidad-tabla td:has([data-seguimiento-campo="sembradorCodigo"]){min-width:235px}
+.cs-densidad-tabla [data-seguimiento-campo="sembradorCodigo"]{
+  min-width:205px;text-align:left;white-space:normal;
+}
+.cs-semana-sembrador{
+  display:block;margin-top:6px;color:#667d70;font-size:.73rem;
+  line-height:1.35;
+}
