@@ -39,3 +39,31 @@
   padding:7px 10px;max-width:100%;background:#fff;color:#194d35;}
 .cs-densidad-controles [data-densidad-solo-terminadas][hidden]{display:none;}
 .cs-densidad-tabla input:disabled{background:#f2f4f3;color:#435b4b;border-color:#d5e1da;}
+
+/* Seguimiento manual: desplegables editables dentro de Bloque/Cama. */
+.cs-densidad-tabla{min-width:810px}
+.cs-densidad-tabla td select,
+.cs-densidad-tabla td input{
+  display:block;width:100%;min-width:112px;min-height:42px;
+  margin:0;padding:8px 10px;border:1px solid #abcbb9;border-radius:8px;
+  background:#fff;color:#184b34;font:inherit;font-weight:700;
+}
+.cs-densidad-tabla td select:focus-visible,
+.cs-densidad-tabla td input:focus-visible{
+  outline:3px solid #82b89c;outline-offset:1px;border-color:#187a4d;
+}
+.cs-densidad-tabla td select:disabled{background:#f0f3f1;color:#748478}
+.cs-densidad-tabla td:has([data-seguimiento-campo="bloque"]),
+.cs-densidad-tabla td:has([data-seguimiento-campo="cama"]){min-width:155px}
+.cs-densidad-tabla td:has([data-seguimiento-campo="reporte"]),
+.cs-densidad-tabla td:has([data-seguimiento-campo="aseguradas"]){min-width:125px}
+.cs-manual-todos{display:flex!important;align-items:center;gap:9px;padding-bottom:10px;cursor:pointer}
+.cs-manual-todos input{width:17px;height:17px;accent-color:#187a4d}
+.cs-manual-acciones{min-width:95px;text-align:center}
+.cs-manual-acciones small{display:block;margin-bottom:6px;color:#67776e;white-space:nowrap}
+.cs-manual-acciones button{
+  border:1px solid #e2bab6;border-radius:7px;background:#fff5f4;
+  color:#8b332c;padding:6px 10px;font:inherit;font-size:.77rem;cursor:pointer;
+}
+.cs-manual-acciones button:hover{background:#ffebea}
+@media(max-width:580px){.cs-densidad-panel{padding:12px}.cs-densidad-controles button{width:100%}}
